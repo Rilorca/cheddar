@@ -5,6 +5,8 @@
 # and fires callbacks to switch ratbagd profiles accordingly.
 
 import os
+import re
+import subprocess
 import threading
 import logging
 from typing import Callable, Dict, Optional, Set
@@ -31,8 +33,8 @@ def _basename_any_os(path: str) -> str:
     return path.replace("\\", "/").rsplit("/", 1)[-1]
 
 
-def _running_executables() -> Set[str]:
-    """Return lowercase basenames of every executable visible in /proc.
+def _scan_processes() -> Dict[int, Set[str]]:
+    """Map every PID in /proc to the lowercase names it can be known by.
 
     Two sources per process:
       • /proc/PID/exe      — native Linux binaries.
@@ -45,26 +47,76 @@ def _running_executables() -> Set[str]:
     as promised by the rule dialog). Only argv[0] is inspected — scanning
     every argument would false-positive on e.g. 'grep game.exe'.
     """
-    exes: Set[str] = set()
+    procs: Dict[int, Set[str]] = {}
     try:
         for entry in os.scandir("/proc"):
             if not entry.name.isdigit():
                 continue
+            names: Set[str] = set()
             try:
                 exe_path = os.readlink(f"/proc/{entry.name}/exe")
-                _add_name(exes, os.path.basename(exe_path))
+                _add_name(names, os.path.basename(exe_path))
             except OSError:
                 pass
             try:
                 with open(f"/proc/{entry.name}/cmdline", "rb") as f:
                     argv0 = f.read(4096).split(b"\0", 1)[0]
                 if argv0:
-                    _add_name(exes, _basename_any_os(argv0.decode("utf-8", "replace")))
+                    _add_name(names, _basename_any_os(argv0.decode("utf-8", "replace")))
             except OSError:
                 pass
+            if names:
+                procs[int(entry.name)] = names
     except Exception as e:
         logger.debug("Error scanning /proc: %s", e)
+    return procs
+
+
+def _running_executables() -> Set[str]:
+    """Union of every name from _scan_processes()."""
+    exes: Set[str] = set()
+    for names in _scan_processes().values():
+        exes |= names
     return exes
+
+
+_WINDOW_ID_RE = re.compile(r"0x[0-9a-fA-F]+")
+_PID_RE = re.compile(r"= (\d+)$")
+
+
+def _focused_pid() -> Optional[int]:
+    """PID of the process owning the currently focused window, or None.
+
+    Uses the X11 _NET_ACTIVE_WINDOW / _NET_WM_PID properties via xprop.
+    Proton/Wine games run on XWayland, so this works for them even on a
+    Wayland session; when a Wayland-native window is focused the X active
+    window carries no PID and this returns None — callers must treat that
+    as "unknown" and fall back to any-running matching, never as "no game".
+    """
+    env = dict(os.environ)
+    env.setdefault("DISPLAY", ":0")
+    try:
+        out = subprocess.run(
+            ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            env=env,
+        ).stdout
+        m = _WINDOW_ID_RE.search(out)
+        if not m:
+            return None
+        out = subprocess.run(
+            ["xprop", "-id", m.group(0), "_NET_WM_PID"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            env=env,
+        ).stdout
+        m = _PID_RE.search(out.strip())
+        return int(m.group(1)) if m else None
+    except (OSError, subprocess.SubprocessError):
+        return None
 
 
 class AutoPilotWatcher:
@@ -89,6 +141,7 @@ class AutoPilotWatcher:
         self._on_switch = on_switch
         self._default_profile = default_profile
         self._active_profile: Optional[int] = None
+        self._last_matched_exe: Optional[str] = None
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
 
@@ -131,6 +184,7 @@ class AutoPilotWatcher:
         self._rules = {k.lower(): v for k, v in rules.items()}
         self._default_profile = default_profile
         self._active_profile = None  # force re-evaluation
+        self._last_matched_exe = None
 
     # ── Internal ───────────────────────────────────────────────────────────────
 
@@ -142,15 +196,41 @@ class AutoPilotWatcher:
         if not self._rules:
             return
 
-        running = _running_executables()
+        procs = _scan_processes()
         matched_profile: Optional[int] = None
         matched_exe: Optional[str] = None
 
-        for exe, profile_idx in self._rules.items():
-            if exe in running:
-                matched_profile = profile_idx
-                matched_exe = exe
-                break
+        # Focus first: with several mapped games running at once, the one
+        # owning the focused window wins — matching G HUB's behavior of
+        # following the game you're actually playing.
+        focused = _focused_pid()
+        if focused is not None:
+            focused_names = procs.get(focused, set())
+            for exe, profile_idx in self._rules.items():
+                if exe in focused_names:
+                    matched_profile = profile_idx
+                    matched_exe = exe
+                    break
+
+        # Fallback: any running mapped game (focus unknown, or a non-game
+        # window like a browser is focused while the game keeps running).
+        # Prefer the game matched last time so briefly focusing a window
+        # without a PID doesn't flip between two running games.
+        if matched_profile is None:
+            running: Set[str] = set()
+            for names in procs.values():
+                running |= names
+            if self._last_matched_exe and self._last_matched_exe in running:
+                matched_exe = self._last_matched_exe
+                matched_profile = self._rules.get(matched_exe)
+            if matched_profile is None:
+                for exe, profile_idx in self._rules.items():
+                    if exe in running:
+                        matched_profile = profile_idx
+                        matched_exe = exe
+                        break
+
+        self._last_matched_exe = matched_exe
 
         target = (
             matched_profile if matched_profile is not None else self._default_profile

@@ -16,6 +16,7 @@ from gettext import gettext as _
 from typing import Dict, List, Optional
 
 from .autopilot_config import load as cfg_load, save as cfg_save
+from .autopilot_games import installed_games
 from .autopilot_watcher import AutoPilotWatcher
 from .ratbagd import RatbagdDevice, RatbagdProfile
 
@@ -23,6 +24,13 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk  # noqa
+
+
+def _profile_label(profile: RatbagdProfile) -> str:
+    """The exact name the profile switcher (ProfileRow) shows for a profile,
+    so AutoPilot never presents a numbering of its own."""
+    return profile.name or f"Profile {profile.index}"
+
 
 # ─── Helper: Rule-editor dialog ───────────────────────────────────────────────
 
@@ -37,6 +45,7 @@ class _RuleDialog(Gtk.Dialog):
         exe: str = "",
         profile_index: int = 0,
         title: str = "",
+        default_profile: Optional[int] = None,
     ) -> None:
         super().__init__(
             title=title or _("Add Rule"),
@@ -51,6 +60,8 @@ class _RuleDialog(Gtk.Dialog):
         ok_btn.get_style_context().add_class("suggested-action")
         self.set_default_response(Gtk.ResponseType.OK)
 
+        self._default_profile = default_profile
+
         grid = Gtk.Grid(
             column_spacing=12,
             row_spacing=10,
@@ -58,10 +69,29 @@ class _RuleDialog(Gtk.Dialog):
         )
         self.get_content_area().add(grid)
 
+        # ── Installed-game picker (G HUB style) ───────────────────────────────
+        lbl_game = Gtk.Label(label=_("Installed game"), xalign=0)
+        lbl_game.get_style_context().add_class("dim-label")
+        grid.attach(lbl_game, 0, 0, 1, 1)
+
+        self._games = installed_games()
+        self._game_combo = Gtk.ComboBoxText(hexpand=True)
+        if self._games:
+            self._game_combo.append("", _("Choose a game…"))
+            for i, game in enumerate(self._games):
+                self._game_combo.append(str(i), f"{game.name}  ({game.source})")
+            self._game_combo.set_active_id("")
+            self._game_combo.connect("changed", self._on_game_selected)
+        else:
+            self._game_combo.append("", _("No games detected"))
+            self._game_combo.set_active_id("")
+            self._game_combo.set_sensitive(False)
+        grid.attach(self._game_combo, 1, 0, 1, 1)
+
         # ── Executable name ───────────────────────────────────────────────────
         lbl_exe = Gtk.Label(label=_("Game executable"), xalign=0)
         lbl_exe.get_style_context().add_class("dim-label")
-        grid.attach(lbl_exe, 0, 0, 1, 1)
+        grid.attach(lbl_exe, 0, 1, 1, 1)
 
         self._exe_entry = Gtk.Entry(
             hexpand=True,
@@ -69,7 +99,7 @@ class _RuleDialog(Gtk.Dialog):
             activates_default=True,
             text=exe,
         )
-        grid.attach(self._exe_entry, 1, 0, 1, 1)
+        grid.attach(self._exe_entry, 1, 1, 1, 1)
 
         hint = Gtk.Label(xalign=0)
         hint.set_markup(
@@ -77,23 +107,49 @@ class _RuleDialog(Gtk.Dialog):
             + _("Basename only, case-insensitive. Extension optional.")
             + "</span>"
         )
-        grid.attach(hint, 1, 1, 1, 1)
+        grid.attach(hint, 1, 2, 1, 1)
 
         # ── Profile picker ────────────────────────────────────────────────────
         lbl_p = Gtk.Label(label=_("Switch to profile"), xalign=0)
         lbl_p.get_style_context().add_class("dim-label")
-        grid.attach(lbl_p, 0, 2, 1, 1)
+        grid.attach(lbl_p, 0, 3, 1, 1)
 
         self._profile_combo = Gtk.ComboBoxText(hexpand=True)
         for p in profiles:
-            label = p.name if p.name else _("Profile {}").format(p.index + 1)
-            self._profile_combo.append(str(p.index), f"{p.index + 1}. {label}")
+            self._profile_combo.append(str(p.index), _profile_label(p))
         self._profile_combo.set_active_id(str(profile_index))
         if self._profile_combo.get_active_id() is None:
             self._profile_combo.set_active(0)
-        grid.attach(self._profile_combo, 1, 2, 1, 1)
+        self._profile_combo.connect("changed", self._update_warning)
+        grid.attach(self._profile_combo, 1, 3, 1, 1)
+
+        # Warn when the rule is a no-op (same profile as the default).
+        self._warning = Gtk.Label(xalign=0, wrap=True, max_width_chars=44)
+        grid.attach(self._warning, 1, 4, 1, 1)
 
         grid.show_all()
+        self._update_warning()
+
+    def _on_game_selected(self, combo: Gtk.ComboBoxText) -> None:
+        aid = combo.get_active_id()
+        if aid:
+            self._exe_entry.set_text(self._games[int(aid)].exe)
+
+    def _update_warning(self, *_args) -> None:
+        if (
+            self._default_profile is not None
+            and self.profile_index == self._default_profile
+        ):
+            self._warning.set_markup(
+                '<span size="small" foreground="orange">⚠ '
+                + _(
+                    "This is already the default profile — the rule "
+                    "won't change anything."
+                )
+                + "</span>"
+            )
+        else:
+            self._warning.set_markup("")
 
     @property
     def exe(self) -> str:
@@ -212,8 +268,7 @@ class AutoPilotPage(Gtk.Box):
 
         self._default_combo = Gtk.ComboBoxText()
         for p in self._device.profiles:
-            plabel = p.name if p.name else _("Profile {}").format(p.index + 1)
-            self._default_combo.append(str(p.index), f"{p.index + 1}. {plabel}")
+            self._default_combo.append(str(p.index), _profile_label(p))
         self._default_combo.set_active_id(str(self._config.get("default_profile", 0)))
         if self._default_combo.get_active_id() is None:
             self._default_combo.set_active(0)
@@ -327,13 +382,10 @@ class AutoPilotPage(Gtk.Box):
         box.pack_start(arrow, False, False, 0)
 
         # Profile name
-        p_label = _("Profile {}").format(profile_idx + 1)
+        p_label = f"Profile {profile_idx}"
         for p in self._device.profiles:
             if p.index == profile_idx:
-                p_label = "{}.  {}".format(
-                    p.index + 1,
-                    p.name if p.name else _("Profile {}").format(p.index + 1),
-                )
+                p_label = _profile_label(p)
                 break
         profile_lbl = Gtk.Label(label=p_label, xalign=1)
         profile_lbl.get_style_context().add_class("dim-label")
@@ -412,10 +464,10 @@ class AutoPilotPage(Gtk.Box):
             )
         elif last_switch:
             exe, idx = last_switch
-            p_name = _("Profile {}").format(idx + 1)
+            p_name = f"Profile {idx}"
             for p in self._device.profiles:
                 if p.index == idx:
-                    p_name = p.name or p_name
+                    p_name = _profile_label(p)
                     break
             markup = (
                 '<span foreground="green">● </span>'
@@ -468,6 +520,7 @@ class AutoPilotPage(Gtk.Box):
             self.get_toplevel(),
             self._device.profiles,
             title=_("Add Rule"),
+            default_profile=self._config.get("default_profile", 0),
         )
         resp = dlg.run()
         if resp == Gtk.ResponseType.OK and dlg.exe:
@@ -484,6 +537,7 @@ class AutoPilotPage(Gtk.Box):
             exe=exe,
             profile_index=profile_idx,
             title=_("Edit Rule"),
+            default_profile=self._config.get("default_profile", 0),
         )
         resp = dlg.run()
         if resp == Gtk.ResponseType.OK:
