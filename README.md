@@ -158,6 +158,25 @@ A systemd **user** unit is installed with the app; enable it to start on login:
 systemctl --user enable --now piper-autopilot
 ```
 
+### Software profiles (unlimited, like G HUB)
+
+The mouse's onboard memory only holds a few profile slots (3 on the G600).
+Like G HUB, AutoPilot works around this with unlimited **user profiles**,
+managed straight from the profile switcher (top-left): "Añadir perfil"
+captures the mouse's current setup (buttons, macros, LEDs, resolutions,
+report rate) under a name, into `~/.config/piper/autopilot_profiles.json`.
+User profiles list in the switcher marked with a person icon — click one to
+load it onto the mouse (then tweak it in the other tabs and save it again
+under the same name). Game rules can target them like any profile.
+
+Under the hood a scratch onboard slot receives them (the last slot by
+default; `"scratch_slot"` in `autopilot.json` overrides). While AutoPilot is
+enabled that slot is hidden from the switcher, since its contents are
+managed by AutoPilot and get overwritten on game launches.
+
+Per-profile backups of the onboard configuration are also written to
+`~/.config/piper/backups/` the first time you experiment — keep them.
+
 ### Files added / modified
 
 | File | Change |

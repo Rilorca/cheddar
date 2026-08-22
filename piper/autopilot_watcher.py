@@ -9,7 +9,10 @@ import re
 import subprocess
 import threading
 import logging
-from typing import Callable, Dict, Optional, Set
+from typing import Callable, Dict, Optional, Set, Union
+
+# A rule target: onboard profile index (int) or software profile ("sw:<name>")
+RuleTarget = Union[int, str]
 
 logger = logging.getLogger(__name__)
 
@@ -143,14 +146,14 @@ class AutoPilotWatcher:
 
     def __init__(
         self,
-        rules: Dict[str, int],
-        on_switch: Callable[[int, str], None],
+        rules: Dict[str, RuleTarget],
+        on_switch: Callable[[RuleTarget, str], None],
         default_profile: int = 0,
     ) -> None:
-        self._rules: Dict[str, int] = {k.lower(): v for k, v in rules.items()}
+        self._rules: Dict[str, RuleTarget] = {k.lower(): v for k, v in rules.items()}
         self._on_switch = on_switch
         self._default_profile = default_profile
-        self._active_profile: Optional[int] = None
+        self._active_profile: Optional[RuleTarget] = None
         self._last_matched_exe: Optional[str] = None
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -189,7 +192,9 @@ class AutoPilotWatcher:
     def is_running(self) -> bool:
         return bool(self._thread and self._thread.is_alive())
 
-    def update_rules(self, rules: Dict[str, int], default_profile: int = 0) -> None:
+    def update_rules(
+        self, rules: Dict[str, RuleTarget], default_profile: int = 0
+    ) -> None:
         """Hot-reload rules without restarting the thread."""
         self._rules = {k.lower(): v for k, v in rules.items()}
         self._default_profile = default_profile
@@ -207,7 +212,7 @@ class AutoPilotWatcher:
             return
 
         procs = _scan_processes()
-        matched_profile: Optional[int] = None
+        matched_profile: Optional[RuleTarget] = None
         matched_exe: Optional[str] = None
 
         # Focus decides, matching G HUB's behavior: the game owning the

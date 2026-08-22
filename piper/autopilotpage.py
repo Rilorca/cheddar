@@ -15,22 +15,25 @@ import threading
 from gettext import gettext as _
 from typing import Dict, List, Optional
 
+from . import autopilot_profiles as ap
 from .autopilot_config import load as cfg_load, save as cfg_save
 from .autopilot_games import installed_games
-from .autopilot_watcher import AutoPilotWatcher
+from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import RatbagdDevice, RatbagdProfile
 
+import cairo
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import GdkPixbuf, GLib, Gtk  # noqa
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # noqa
 
 
-def _load_game_icon(path: Optional[str]) -> Optional[GdkPixbuf.Pixbuf]:
-    """Load a game icon scaled for the picker; themed fallback when absent."""
+def _load_game_icon(path: Optional[str], size: int = 20) -> Optional[GdkPixbuf.Pixbuf]:
+    """Load a game icon as a rounded square of `size` px; themed fallback."""
     if path:
         try:
-            return GdkPixbuf.Pixbuf.new_from_file_at_size(path, 20, 20)
+            src = GdkPixbuf.Pixbuf.new_from_file_at_size(path, size, size)
+            return _rounded(src, size)
         except GLib.Error:
             pass
     try:
@@ -39,6 +42,30 @@ def _load_game_icon(path: Optional[str]) -> Optional[GdkPixbuf.Pixbuf]:
         )
     except GLib.Error:
         return None
+
+
+def _rounded(pixbuf: GdkPixbuf.Pixbuf, size: int) -> GdkPixbuf.Pixbuf:
+    """Clip a pixbuf to a square with rounded corners, so game icons of any
+    shape render uniformly in lists."""
+    radius = max(3, size // 5)
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
+    cr = cairo.Context(surface)
+    cr.new_sub_path()
+    cr.arc(size - radius, radius, radius, -1.5708, 0)
+    cr.arc(size - radius, size - radius, radius, 0, 1.5708)
+    cr.arc(radius, size - radius, radius, 1.5708, 3.1416)
+    cr.arc(radius, radius, radius, 3.1416, 4.7124)
+    cr.close_path()
+    cr.clip()
+    # Center the (possibly non-square) scaled icon inside the square
+    Gdk.cairo_set_source_pixbuf(
+        cr,
+        pixbuf,
+        (size - pixbuf.get_width()) / 2,
+        (size - pixbuf.get_height()) / 2,
+    )
+    cr.paint()
+    return Gdk.pixbuf_get_from_surface(surface, 0, 0, size, size)
 
 
 def _profile_label(profile: RatbagdProfile) -> str:
@@ -147,6 +174,10 @@ class _RuleDialog(Gtk.Dialog):
         self._profile_combo = Gtk.ComboBoxText(hexpand=True)
         for p in profiles:
             self._profile_combo.append(str(p.index), _profile_label(p))
+        # The user's named profiles list right after the onboard slots, with
+        # no technical distinction — G HUB style: the syncing is our problem.
+        for name in sorted(ap.load_store()):
+            self._profile_combo.append(ap.SW_PREFIX + name, name)
         self._profile_combo.set_active_id(str(profile_index))
         if self._profile_combo.get_active_id() is None:
             self._profile_combo.set_active(0)
@@ -166,10 +197,7 @@ class _RuleDialog(Gtk.Dialog):
             self._exe_entry.set_text(self._games[int(aid)].exe)
 
     def _update_warning(self, *_args) -> None:
-        if (
-            self._default_profile is not None
-            and self.profile_index == self._default_profile
-        ):
+        if self._default_profile is not None and self.target == self._default_profile:
             self._warning.set_markup(
                 '<span size="small" foreground="orange">⚠ '
                 + _(
@@ -186,9 +214,13 @@ class _RuleDialog(Gtk.Dialog):
         return self._exe_entry.get_text().strip().lower()
 
     @property
-    def profile_index(self) -> int:
+    def target(self) -> RuleTarget:
+        """The chosen rule target: onboard profile index (int) or a
+        software profile reference ("sw:<name>")."""
         aid = self._profile_combo.get_active_id()
-        return int(aid) if aid is not None else 0
+        if aid is None:
+            return 0
+        return aid if aid.startswith(ap.SW_PREFIX) else int(aid)
 
 
 # ─── Main page widget ──────────────────────────────────────────────────────────
@@ -214,6 +246,15 @@ class AutoPilotPage(Gtk.Box):
         self._device = device
         self._config: Dict = cfg_load()
         self._watcher: Optional[AutoPilotWatcher] = None
+        self._editing_name: Optional[str] = None
+        self._current_sw: Optional[str] = None
+
+        # Map rule exes to installed games so rule rows can show the game's
+        # title and icon (keyed with and without the .exe suffix).
+        self._game_by_exe: Dict[str, object] = {}
+        for game in installed_games():
+            self._game_by_exe.setdefault(game.exe, game)
+            self._game_by_exe.setdefault(game.exe.removesuffix(".exe"), game)
 
         self._build_ui()
 
@@ -307,6 +348,10 @@ class AutoPilotPage(Gtk.Box):
         self._default_combo.connect("changed", self._on_default_changed)
         left.pack_start(self._default_combo, False, False, 0)
 
+        # User-created profiles are managed from the profile switcher popover
+        # (top-left), where they list alongside the onboard ones — see
+        # MousePerspective. This tab only maps games to profiles.
+
         # ─── Right column: rules list ─────────────────────────────────────────
         right = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -397,15 +442,24 @@ class AutoPilotPage(Gtk.Box):
             border_width=8,
         )
 
-        # Game icon
-        icon = Gtk.Image.new_from_icon_name(
-            "applications-games-symbolic", Gtk.IconSize.MENU
-        )
+        # Game icon: the game's own artwork when we can match the rule to an
+        # installed game, rounded to a uniform square; generic icon otherwise.
+        game = self._game_by_exe.get(exe)
+        pixbuf = _load_game_icon(game.icon if game else None)
+        if pixbuf is not None:
+            icon = Gtk.Image.new_from_pixbuf(pixbuf)
+        else:
+            icon = Gtk.Image.new_from_icon_name(
+                "applications-games-symbolic", Gtk.IconSize.MENU
+            )
         box.pack_start(icon, False, False, 0)
 
-        # Executable name
-        exe_lbl = Gtk.Label(label=exe, xalign=0, hexpand=True)
+        # Display name: the game's title when known; otherwise the rule's exe
+        # without the Windows-ism ".exe" suffix.
+        display = game.name if game else exe.removesuffix(".exe")
+        exe_lbl = Gtk.Label(label=display, xalign=0, hexpand=True)
         exe_lbl.set_ellipsize(3)  # PANGO_ELLIPSIZE_END
+        exe_lbl.set_tooltip_text(exe)
         box.pack_start(exe_lbl, True, True, 0)
 
         # Arrow
@@ -413,12 +467,8 @@ class AutoPilotPage(Gtk.Box):
         arrow.get_style_context().add_class("dim-label")
         box.pack_start(arrow, False, False, 0)
 
-        # Profile name
-        p_label = f"Profile {profile_idx}"
-        for p in self._device.profiles:
-            if p.index == profile_idx:
-                p_label = _profile_label(p)
-                break
+        # Target name
+        p_label = self._target_label(profile_idx)
         profile_lbl = Gtk.Label(label=p_label, xalign=1)
         profile_lbl.get_style_context().add_class("dim-label")
         box.pack_start(profile_lbl, False, False, 4)
@@ -466,20 +516,127 @@ class AutoPilotPage(Gtk.Box):
             self._watcher = None
         self._update_status_label()
 
-    def _on_watcher_switch(self, profile_index: int, exe_name: str) -> None:
-        """Called from the watcher thread — must schedule GTK work via idle_add."""
-        GLib.idle_add(self._switch_profile_main_thread, profile_index, exe_name)
+    # ── Public API for MousePerspective ────────────────────────────────────────
 
-    def _switch_profile_main_thread(self, profile_index: int, exe_name: str) -> bool:
-        for profile in self._device.profiles:
-            if profile.index == profile_index:
-                try:
-                    profile.set_active()
-                    self._device.commit()
-                    self._update_status_label(last_switch=(exe_name, profile_index))
-                except Exception as exc:
-                    self._update_status_label(error=str(exc))
-                break
+    @property
+    def autopilot_enabled(self) -> bool:
+        return bool(self._config.get("enabled", False))
+
+    @property
+    def scratch_slot(self) -> int:
+        """The onboard slot AutoPilot reserves for named profiles."""
+        return ap.scratch_slot_for(self._device, self._config)
+
+    def connect_enabled_changed(self, callback) -> None:
+        """Invoke callback whenever the AutoPilot toggle changes."""
+        self._toggle.connect("notify::active", lambda *_: callback())
+
+    # ── User profiles (managed from the profile switcher popover) ─────────────
+
+    @property
+    def current_user_profile(self) -> Optional[str]:
+        """Name of the user profile currently loaded on the scratch slot via
+        this GUI, if any — used by the switcher to label the active profile."""
+        return self._current_sw
+
+    def user_profile_names(self) -> List[str]:
+        return sorted(ap.load_store())
+
+    def load_user_profile(self, name: str) -> bool:
+        """Write a saved profile onto the mouse and activate it, so the user
+        can use it or tweak it with Piper's regular tabs."""
+        try:
+            ap.activate_target(self._device, ap.SW_PREFIX + name, self._config)
+        except Exception as exc:
+            self._update_status_label(error=str(exc))
+            return False
+        self._editing_name = name
+        self._current_sw = name
+        return True
+
+    def save_current_setup_dialog(self, parent: Gtk.Widget) -> Optional[str]:
+        """Prompt for a name and save the mouse's current setup under it.
+        Returns the saved name, or None if cancelled."""
+        dlg = Gtk.Dialog(
+            title=_("New Profile"),
+            transient_for=parent,
+            modal=True,
+            use_header_bar=True,
+        )
+        dlg.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+        ok = dlg.add_button(_("_Save"), Gtk.ResponseType.OK)
+        ok.get_style_context().add_class("suggested-action")
+        dlg.set_default_response(Gtk.ResponseType.OK)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, border_width=18)
+        active = self._device.active_profile
+        box.add(
+            Gtk.Label(
+                label=_(
+                    "Saves how the mouse is set up right now — every "
+                    "button, LED and resolution — as a profile you can "
+                    "assign to a game."
+                ),
+                xalign=0,
+                wrap=True,
+                max_width_chars=44,
+            )
+        )
+        entry = Gtk.Entry(
+            placeholder_text=_("Name, e.g. Overwatch setup"),
+            activates_default=True,
+            text=self._editing_name or "",
+        )
+        box.add(entry)
+        dlg.get_content_area().add(box)
+        box.show_all()
+        saved = None
+        if dlg.run() == Gtk.ResponseType.OK and entry.get_text().strip():
+            saved = entry.get_text().strip()
+            store = ap.load_store()
+            store[saved] = ap.capture_profile(active)
+            ap.save_store(store)
+            self._editing_name = None
+        dlg.destroy()
+        return saved
+
+    def delete_user_profile(self, name: str) -> None:
+        """Remove a saved profile and any rules that point at it."""
+        store = ap.load_store()
+        store.pop(name, None)
+        ap.save_store(store)
+        rules = self._config.get("rules", {})
+        target = ap.SW_PREFIX + name
+        for exe in [e for e, t in rules.items() if t == target]:
+            rules.pop(exe)
+        cfg_save(self._config)
+        self._sync_watcher_rules()
+        self._refresh_rules()
+        if self._current_sw == name:
+            self._current_sw = None
+
+    def _target_label(self, target: RuleTarget) -> str:
+        """Display name for a rule target: onboard profile name, or the
+        software profile's name."""
+        if ap.is_software_target(target):
+            return ap.target_label(target)
+        for p in self._device.profiles:
+            if p.index == target:
+                return _profile_label(p)
+        return f"Profile {target}"
+
+    def _on_watcher_switch(self, target: RuleTarget, exe_name: str) -> None:
+        """Called from the watcher thread — must schedule GTK work via idle_add."""
+        GLib.idle_add(self._switch_profile_main_thread, target, exe_name)
+
+    def _switch_profile_main_thread(self, target: RuleTarget, exe_name: str) -> bool:
+        try:
+            ap.activate_target(self._device, target, self._config)
+            self._current_sw = (
+                ap.target_label(target) if ap.is_software_target(target) else None
+            )
+            self._update_status_label(last_switch=(exe_name, target))
+        except Exception as exc:
+            self._update_status_label(error=str(exc))
         return False  # GLib.idle_add one-shot
 
     def _update_status_label(
@@ -496,11 +653,7 @@ class AutoPilotPage(Gtk.Box):
             )
         elif last_switch:
             exe, idx = last_switch
-            p_name = f"Profile {idx}"
-            for p in self._device.profiles:
-                if p.index == idx:
-                    p_name = _profile_label(p)
-                    break
+            p_name = self._target_label(idx)
             markup = (
                 '<span foreground="green">● </span>'
                 + '<span size="small">'
@@ -556,7 +709,7 @@ class AutoPilotPage(Gtk.Box):
         )
         resp = dlg.run()
         if resp == Gtk.ResponseType.OK and dlg.exe:
-            self._config.setdefault("rules", {})[dlg.exe] = dlg.profile_index
+            self._config.setdefault("rules", {})[dlg.exe] = dlg.target
             cfg_save(self._config)
             self._sync_watcher_rules()
             self._refresh_rules()
@@ -577,7 +730,7 @@ class AutoPilotPage(Gtk.Box):
             if dlg.exe and dlg.exe != exe:
                 rules.pop(exe, None)
             if dlg.exe:
-                rules[dlg.exe] = dlg.profile_index
+                rules[dlg.exe] = dlg.target
             cfg_save(self._config)
             self._sync_watcher_rules()
             self._refresh_rules()

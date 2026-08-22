@@ -21,8 +21,9 @@ import sys
 
 from gi.repository import Gio, GLib
 
+from . import autopilot_profiles as ap
 from .autopilot_config import _CONFIG_FILE, load as cfg_load
-from .autopilot_watcher import AutoPilotWatcher
+from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import Ratbagd, RatbagdIncompatibleError, RatbagdUnavailableError
 
 RATBAGD_API_VERSION = 2
@@ -47,7 +48,8 @@ class AutoPilotDaemon:
         for device in self._ratbag.devices:
             logger.info("device: %s", device.name)
 
-        config = cfg_load()
+        self._config = cfg_load()
+        config = self._config
         self._watcher = AutoPilotWatcher(
             rules=config.get("rules", {}),
             on_switch=self._on_switch,
@@ -73,36 +75,24 @@ class AutoPilotDaemon:
             Gio.FileMonitorEvent.CREATED,
         ):
             return
-        config = cfg_load()
+        self._config = cfg_load()
+        config = self._config
         self._watcher.update_rules(
             config.get("rules", {}), config.get("default_profile", 0)
         )
         logger.info("config reloaded (%d rule(s))", len(config.get("rules", {})))
 
-    def _on_switch(self, profile_index: int, exe_name: str) -> None:
+    def _on_switch(self, target: RuleTarget, exe_name: str) -> None:
         # Called from the watcher thread; hop onto the main loop for D-Bus.
-        GLib.idle_add(self._switch_main_thread, profile_index, exe_name)
+        GLib.idle_add(self._switch_main_thread, target, exe_name)
 
-    def _switch_main_thread(self, profile_index: int, exe_name: str) -> bool:
+    def _switch_main_thread(self, target: RuleTarget, exe_name: str) -> bool:
         for device in self._ratbag.devices:
-            for profile in device.profiles:
-                if profile.index == profile_index:
-                    try:
-                        profile.set_active()
-                        device.commit()
-                        logger.info(
-                            "%s: '%s' -> profile %d",
-                            device.name,
-                            exe_name,
-                            profile_index,
-                        )
-                    except Exception as exc:
-                        logger.error("switch failed on %s: %s", device.name, exc)
-                    break
-            else:
-                logger.warning(
-                    "%s has no profile %d — rule ignored", device.name, profile_index
-                )
+            try:
+                ap.activate_target(device, target, self._config)
+                logger.info("%s: '%s' -> %s", device.name, exe_name, target)
+            except Exception as exc:
+                logger.error("switch failed on %s: %s", device.name, exc)
         return False  # one-shot
 
     def stop(self) -> None:

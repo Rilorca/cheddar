@@ -18,6 +18,40 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, GObject, Gtk  # noqa
 
 
+class UserProfileRow(Gtk.ListBoxRow):
+    """A row in the profile switcher for a user-created (AutoPilot) profile.
+
+    Marked with a person icon to distinguish it from the mouse's onboard
+    profiles. Activating it writes the profile onto the mouse.
+    """
+
+    def __init__(self, name: str, on_delete) -> None:
+        super().__init__()
+        self.sw_name = name
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8, border_width=4)
+        mark = Gtk.Image.new_from_icon_name(
+            "avatar-default-symbolic", Gtk.IconSize.MENU
+        )
+        mark.set_tooltip_text(_("Your profile — stored on this PC"))
+        box.pack_start(mark, False, False, 4)
+        lbl = Gtk.Label(label=name, xalign=0, hexpand=True)
+        lbl.set_ellipsize(3)  # PANGO_ELLIPSIZE_END
+        box.pack_start(lbl, True, True, 0)
+        del_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
+        del_btn.add(
+            Gtk.Image.new_from_icon_name("edit-delete-symbolic", Gtk.IconSize.MENU)
+        )
+        del_btn.set_tooltip_text(_("Delete this profile"))
+        del_btn.connect("clicked", lambda _b: on_delete(name))
+        box.pack_start(del_btn, False, False, 0)
+        self.add(box)
+        self.show_all()
+
+    @GObject.Property
+    def name(self) -> str:
+        return self.sw_name
+
+
 @Gtk.Template(resource_path="/org/freedesktop/Piper/ui/MousePerspective.ui")
 class MousePerspective(Gtk.Overlay):
     """The perspective to configure a mouse."""
@@ -112,9 +146,73 @@ class MousePerspective(Gtk.Overlay):
 
         self._select_profile_row(active_profile)
 
-    def _select_profile_row(self, profile: RatbagdProfile) -> None:
+        # AutoPilot reserves one onboard slot for the user's named profiles;
+        # hide it from the switcher while AutoPilot is on so nobody edits a
+        # slot that gets overwritten on the next game launch.
+        self._autopilot_page.connect_enabled_changed(self._update_reserved_slot_row)
+        self._update_reserved_slot_row()
+
+        # The user's own profiles list right below the onboard ones.
+        self._refresh_user_profile_rows()
+
+    def _update_reserved_slot_row(self) -> None:
+        page = self._autopilot_page
+        if page is None:
+            return
+        hide = page.autopilot_enabled
+        slot = page.scratch_slot
         for row in self.listbox_profiles.get_children():
-            if row.profile is profile:
+            if isinstance(row, ProfileRow) and row.profile.index == slot:
+                row.set_no_show_all(hide)
+                row.set_visible(not hide)
+
+    def _refresh_user_profile_rows(self) -> None:
+        if self._autopilot_page is None:
+            return
+        for row in self.listbox_profiles.get_children():
+            if isinstance(row, UserProfileRow):
+                self.listbox_profiles.remove(row)
+        for name in self._autopilot_page.user_profile_names():
+            self.listbox_profiles.add(UserProfileRow(name, self._delete_user_profile))
+
+    def _delete_user_profile(self, name: str) -> None:
+        confirm = Gtk.MessageDialog(
+            transient_for=self.get_toplevel(),
+            modal=True,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=_(
+                'Delete profile "{}"? Game rules that use it will be removed too.'
+            ).format(name),
+        )
+        if confirm.run() == Gtk.ResponseType.YES:
+            assert self._autopilot_page is not None
+            self._autopilot_page.delete_user_profile(name)
+            self._refresh_user_profile_rows()
+        confirm.destroy()
+
+    def _select_profile_row(self, profile: RatbagdProfile) -> None:
+        page = self._autopilot_page
+        # When the active profile is the slot AutoPilot manages, what's on
+        # the mouse is one of the user's named profiles — label and select
+        # that instead of the hidden "Profile N" slot.
+        if (
+            page is not None
+            and page.autopilot_enabled
+            and profile.index == page.scratch_slot
+            and page.current_user_profile
+        ):
+            self.label_profile.set_label(page.current_user_profile)
+            for row in self.listbox_profiles.get_children():
+                if (
+                    isinstance(row, UserProfileRow)
+                    and row.sw_name == page.current_user_profile
+                ):
+                    self.listbox_profiles.select_row(row)
+                    break
+            return
+        for row in self.listbox_profiles.get_children():
+            if isinstance(row, ProfileRow) and row.profile is profile:
                 self.listbox_profiles.select_row(row)
                 self.label_profile.set_label(row.name)
                 break
@@ -211,13 +309,30 @@ class MousePerspective(Gtk.Overlay):
         self._hide_notification_error()
 
     @Gtk.Template.Callback("_on_profile_row_activated")
-    def _on_profile_row_activated(self, listbox: Gtk.ListBox, row: ProfileRow) -> None:
-        row.set_active()
+    def _on_profile_row_activated(
+        self, listbox: Gtk.ListBox, row: Gtk.ListBoxRow
+    ) -> None:
+        if isinstance(row, UserProfileRow):
+            # A user profile: write it onto the mouse's reserved slot.
+            assert self._autopilot_page is not None
+            if self._autopilot_page.load_user_profile(row.sw_name):
+                self.label_profile.set_label(row.sw_name)
+                self.listbox_profiles.select_row(row)
+        else:
+            row.set_active()
 
     @Gtk.Template.Callback("_on_add_profile_button_clicked")
     def _on_add_profile_button_clicked(self, button: Gtk.Button) -> None:
         assert self._device is not None
-        # Enable the first disabled profile we find.
+        # Fork behavior: create a new user profile from the mouse's current
+        # setup (the upstream behavior — enabling a disabled onboard slot —
+        # doesn't apply to mice like the G600 whose slots are all enabled).
+        if self._autopilot_page is not None:
+            saved = self._autopilot_page.save_current_setup_dialog(self.get_toplevel())
+            if saved:
+                self._refresh_user_profile_rows()
+            return
+        # No AutoPilot page (shouldn't happen): fall back to upstream behavior.
         for profile in self._device.profiles:
             if not profile.disabled:
                 continue
@@ -229,9 +344,8 @@ class MousePerspective(Gtk.Overlay):
     ) -> None:
         assert self._device is not None
 
-        self.add_profile_button.set_sensitive(
-            any(p.disabled for p in self._device.profiles)
-        )
+        # Always sensitive in this fork: the button creates user profiles.
+        self.add_profile_button.set_sensitive(True)
 
     def _on_profile_notify_dirty(
         self, profile: RatbagdProfile, pspec: Optional[GObject.ParamSpec]
