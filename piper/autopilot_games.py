@@ -58,6 +58,41 @@ class Game(NamedTuple):
     name: str  # display name ("Overwatch®")
     exe: str  # process basename for the rule ("overwatch.exe")
     source: str  # launcher it came from ("Steam")
+    icon: Optional[str] = None  # path to a small icon image, if one was found
+
+
+def _steam_icon(steam_root: str, appid: str) -> Optional[str]:
+    """Path to the game's small icon in Steam's library cache, if any.
+
+    Older Steam clients store it as librarycache/{appid}_icon.jpg; newer ones
+    keep hash-named files inside librarycache/{appid}/ where the icon is the
+    small square image among posters and heroes. GdkPixbuf.get_file_info
+    reads only the header, so probing sizes is cheap.
+    """
+    cache = os.path.join(steam_root, "appcache", "librarycache")
+    legacy = os.path.join(cache, f"{appid}_icon.jpg")
+    if os.path.isfile(legacy):
+        return legacy
+    appdir = os.path.join(cache, appid)
+    try:
+        entries = os.listdir(appdir)
+    except OSError:
+        return None
+    try:
+        from gi.repository import GdkPixbuf
+    except ImportError:  # headless callers don't need icons
+        return None
+    best: Optional[str] = None
+    best_size = 0
+    for fname in entries:
+        path = os.path.join(appdir, fname)
+        info = GdkPixbuf.Pixbuf.get_file_info(path)
+        fmt, width, height = info if isinstance(info, tuple) else (info, 0, 0)
+        if fmt is None or width != height or not 16 <= width <= 128:
+            continue
+        if width > best_size:
+            best, best_size = path, width
+    return best
 
 
 def _normalize(s: str) -> str:
@@ -171,7 +206,10 @@ def _scan_steam() -> List[Game]:
                     continue
                 exe = _find_game_exe(install_dir, [dir_m.group(1), name])
                 if exe:
-                    games.append(Game(name, exe.lower(), "Steam"))
+                    appid = mf[len("appmanifest_") : -len(".acf")]
+                    games.append(
+                        Game(name, exe.lower(), "Steam", _steam_icon(root, appid))
+                    )
     return games
 
 
@@ -203,7 +241,12 @@ def _scan_lutris() -> List[Game]:
         # lutris config files are "<slug>-<timestamp>.yml"
         slug = re.sub(r"-\d+$", "", fname[:-4])
         name = slug.replace("-", " ").title()
-        games.append(Game(name, exe.lower(), "Lutris"))
+        icon = os.path.expanduser(
+            f"~/.local/share/icons/hicolor/128x128/apps/lutris_{slug}.png"
+        )
+        games.append(
+            Game(name, exe.lower(), "Lutris", icon if os.path.isfile(icon) else None)
+        )
     return games
 
 

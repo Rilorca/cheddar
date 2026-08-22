@@ -23,7 +23,22 @@ from .ratbagd import RatbagdDevice, RatbagdProfile
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, Gtk  # noqa
+from gi.repository import GdkPixbuf, GLib, Gtk  # noqa
+
+
+def _load_game_icon(path: Optional[str]) -> Optional[GdkPixbuf.Pixbuf]:
+    """Load a game icon scaled for the picker; themed fallback when absent."""
+    if path:
+        try:
+            return GdkPixbuf.Pixbuf.new_from_file_at_size(path, 20, 20)
+        except GLib.Error:
+            pass
+    try:
+        return Gtk.IconTheme.get_default().load_icon(
+            "applications-games-symbolic", 16, 0
+        )
+    except GLib.Error:
+        return None
 
 
 def _profile_label(profile: RatbagdProfile) -> str:
@@ -75,15 +90,30 @@ class _RuleDialog(Gtk.Dialog):
         grid.attach(lbl_game, 0, 0, 1, 1)
 
         self._games = installed_games()
-        self._game_combo = Gtk.ComboBoxText(hexpand=True)
+        # id, icon, label — a plain ComboBoxText can't render the game icons
+        store = Gtk.ListStore(str, GdkPixbuf.Pixbuf, str)
+        self._game_combo = Gtk.ComboBox(model=store, hexpand=True)
+        self._game_combo.set_id_column(0)
+        icon_cell = Gtk.CellRendererPixbuf(xpad=4)
+        self._game_combo.pack_start(icon_cell, False)
+        self._game_combo.add_attribute(icon_cell, "pixbuf", 1)
+        text_cell = Gtk.CellRendererText()
+        self._game_combo.pack_start(text_cell, True)
+        self._game_combo.add_attribute(text_cell, "text", 2)
         if self._games:
-            self._game_combo.append("", _("Choose a game…"))
+            store.append(["", None, _("Choose a game…")])
             for i, game in enumerate(self._games):
-                self._game_combo.append(str(i), f"{game.name}  ({game.source})")
+                store.append(
+                    [
+                        str(i),
+                        _load_game_icon(game.icon),
+                        f"{game.name}  ({game.source})",
+                    ]
+                )
             self._game_combo.set_active_id("")
             self._game_combo.connect("changed", self._on_game_selected)
         else:
-            self._game_combo.append("", _("No games detected"))
+            store.append(["", None, _("No games detected")])
             self._game_combo.set_active_id("")
             self._game_combo.set_sensitive(False)
         grid.attach(self._game_combo, 1, 0, 1, 1)
@@ -219,9 +249,11 @@ class AutoPilotPage(Gtk.Box):
         )
         desc.set_markup(
             '<span size="small" foreground="grey">'
-            + _(
-                "AutoPilot watches running processes and switches your G600 "
-                "profile automatically when a mapped game is detected."
+            + GLib.markup_escape_text(
+                _(
+                    "AutoPilot watches running processes and switches your "
+                    "{} profile automatically when a mapped game is detected."
+                ).format(self._device.name)
             )
             + "</span>"
         )

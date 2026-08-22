@@ -84,14 +84,22 @@ _WINDOW_ID_RE = re.compile(r"0x[0-9a-fA-F]+")
 _PID_RE = re.compile(r"= (\d+)$")
 
 
+# _focused_pid() return values: a PID when the focused window exposes one;
+# NO_PID when there is a focused window but it carries no X PID (a
+# Wayland-native app — i.e. definitely not a Proton/Wine game); None when
+# focus could not be determined at all (xprop missing/failed).
+NO_PID = 0
+
+
 def _focused_pid() -> Optional[int]:
-    """PID of the process owning the currently focused window, or None.
+    """PID owning the focused window, NO_PID for a PID-less window, or None.
 
     Uses the X11 _NET_ACTIVE_WINDOW / _NET_WM_PID properties via xprop.
-    Proton/Wine games run on XWayland, so this works for them even on a
-    Wayland session; when a Wayland-native window is focused the X active
-    window carries no PID and this returns None — callers must treat that
-    as "unknown" and fall back to any-running matching, never as "no game".
+    Proton/Wine games run on XWayland, so a focused game always exposes its
+    PID even on a Wayland session. A focused Wayland-native window (browser,
+    terminal, desktop) leaves the X active window without a PID — that is a
+    positive "something that isn't a game has focus" signal, distinct from
+    None where callers should fall back to any-running matching.
     """
     env = dict(os.environ)
     env.setdefault("DISPLAY", ":0")
@@ -106,6 +114,8 @@ def _focused_pid() -> Optional[int]:
         m = _WINDOW_ID_RE.search(out)
         if not m:
             return None
+        if int(m.group(0), 16) == 0:  # no active X window at all
+            return NO_PID
         out = subprocess.run(
             ["xprop", "-id", m.group(0), "_NET_WM_PID"],
             capture_output=True,
@@ -114,7 +124,7 @@ def _focused_pid() -> Optional[int]:
             env=env,
         ).stdout
         m = _PID_RE.search(out.strip())
-        return int(m.group(1)) if m else None
+        return int(m.group(1)) if m else NO_PID
     except (OSError, subprocess.SubprocessError):
         return None
 
@@ -200,23 +210,24 @@ class AutoPilotWatcher:
         matched_profile: Optional[int] = None
         matched_exe: Optional[str] = None
 
-        # Focus first: with several mapped games running at once, the one
-        # owning the focused window wins — matching G HUB's behavior of
-        # following the game you're actually playing.
+        # Focus decides, matching G HUB's behavior: the game owning the
+        # focused window wins, and focusing anything that is not a mapped
+        # game (desktop, browser, another app) returns to the default
+        # profile even while games keep running in the background.
         focused = _focused_pid()
         if focused is not None:
-            focused_names = procs.get(focused, set())
+            focused_names = procs.get(focused, set()) if focused > 0 else set()
             for exe, profile_idx in self._rules.items():
                 if exe in focused_names:
                     matched_profile = profile_idx
                     matched_exe = exe
                     break
-
-        # Fallback: any running mapped game (focus unknown, or a non-game
-        # window like a browser is focused while the game keeps running).
-        # Prefer the game matched last time so briefly focusing a window
-        # without a PID doesn't flip between two running games.
-        if matched_profile is None:
+            # No match on a positively identified focus → fall through with
+            # no game matched, which lands on the default profile below.
+        else:
+            # Focus unknown (xprop unavailable/failed): fall back to
+            # any-running matching, preferring the game matched last time
+            # so the profile doesn't flip between two running games.
             running: Set[str] = set()
             for names in procs.values():
                 running |= names
