@@ -1,0 +1,544 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the piper package.
+#
+# SPDX-FileCopyrightText: 2023 detiam <dehe_tian@outlook.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: piper\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-11 20:31+0800\n"
+"PO-Revision-Date: 2023-09-11 20:43+0800\n"
+"Last-Translator: detiam <dehe_tian@outlook.com>\n"
+"Language-Team: Chinese <kde-i18n-doc@kde.org>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Lokalize 23.08.0\n"
+
+#: data/org.freedesktop.Piper.desktop.in:3
+msgid "Piper"
+msgstr "Piper"
+
+#: data/org.freedesktop.Piper.desktop.in:4
+msgid "Configurable mouse configuration utility"
+msgstr "可配置的鼠标配置工具"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/org.freedesktop.Piper.desktop.in:12
+msgid "gaming;configuration;mouse;mice;"
+msgstr "游戏;配置;鼠标;gaming;configuration;mouse;mice;"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:8
+msgid "Gaming mouse configuration utility"
+msgstr "游戏鼠标配置工具"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:10
+msgid ""
+"Piper is a graphical user interface to configure gaming mice. Configuration "
+"options include changing the resolution (DPI) of the mouse, adding and "
+"removing profiles, setting LED colors and changing button behaviors."
+msgstr ""
+"Piper 是一个用来配置游戏鼠标的图形化的用户界面。可配置项包括修改鼠标分辨率"
+"（DPI），增改配置档，修改灯光颜色和修改按钮行为。"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:16
+msgid ""
+"Piper requires libratbag’s ratbagd, the daemon to actually communicate with "
+"the mice. Piper is merely a front end to ratbagd, ratbagd must be installed "
+"and running when Piper is launched."
+msgstr ""
+"Piper 需要 libratbag 的 ratbagd，这个实际与鼠标通讯的守护进程，Piper只是 "
+"ratbagd 的前端，需要和 ratbagd 同时安装和运行。"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:27
+msgid "The button configuraton page"
+msgstr "鼠标设置页面"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:31
+msgid "The LED configuraton page"
+msgstr "灯光设置页面"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:35
+msgid "The resolution configuraton page"
+msgstr "分辨率设置页面"
+
+#. Translators: section header for mapping one button's click to another.
+#: piper/buttondialog.py:127
+msgid "Button mapping"
+msgstr "按钮映射"
+
+#. Translators: section header for assigning special functions to buttons.
+#: piper/buttondialog.py:136
+msgid "Special mapping"
+msgstr "特殊映射"
+
+#. Translators: the {} will be replaced with the button index, e.g.
+#. "Button 1 click".
+#: piper/buttondialog.py:208 piper/buttonspage.py:76
+msgid "Button {} click"
+msgstr "按钮 {} 点击"
+
+#: piper/buttonspage.py:80
+msgid "Macro: {}"
+msgstr "宏：{}"
+
+#. Translators: the button is turned disabled, e.g. off.
+#: piper/buttonspage.py:83
+msgid "Disabled"
+msgstr "关闭"
+
+#. Translators: the button has an unknown function.
+#: piper/buttonspage.py:86 piper/ratbagd.py:669
+msgid "Unknown"
+msgstr "未知"
+
+#: piper/buttonspage.py:94
+msgid "Configure button {}"
+msgstr "配置按钮 {}"
+
+#: piper/mouseperspective.py:76 data/ui/ResolutionsPage.ui:240
+msgid "Resolutions"
+msgstr "分辨率"
+
+#: piper/mouseperspective.py:78
+msgid "Buttons"
+msgstr "按钮"
+
+#: piper/mouseperspective.py:80
+msgid "LEDs"
+msgstr "灯光"
+
+#: piper/ratbagd.py:659
+msgid "Left mouse button click"
+msgstr "鼠标左键点击"
+
+#: piper/ratbagd.py:660
+msgid "Right mouse button click"
+msgstr "鼠标右键点击"
+
+#: piper/ratbagd.py:661
+msgid "Middle mouse button click"
+msgstr "鼠标中键点击"
+
+#: piper/ratbagd.py:662
+msgid "Backward"
+msgstr "返回"
+
+#: piper/ratbagd.py:663
+msgid "Forward"
+msgstr "前进"
+
+#: piper/ratbagd.py:668
+msgid "Invalid"
+msgstr "无效"
+
+#: piper/ratbagd.py:670
+msgid "Doubleclick"
+msgstr "双击"
+
+#: piper/ratbagd.py:671
+msgid "Wheel Left"
+msgstr "滚轮左"
+
+#: piper/ratbagd.py:672
+msgid "Wheel Right"
+msgstr "滚轮右"
+
+#: piper/ratbagd.py:673
+msgid "Wheel Up"
+msgstr "滚轮上"
+
+#: piper/ratbagd.py:674
+msgid "Wheel Down"
+msgstr "滚轮下"
+
+#: piper/ratbagd.py:675
+msgid "Ratchet Mode"
+msgstr "棘轮模式"
+
+#: piper/ratbagd.py:676
+msgid "Cycle Resolution Up"
+msgstr "循环分辨率提高"
+
+#: piper/ratbagd.py:677
+msgid "Cycle Resolution Down"
+msgstr "循环分辨率下降"
+
+#: piper/ratbagd.py:678
+msgid "Resolution Up"
+msgstr "分辨率提高"
+
+#: piper/ratbagd.py:679
+msgid "Resolution Down"
+msgstr "分辨率下降"
+
+#: piper/ratbagd.py:680
+msgid "Resolution Switch"
+msgstr "分辨率切换"
+
+#: piper/ratbagd.py:681
+msgid "Default Resolution"
+msgstr "默认分辨率"
+
+#: piper/ratbagd.py:682
+msgid "Cycle Profile Up"
+msgstr "循环配置档向上"
+
+#: piper/ratbagd.py:683
+msgid "Cycle Profile Down"
+msgstr "循环配置档向下"
+
+#: piper/ratbagd.py:684
+msgid "Profile Up"
+msgstr "配置档向上"
+
+#: piper/ratbagd.py:685
+msgid "Profile Down"
+msgstr "配置档向下"
+
+#: piper/ratbagd.py:686
+msgid "Second Mode"
+msgstr "第二模式"
+
+#: piper/ratbagd.py:687
+msgid "Battery Level"
+msgstr "电池电量"
+
+#. Translators: this is used when there is no macro to preview.
+#: piper/ratbagd.py:817 data/ui/ButtonDialog.ui:106 data/ui/ButtonDialog.ui:187
+msgid "None"
+msgstr "无"
+
+#. Translators: the LED is off.
+#: piper/ratbagd.py:899 data/ui/LedDialog.ui:395
+msgid "Off"
+msgstr "关闭"
+
+#. Translators: the LED has a single, solid color.
+#: piper/ratbagd.py:901 data/ui/LedDialog.ui:66
+msgid "Solid"
+msgstr "单色"
+
+#. Translators: the LED is cycling between red, green and blue.
+#: piper/ratbagd.py:903 data/ui/LedDialog.ui:189
+msgid "Cycle"
+msgstr "循环"
+
+#. Translators: the LED's is pulsating a single color on different
+#. brightnesses.
+#: piper/ratbagd.py:906 data/ui/LedDialog.ui:355
+msgid "Breathing"
+msgstr "呼吸"
+
+#: piper/window.py:42
+msgid "Cannot connect to ratbagd"
+msgstr "无法连接到 ratbagd"
+
+#: piper/window.py:43
+msgid ""
+"Please make sure ratbagd is running and your user is in the required group"
+msgstr "请确定 ratbagd 正在运行并且您的用户在所需的组中"
+
+#: piper/window.py:46
+msgid "Incompatible ratbagd API version (required: {}, provided: {})"
+msgstr "不兼容的 ratbagd API 版本 (需要: {}, 提供: {})"
+
+#: piper/window.py:47
+msgid "Please update both piper and libratbag to the latest versions"
+msgstr "请更新 Piper 和 libratbag 到最新的版本"
+
+#: piper/window.py:61 piper/window.py:115
+msgid "Cannot find any devices"
+msgstr "无法找到任何设备"
+
+#: piper/window.py:62 piper/window.py:116
+msgid "Please make sure your device is supported and plugged in"
+msgstr "请确保您的设备是支持的并且已插入到位"
+
+#: piper/window.py:74
+msgid "There are unapplied changes. Are you sure you want to quit?"
+msgstr "有未保存的更改，您确定要退出吗？"
+
+#: piper/window.py:83
+msgid "Ooops. ratbagd has disappeared"
+msgstr "哦不，ratbagd 消失了"
+
+#: piper/window.py:84
+msgid "Please restart Piper"
+msgstr "请重启 Piper"
+
+#. The current device disconnected, which can only happen from the
+#. mouse perspective as we'd otherwise be in the welcome screen with
+#. more than one device remaining. Hence, we display the error
+#. perspective.
+#: piper/window.py:107
+msgid "Your device disconnected!"
+msgstr "您的设备断开了"
+
+#: piper/window.py:108
+msgid "Please make sure your device is plugged in"
+msgstr "请确保您的设备已插入到位"
+
+#: piper/window.py:147
+msgid "Cannot display device SVG"
+msgstr "无法显示设备 SVG"
+
+#: piper/window.py:154
+msgid "Newer version of ratbagd required"
+msgstr "需要更新版本的 ratbagd"
+
+#: piper/window.py:155
+msgid "Please update to the latest available version"
+msgstr "请更新到最新可用的版本"
+
+#: piper/window.py:157
+msgid "Unknown exception occurred"
+msgstr "遇到未知的异常"
+
+#: data/ui/AboutDialog.ui.in:10
+msgid "Version: @version@"
+msgstr "版本: @version@"
+
+#: data/ui/AboutDialog.ui.in:12
+msgid "Visit Piper on GitHub"
+msgstr "在 GitHub 查看 Piper"
+
+#: data/ui/AboutDialog.ui.in:13
+msgid "translator-credits"
+msgstr "detiam <dehe_tian@outlook.com>，2023"
+
+#: data/ui/ButtonDialog.ui:65
+msgid "Search for a button mapping"
+msgstr "搜索按钮映射"
+
+#: data/ui/ButtonDialog.ui:91
+msgid "Capture a macro for this button"
+msgstr "为这个按钮录制宏"
+
+#: data/ui/ButtonDialog.ui:104
+msgid "The currently set macro"
+msgstr "当前设置的宏"
+
+#: data/ui/ButtonDialog.ui:129
+msgid "Send keystroke"
+msgstr "发送键盘输入"
+
+#: data/ui/ButtonDialog.ui:169
+msgid "Enter a new key sequence for the macro."
+msgstr "为宏输入新的键序"
+
+#: data/ui/ButtonDialog.ui:235
+msgid "Set the device’s handedness."
+msgstr "设置设备的惯用手。"
+
+#: data/ui/ButtonDialog.ui:253
+msgid ""
+"This allows you to swap the order of the primary mouse buttons. In left-"
+"handed mode, the physical left mouse button generates a right mouse click "
+"and vice versa."
+msgstr "这允许您设置主鼠标键。在左惯用手模式，物理左键会产生右键点击，反之亦然。"
+
+#: data/ui/ButtonDialog.ui:273
+msgid "Left Handed"
+msgstr "左惯用手"
+
+#: data/ui/ButtonDialog.ui:278
+msgid "The left mouse button generates a left mouse click"
+msgstr "物理左键会产生右键点击"
+
+#: data/ui/ButtonDialog.ui:292
+msgid "Right Handed"
+msgstr "右惯用手"
+
+#: data/ui/ButtonDialog.ui:297
+msgid "The left mouse button generates a right mouse click"
+msgstr "物理左键会产生左键点击"
+
+#: data/ui/ButtonDialog.ui:337 data/ui/LedDialog.ui:414
+msgid "Cancel"
+msgstr "取消"
+
+#: data/ui/ButtonDialog.ui:339 data/ui/LedDialog.ui:418
+msgid "Ignore any changes made"
+msgstr "忽略所有更改"
+
+#: data/ui/ButtonDialog.ui:345 data/ui/LedDialog.ui:430
+#: data/ui/MousePerspective.ui:132
+msgid "Apply"
+msgstr "应用"
+
+#: data/ui/ButtonDialog.ui:348 data/ui/LedDialog.ui:435
+msgid "Apply any changes made"
+msgstr "应用并修改模式"
+
+#: data/ui/ButtonDialog.ui:388
+msgid "No button mapping found"
+msgstr "没有发现按键映射"
+
+#: data/ui/ButtonDialog.ui:404
+msgid "Try a different search"
+msgstr "尝试不同的搜索"
+
+#: data/ui/ErrorPerspective.ui:16
+msgid "Here, rodent, rodent, rodent…"
+msgstr "这，咔，咔，咔。。。"
+
+#: data/ui/ErrorPerspective.ui:69
+msgid "Uh Oh! Something went wrong…"
+msgstr "嗯、哦，发生了点问题。。。"
+
+#: data/ui/ErrorPerspective.ui:73 data/ui/WelcomePerspective.ui:123
+msgid "Quit"
+msgstr "退出"
+
+#: data/ui/LedDialog.ui:58 data/ui/LedDialog.ui:209
+msgid "Choose a color for the LED"
+msgstr "为 LED 选择颜色"
+
+#: data/ui/LedDialog.ui:90 data/ui/LedDialog.ui:257
+msgid "Choose a brightness for the LED"
+msgstr "为 LED 选择亮度"
+
+#: data/ui/LedDialog.ui:104 data/ui/LedDialog.ui:270
+msgid "Brightness"
+msgstr "亮度"
+
+#: data/ui/LedDialog.ui:135 data/ui/LedDialog.ui:301
+msgid "Choose an effect duration for the LED"
+msgstr "为 LED 选择效果持续时间"
+
+#: data/ui/LedDialog.ui:153 data/ui/LedDialog.ui:319
+msgid "ms"
+msgstr "毫秒"
+
+#: data/ui/LedDialog.ui:175 data/ui/LedDialog.ui:341
+msgid "Effect duration"
+msgstr "持续时间"
+
+#: data/ui/LedDialog.ui:212
+msgid "Pick a Color for the LED"
+msgstr "选择 LED 颜色"
+
+#: data/ui/LedDialog.ui:226
+msgid "Color"
+msgstr "颜色"
+
+#: data/ui/LedDialog.ui:380
+msgid "This LED is off"
+msgstr "此 LED 已关闭"
+
+#: data/ui/MousePerspective.ui:44
+msgid "Something went wrong. The device has been reset to a previous state."
+msgstr "有错误发生，此设备已被重置为之前的状态。"
+
+#: data/ui/MousePerspective.ui:101
+msgid "Select another profile"
+msgstr "选择另一个配置档"
+
+#: data/ui/MousePerspective.ui:126
+msgid "Commit the changes to the device"
+msgstr "提交对此设备的修改"
+
+#: data/ui/MousePerspective.ui:170
+msgid "Click to switch to another profile"
+msgstr "点击以切换配置档"
+
+#: data/ui/MousePerspective.ui:185
+msgid "Add profile"
+msgstr "添加配置档"
+
+#: data/ui/MousePerspective.ui:189
+msgid "Add a new profile to the device"
+msgstr "添加一个新的配置档到此设备"
+
+#: data/ui/OptionButton.ui:9
+msgid "Open the configuration dialog"
+msgstr "打开配置对话框"
+
+#: data/ui/ProfileRow.ui:16
+msgid "Remove this profile from the device"
+msgstr "删除一个此设备上的配置档"
+
+#. Translators: this is used to indicate the active resolution.
+#: data/ui/ResolutionRow.ui:37
+msgid "Active"
+msgstr "激活"
+
+#: data/ui/ResolutionRow.ui:77
+msgid "Set this resolution’s DPI"
+msgstr "设置这个分辨率的 DPI"
+
+#. Translators: the rate at which the device reports movement.
+#: data/ui/ResolutionsPage.ui:43
+msgid "Report rate"
+msgstr "回报率"
+
+#: data/ui/ResolutionsPage.ui:60
+msgid "Change the profile’s report rate"
+msgstr "修改这个配置档的回报率"
+
+#: data/ui/ResolutionsPage.ui:136
+msgid "Hz"
+msgstr "赫兹"
+
+#. Translators: the sensitivity of the device's sensor.
+#: data/ui/ResolutionsPage.ui:156
+msgid "Sensitivity"
+msgstr "灵敏度"
+
+#: data/ui/ResolutionsPage.ui:205
+msgid "Add a new resolution to the profile"
+msgstr "为这个配置档增加新的分辨率"
+
+#: data/ui/WelcomePerspective.ui:20
+msgid "Welcome"
+msgstr "欢迎"
+
+#: data/ui/WelcomePerspective.ui:38
+msgctxt "A subtitle under the \"Welcome\" title."
+msgid "Select a device to configure it"
+msgstr "选择一个设备来配置"
+
+#: data/ui/WelcomePerspective.ui:89
+msgctxt "A tooltip over the list of devices."
+msgid "Select a device to configure it"
+msgstr "选择一个设备以进行配置"
+
+#: data/ui/WelcomePerspective.ui:119
+msgid "Select a Device"
+msgstr "选择设备"
+
+#: data/ui/Window.ui:8
+msgid "_About Piper"
+msgstr "关于 Piper [_A]"
+
+#~ msgid "Disable"
+#~ msgstr "禁用"
+
+#~ msgid "Other"
+#~ msgstr "其他"
+
+#~ msgid "Key: {}"
+#~ msgstr "键：{}"
+
+#~ msgid "Advanced"
+#~ msgstr "高级"
+
+#~ msgid "Debounce time"
+#~ msgstr "去抖动时间"
+
+#~ msgid "Angle snapping"
+#~ msgstr "角度锁定"
+
+#~ msgid "Disable this resolution"
+#~ msgstr "禁用此分辨率"
+
+#~ msgid "Set active"
+#~ msgstr "设为激活"
+
+#~ msgid "Set this resolution as active"
+#~ msgstr "设置此分辨率为激活"
+
+

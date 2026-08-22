@@ -1,0 +1,522 @@
+# Czech translation for Piper.
+# Copyright (C) 2017-2022 Piper developres
+# This file is distributed under the same license as the piper package.
+# Štěpán Šebestian <stepanse@protonmail.com>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: piper\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-07-04 21:48+0200\n"
+"PO-Revision-Date: 2022-07-04 22:29+0200\n"
+"Last-Translator: Štěpán Šebestian <stepanse@protonmail.com>\n"
+"Language-Team: \n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: data/org.freedesktop.Piper.desktop.in:3
+msgid "Piper"
+msgstr "Piper"
+
+#: data/org.freedesktop.Piper.desktop.in:4
+msgid "Configurable mouse configuration utility"
+msgstr "Konfigurovatelný nástroj pro konfiguraci myši"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/org.freedesktop.Piper.desktop.in:12
+msgid "gaming;configuration;mouse;mice;"
+msgstr ""
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:8
+msgid "Gaming mouse configuration utility"
+msgstr "Konfigurační nástroj pro herní myši"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:10
+msgid ""
+"Piper is a graphical user interface to configure gaming mice. Configuration "
+"options include changing the resolution (DPI) of the mouse, adding and "
+"removing profiles, setting LED colors and changing button behaviors."
+msgstr ""
+"Piper je grafické uživatelské rozhraní pro konfiguraci herních myši. Konfigurační "
+"možnosti zahrnují změny rozlišení (DPI) myši, přidávání a "
+"odebírání profilů, nastavení barev LED a změny chování tlačítek."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:16
+msgid ""
+"Piper requires libratbag’s ratbagd, the daemon to actually communicate with "
+"the mice. Piper is merely a front end to ratbagd, ratbagd must be installed "
+"and running when Piper is launched."
+msgstr ""
+"Piper vyžaduje ratbagd z libratbag, démon, který ve skutečnosti komunikuje s "
+"myší. Piper je jen frontend pro ratbagd, ratbagd musí být nainstalován "
+"a spuštěn když je spuštěn Piper."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:27
+msgid "The button configuraton page"
+msgstr "Stránka konfigurace tlačítek"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:31
+msgid "The LED configuraton page"
+msgstr "Stránka konfigurace LED"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:35
+msgid "The resolution configuraton page"
+msgstr "Stránka konfigurace rozlišení"
+
+#. Translators: section header for mapping one button's click to another.
+#: piper/buttondialog.py:127
+msgid "Button mapping"
+msgstr "Mapování tlačítek"
+
+#. Translators: section header for assigning special functions to buttons.
+#: piper/buttondialog.py:136
+msgid "Special mapping"
+msgstr "Speciální mapování"
+
+#. Translators: the {} will be replaced with the button index, e.g.
+#. "Button 1 click".
+#: piper/buttondialog.py:208 piper/buttonspage.py:76
+msgid "Button {} click"
+msgstr "Kliknutí tlačítka {}"
+
+#: piper/buttonspage.py:80
+msgid "Macro: {}"
+msgstr "Makro: {}"
+
+#. Translators: the button is turned disabled, e.g. off.
+#: piper/buttonspage.py:83
+msgid "Disabled"
+msgstr "Zakázáno"
+
+#. Translators: the button has an unknown function.
+#: piper/buttonspage.py:86 piper/ratbagd.py:669
+msgid "Unknown"
+msgstr "Neznámé"
+
+#: piper/buttonspage.py:94
+msgid "Configure button {}"
+msgstr "Konfigurovat tlačítko {}"
+
+#: piper/mouseperspective.py:76 data/ui/ResolutionsPage.ui:240
+msgid "Resolutions"
+msgstr "Rozlišení"
+
+#: piper/mouseperspective.py:78
+msgid "Buttons"
+msgstr "Tlačítka"
+
+#: piper/mouseperspective.py:80
+msgid "LEDs"
+msgstr "LED"
+
+#: piper/ratbagd.py:659
+msgid "Left mouse button click"
+msgstr "Kliknutí levým tlačítkem myši"
+
+#: piper/ratbagd.py:660
+msgid "Right mouse button click"
+msgstr "Kliknutí pravým tlačítkem myši"
+
+#: piper/ratbagd.py:661
+msgid "Middle mouse button click"
+msgstr "Kliknutí prostředním tlačítkem myši"
+
+#: piper/ratbagd.py:662
+msgid "Backward"
+msgstr "Zpět"
+
+#: piper/ratbagd.py:663
+msgid "Forward"
+msgstr "Vpřed"
+
+#: piper/ratbagd.py:668
+msgid "Invalid"
+msgstr "Neplatné"
+
+#: piper/ratbagd.py:670
+msgid "Doubleclick"
+msgstr "Dvojité kliknutí"
+
+#: piper/ratbagd.py:671
+msgid "Wheel Left"
+msgstr "Kolečko doleva"
+
+#: piper/ratbagd.py:672
+msgid "Wheel Right"
+msgstr "Kolečko doprava"
+
+#: piper/ratbagd.py:673
+msgid "Wheel Up"
+msgstr "Kolečko nahoru"
+
+#: piper/ratbagd.py:674
+msgid "Wheel Down"
+msgstr "Kolečko dolů"
+
+#: piper/ratbagd.py:675
+# Translation taken from Logitech documentation for MX Master 3S
+msgid "Ratchet Mode"
+msgstr "Režim po krocích"
+
+#: piper/ratbagd.py:676
+msgid "Cycle Resolution Up"
+msgstr "Cyklus Zvýšit rozlišení"
+
+#: piper/ratbagd.py:677
+msgid "Cycle Resolution Down"
+msgstr "Cyklus Snížit rozlišení"
+
+#: piper/ratbagd.py:678
+msgid "Resolution Up"
+msgstr "Zvýšit rozlišení"
+
+#: piper/ratbagd.py:679
+msgid "Resolution Down"
+msgstr "Snížit rozlišení"
+
+#: piper/ratbagd.py:680
+msgid "Resolution Switch"
+msgstr "Přepnout rozlišení"
+
+#: piper/ratbagd.py:681
+msgid "Default Resolution"
+msgstr "Výchozí rozlišení"
+
+#: piper/ratbagd.py:682
+msgid "Cycle Profile Up"
+msgstr "Cyklus Další profil"
+
+#: piper/ratbagd.py:683
+msgid "Cycle Profile Down"
+msgstr "Cyklus Předchozí profil"
+
+#: piper/ratbagd.py:684
+msgid "Profile Up"
+msgstr "Další profil"
+
+#: piper/ratbagd.py:685
+msgid "Profile Down"
+msgstr "Předchozí profil"
+
+#: piper/ratbagd.py:686
+msgid "Second Mode"
+msgstr "Druhý režim"
+
+#: piper/ratbagd.py:687
+msgid "Battery Level"
+msgstr "Úroveň baterie"
+
+#. Translators: this is used when there is no macro to preview.
+#: piper/ratbagd.py:817 data/ui/ButtonDialog.ui:106 data/ui/ButtonDialog.ui:187
+msgid "None"
+msgstr "Žádné"
+
+#. Translators: the LED is off.
+#: piper/ratbagd.py:899 data/ui/LedDialog.ui:395
+msgid "Off"
+msgstr "Vypnuto"
+
+#. Translators: the LED has a single, solid color.
+#: piper/ratbagd.py:901 data/ui/LedDialog.ui:66
+msgid "Solid"
+msgstr "Solidní"
+
+#. Translators: the LED is cycling between red, green and blue.
+#: piper/ratbagd.py:903 data/ui/LedDialog.ui:189
+msgid "Cycle"
+msgstr "Cyklus"
+
+#. Translators: the LED's is pulsating a single color on different
+#. brightnesses.
+#: piper/ratbagd.py:906 data/ui/LedDialog.ui:355
+msgid "Breathing"
+msgstr "Dýchání"
+
+#: piper/window.py:42
+msgid "Cannot connect to ratbagd"
+msgstr "Nepodařilo se připojit k ratbagd"
+
+#: piper/window.py:43
+msgid ""
+"Please make sure ratbagd is running and your user is in the required group"
+msgstr ""
+"Prosím, ujistěte se že ratbagd běží a váš uživatel je v požadované skupině"
+
+#: piper/window.py:46
+msgid "Incompatible ratbagd API version (required: {}, provided: {})"
+msgstr "Nekompatibilní verze API ratbagd (požadovaná: {}, poskytnutá: {})"
+
+#: piper/window.py:47
+msgid "Please update both piper and libratbag to the latest versions"
+msgstr "Prosím, aktualizujte piper i libratbag na nejnovější verzi"
+
+#: piper/window.py:61 piper/window.py:115
+msgid "Cannot find any devices"
+msgstr "Nepodařilo se najít žádné zařízení"
+
+#: piper/window.py:62 piper/window.py:116
+msgid "Please make sure your device is supported and plugged in"
+msgstr "Prosím, ujistěte se, že vaše zařízení je podporované a připojené"
+
+#: piper/window.py:74
+msgid "There are unapplied changes. Are you sure you want to quit?"
+msgstr "Máte neuložené změny. Opravdu chcete ukončit?"
+
+#: piper/window.py:83
+msgid "Ooops. ratbagd has disappeared"
+msgstr "Ooops. ratbagd se ztratil"
+
+#: piper/window.py:84
+msgid "Please restart Piper"
+msgstr "Prosím, restartujte Piper"
+
+#. The current device disconnected, which can only happen from the
+#. mouse perspective as we'd otherwise be in the welcome screen with
+#. more than one device remaining. Hence, we display the error
+#. perspective.
+#: piper/window.py:107
+msgid "Your device disconnected!"
+msgstr "Vaše zařízení se odpojilo!"
+
+#: piper/window.py:108
+msgid "Please make sure your device is plugged in"
+msgstr "Prosím, ujistěte se že vaše zařízení je připojené"
+
+#: piper/window.py:147
+msgid "Cannot display device SVG"
+msgstr "Nepodařilo se zobrazit SVG zařízení"
+
+#: piper/window.py:154
+msgid "Newer version of ratbagd required"
+msgstr "Je vyžádována novější verze ratbagd"
+
+#: piper/window.py:155
+msgid "Please update to the latest available version"
+msgstr "Prosím, aktualizujte na nejnovější dostupnou verzi"
+
+#: piper/window.py:157
+msgid "Unknown exception occurred"
+msgstr "Stala se neznámá chyba"
+
+#: data/ui/AboutDialog.ui.in:10
+msgid "Version: @version@"
+msgstr "Verze: @version@"
+
+#: data/ui/AboutDialog.ui.in:12
+msgid "Visit Piper on GitHub"
+msgstr "Navštivte Piper na GitHubu"
+
+#: data/ui/AboutDialog.ui.in:13
+msgid "translator-credits"
+msgstr "Přeložili"
+
+#: data/ui/ButtonDialog.ui:65
+msgid "Search for a button mapping"
+msgstr "Vyhledat mapování tlačítka"
+
+#: data/ui/ButtonDialog.ui:91
+msgid "Capture a macro for this button"
+msgstr "Nahrát makro pro toto tlačítko"
+
+#: data/ui/ButtonDialog.ui:104
+msgid "The currently set macro"
+msgstr "Aktuálně nastavené makro"
+
+#: data/ui/ButtonDialog.ui:129
+msgid "Send keystroke"
+msgstr "Stisknout klávesu"
+
+#: data/ui/ButtonDialog.ui:169
+msgid "Enter a new key sequence for the macro."
+msgstr "Zadejte novou sekvenci kláves pro toto makro."
+
+#: data/ui/ButtonDialog.ui:235
+msgid "Set the device’s handedness."
+msgstr "Nastavte, ve které ruce zařízení držíte."
+
+#: data/ui/ButtonDialog.ui:253
+msgid ""
+"This allows you to swap the order of the primary mouse buttons. In left-"
+"handed mode, the physical left mouse button generates a right mouse click "
+"and vice versa."
+msgstr ""
+"Toto vám umožní změnit pořadí primárních tlačítek myši. V režimu pro leváky, "
+"fyzické levé tlačítko myši vygeneruje kliknutí pravým tlačítkem myši "
+"a naopak."
+
+#: data/ui/ButtonDialog.ui:273
+msgid "Left Handed"
+msgstr "Režim pro leváky"
+
+#: data/ui/ButtonDialog.ui:278
+msgid "The left mouse button generates a left mouse click"
+msgstr "Levé tlačítko myši generuje kliknutí levým tlačítkem myši"
+
+#: data/ui/ButtonDialog.ui:292
+msgid "Right Handed"
+msgstr "Režim pro praváky"
+
+#: data/ui/ButtonDialog.ui:297
+msgid "The left mouse button generates a right mouse click"
+msgstr "Levé tlačítko myši generuje kliknutí pravým tlačítkem myši"
+
+#: data/ui/ButtonDialog.ui:337 data/ui/LedDialog.ui:414
+msgid "Cancel"
+msgstr "Zrušit"
+
+#: data/ui/ButtonDialog.ui:339 data/ui/LedDialog.ui:418
+msgid "Ignore any changes made"
+msgstr "Ignoruje jakékoliv provedené změny"
+
+#: data/ui/ButtonDialog.ui:345 data/ui/LedDialog.ui:430
+#: data/ui/MousePerspective.ui:132
+msgid "Apply"
+msgstr "Použít"
+
+#: data/ui/ButtonDialog.ui:348 data/ui/LedDialog.ui:435
+msgid "Apply any changes made"
+msgstr "Použije jakékoliv provedené změny"
+
+#: data/ui/ButtonDialog.ui:388
+msgid "No button mapping found"
+msgstr "Nebylo nalezeno žádné mapování tlačítek"
+
+#: data/ui/ButtonDialog.ui:404
+msgid "Try a different search"
+msgstr "Zkuste jiné vyhledávání"
+
+#: data/ui/ErrorPerspective.ui:16
+msgid "Here, rodent, rodent, rodent…"
+msgstr "Tady, hlodavče, hlodavče, hlodavče..."
+
+#: data/ui/ErrorPerspective.ui:69
+msgid "Uh Oh! Something went wrong…"
+msgstr "Ale ne! Něco se pokazilo"
+
+#: data/ui/ErrorPerspective.ui:73 data/ui/WelcomePerspective.ui:123
+msgid "Quit"
+msgstr "Ukončit"
+
+#: data/ui/LedDialog.ui:58 data/ui/LedDialog.ui:209
+msgid "Choose a color for the LED"
+msgstr "Vyberte barvu pro LED"
+
+#: data/ui/LedDialog.ui:90 data/ui/LedDialog.ui:257
+msgid "Choose a brightness for the LED"
+msgstr "Vyberte jas pro LED"
+
+#: data/ui/LedDialog.ui:104 data/ui/LedDialog.ui:270
+msgid "Brightness"
+msgstr "Jas"
+
+#: data/ui/LedDialog.ui:135 data/ui/LedDialog.ui:301
+msgid "Choose an effect duration for the LED"
+msgstr "Vyberte délku trvání efektu pro LED"
+
+#: data/ui/LedDialog.ui:153 data/ui/LedDialog.ui:319
+msgid "ms"
+msgstr "ms"
+
+#: data/ui/LedDialog.ui:175 data/ui/LedDialog.ui:341
+msgid "Effect duration"
+msgstr "Délka trvání efektu"
+
+#: data/ui/LedDialog.ui:212
+msgid "Pick a Color for the LED"
+msgstr "Vyberte barvu pro LED"
+
+#: data/ui/LedDialog.ui:226
+msgid "Color"
+msgstr "Barva"
+
+#: data/ui/LedDialog.ui:380
+msgid "This LED is off"
+msgstr "Tato LED je vypnutá"
+
+#: data/ui/MousePerspective.ui:44
+msgid "Something went wrong. The device has been reset to a previous state."
+msgstr "Něco se pokazilo. Zařízení bylo resetováno do předchozího stavu."
+
+#: data/ui/MousePerspective.ui:101
+msgid "Select another profile"
+msgstr "Vyberte jiný profil"
+
+#: data/ui/MousePerspective.ui:126
+msgid "Commit the changes to the device"
+msgstr "Zapsat změny do zařízení"
+
+#: data/ui/MousePerspective.ui:170
+msgid "Click to switch to another profile"
+msgstr "Klikněte pro přepnutí na jiný profil"
+
+#: data/ui/MousePerspective.ui:185
+msgid "Add profile"
+msgstr "Přidat profil"
+
+#: data/ui/MousePerspective.ui:189
+msgid "Add a new profile to the device"
+msgstr "Přidá nový profil do zařízení"
+
+#: data/ui/OptionButton.ui:9
+msgid "Open the configuration dialog"
+msgstr "Otevře konfigurační dialog"
+
+#: data/ui/ProfileRow.ui:16
+msgid "Remove this profile from the device"
+msgstr "Smaže tento profil ze zařízení"
+
+#. Translators: this is used to indicate the active resolution.
+#: data/ui/ResolutionRow.ui:37
+msgid "Active"
+msgstr "Aktivní"
+
+#: data/ui/ResolutionRow.ui:77
+msgid "Set this resolution’s DPI"
+msgstr "Nastaví DPI tohoto rozlišení"
+
+#. Translators: the rate at which the device reports movement.
+#: data/ui/ResolutionsPage.ui:43
+msgid "Report rate"
+msgstr "Rychlost hlášení"
+
+#: data/ui/ResolutionsPage.ui:60
+msgid "Change the profile’s report rate"
+msgstr "Změní rychlost hlášení profilu"
+
+#: data/ui/ResolutionsPage.ui:136
+msgid "Hz"
+msgstr "Hz"
+
+#. Translators: the sensitivity of the device's sensor.
+#: data/ui/ResolutionsPage.ui:156
+msgid "Sensitivity"
+msgstr "Citlivost"
+
+#: data/ui/ResolutionsPage.ui:205
+msgid "Add a new resolution to the profile"
+msgstr "Přidá nové rozlišení do profilu"
+
+#: data/ui/WelcomePerspective.ui:20
+msgid "Welcome"
+msgstr "Vítejte"
+
+#: data/ui/WelcomePerspective.ui:38
+msgctxt "A subtitle under the \"Welcome\" title."
+msgid "Select a device to configure it"
+msgstr "Vyberte zařízení pro konfiguraci"
+
+#: data/ui/WelcomePerspective.ui:89
+msgctxt "A tooltip over the list of devices."
+msgid "Select a device to configure it"
+msgstr "Vybere zařízení pro konfiguraci"
+
+#: data/ui/WelcomePerspective.ui:119
+msgid "Select a Device"
+msgstr "Vyberte zařízení"
+
+#: data/ui/Window.ui:8
+msgid "_About Piper"
+msgstr "_O Piperu"

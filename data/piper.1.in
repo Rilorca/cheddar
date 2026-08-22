@@ -1,0 +1,13 @@
+.TH PIPER 1 "@version_date@" "@version@" "User Commands"
+.SH NAME
+Piper \- GTK application to configure gaming devices
+.SH DESCRIPTION
+.SS "Usage:"
+.IP
+piper [OPTION]
+.SS "Help Options:"
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show help options
+.SH "SEE ALSO"
+ratbagctl(1), ratbagd(8)

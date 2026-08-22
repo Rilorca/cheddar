@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsusb)",
+      "Bash(systemctl is-active *)",
+      "Bash(busctl --system list)",
+      "Bash(python3 *)"
+    ]
+  }
+}

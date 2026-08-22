@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import gi
+import os
+import sys
+
+gi.require_version('Gio', '2.0')
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gio, Gtk
+gtk_version = Gtk.get_major_version(), Gtk.get_minor_version()
+if gtk_version < (@gtk_major_version@, @gtk_minor_version@):
+    print("Version of GTK is too old, @gtk_major_version@.@gtk_minor_version@ required", file=sys.stderr)
+    sys.exit(1)
+
+@devel@
+resource = Gio.resource_load(os.path.join('@pkgdatadir@', 'piper.gresource'))
+Gio.Resource._register(resource)
+
+
+def install_excepthook():
+    """Make sure we exit when an unhandled exception occurs."""
+    old_hook = sys.excepthook
+
+    def new_hook(etype, evalue, etb):
+        old_hook(etype, evalue, etb)
+        while Gtk.main_level():
+            Gtk.main_quit()
+        sys.exit()
+    sys.excepthook = new_hook
+
+
+if __name__ == "__main__":
+    import gettext
+    import locale
+    import signal
+    from piper.application import Application
+
+    install_excepthook()
+
+    locale.bindtextdomain('piper', '@localedir@')
+    locale.textdomain('piper')
+    gettext.bindtextdomain('piper', '@localedir@')
+    gettext.textdomain('piper')
+
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    exit_status = Application(@RATBAGD_API_VERSION@).run(sys.argv)
+    sys.exit(exit_status)

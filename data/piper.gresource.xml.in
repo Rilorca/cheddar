@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+     <gresource prefix="/org/freedesktop/Piper">
+        <file>404.svg</file>
+        <file>enter-keyboard-shortcut.svg</file>
+        <file>led-off.svg</file>
+        <file>svgs/svg-lookup.ini</file>
+
+        <file preprocess="xml-stripblanks">AboutDialog.ui</file>
+        <file preprocess="xml-stripblanks">ui/AdvancedPage.ui</file>
+        <file preprocess="xml-stripblanks">ui/ButtonDialog.ui</file>
+        <file preprocess="xml-stripblanks">ui/ButtonRow.ui</file>
+        <file preprocess="xml-stripblanks">ui/DeviceRow.ui</file>
+        <file preprocess="xml-stripblanks">ui/ErrorPerspective.ui</file>
+        <file preprocess="xml-stripblanks">ui/MousePerspective.ui</file>
+        <file preprocess="xml-stripblanks">ui/LedDialog.ui</file>
+        <file preprocess="xml-stripblanks">ui/OptionButton.ui</file>
+        <file preprocess="xml-stripblanks">ui/ProfileRow.ui</file>
+        <file preprocess="xml-stripblanks">ui/ResolutionRow.ui</file>
+        <file preprocess="xml-stripblanks">ui/ResolutionsPage.ui</file>
+        <file preprocess="xml-stripblanks">ui/WelcomePerspective.ui</file>
+        <file preprocess="xml-stripblanks">ui/Window.ui</file>
+
+        <file>@SVG_FILES@</file>
+    </gresource>
+</gresources>

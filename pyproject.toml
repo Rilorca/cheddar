@@ -1,0 +1,40 @@
+[tool.black]
+target-version = ["py37"]
+
+[tool.ruff]
+target-version = "py37"
+lint.select = [
+	# pycodestyle
+	"E",
+	"W",
+	# pyflakes
+	"F",
+	# pyupgrade
+	# Use modern Python features for the best possible develop experience.
+	"UP",
+	# flake8-bugbear
+	# Find obvious bugs.
+	"B",
+	# flake8-pie
+	"PIE",
+	# flake8-return
+	"RET",
+	# pep8-naming
+	# `Error` suffix on exception names.
+	"N818",
+	# flake8-simplify
+	"SIM",
+]
+lint.ignore = [
+	# Line too long.
+	# We have some places where it's just impossible to make it fit.
+	"E501",
+	# Use 'contextlib.suppress(...)' instead of try-except-pass.
+	# I think it's better to use integrated language constructs instead
+	# of libraries.
+	"SIM105",
+	# Use `"key" in dict` instead of `"key" in dict.keys()`.
+	# While the lint itself is good, fixing it's warnings causes `KeyError`
+	# errors with `GLib.Variant`.
+	"SIM118",
+]

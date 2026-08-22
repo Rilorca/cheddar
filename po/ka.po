@@ -1,0 +1,541 @@
+# Georgian translation for piper.
+# Copyright (C) 2023 piper's authors
+# This file is distributed under the same license as the piper package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: piper\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 16:32+0100\n"
+"PO-Revision-Date: 2023-02-22 21:57+0100\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <(nothing)>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: data/org.freedesktop.Piper.desktop.in:3
+msgid "Piper"
+msgstr "Piper"
+
+#: data/org.freedesktop.Piper.desktop.in:4
+msgid "Configurable mouse configuration utility"
+msgstr "მორგებადი თაგუნას მორგების პროგრამა"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/org.freedesktop.Piper.desktop.in:12
+msgid "gaming;configuration;mouse;mice;"
+msgstr "თამაში;მორგება;თაგუნა;"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:8
+msgid "Gaming mouse configuration utility"
+msgstr "სათამაშო თაგუნას მორგების პროგრამა"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:10
+msgid ""
+"Piper is a graphical user interface to configure gaming mice. Configuration "
+"options include changing the resolution (DPI) of the mouse, adding and "
+"removing profiles, setting LED colors and changing button behaviors."
+msgstr ""
+"Piper-ი სათამაშო თაგუნების მორგების გრაფიკული ინტერფეისია. კონფიგურაციის "
+"პარამეტრები თაგუნას გაფართოების (DPI) შეცვლას, პროფილების წაშლას და "
+"დამატებას, LED-ის ფერების დაყენებას და ღილაკების ქცევის ცვლილებას შეიცავს."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:16
+msgid ""
+"Piper requires libratbag’s ratbagd, the daemon to actually communicate with "
+"the mice. Piper is merely a front end to ratbagd, ratbagd must be installed "
+"and running when Piper is launched."
+msgstr ""
+"Piper-ს libratbag-ის პროგრამა, ratbagd, დემონი, რომელიც თაგუნას ელაპარაკება, "
+"ესაჭიროება. Piper უბრალოდ წინაბოლოა, ამიტომ Piper-ის გაშვებისას ratbagd "
+"დაყენებული და გაშვებული უნდა იყოს."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:27
+msgid "The button configuraton page"
+msgstr "ღილაკის მორგების გვერდი"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:31
+msgid "The LED configuraton page"
+msgstr "LED-ის მორგების გვერდი"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:35
+msgid "The resolution configuraton page"
+msgstr "გაფართოების მორგების გვერდი"
+
+#. Translators: section header for mapping one button's click to another.
+#: piper/buttondialog.py:131
+msgid "Button mapping"
+msgstr "ღილაკების მიბმა"
+
+#. Translators: section header for assigning special functions to buttons.
+#: piper/buttondialog.py:140
+msgid "Special mapping"
+msgstr "სპეციალური მიბმა"
+
+#. Translators: the {} will be replaced with the button index, e.g.
+#. "Button 1 click".
+#: piper/buttondialog.py:217 piper/buttonspage.py:79
+msgid "Button {} click"
+msgstr "ღილაკის {} წკაპი"
+
+#: piper/buttonspage.py:83
+msgid "Macro: {}"
+msgstr "მაკრო: {}"
+
+#: piper/buttonspage.py:85
+msgid "Key: {}"
+msgstr "ღილაკი: {}"
+
+#. Translators: the button is turned disabled, e.g. off.
+#: piper/buttonspage.py:88
+msgid "Disabled"
+msgstr "გამოირთო"
+
+#. Translators: the button has an unknown function.
+#: piper/buttonspage.py:91 piper/ratbagd.py:727
+msgid "Unknown"
+msgstr "უცნობი"
+
+#: piper/buttonspage.py:103
+msgid "Configure button {}"
+msgstr "ღილაკის მორგება {}"
+
+#: piper/mouseperspective.py:76 data/ui/ResolutionsPage.ui:240
+msgid "Resolutions"
+msgstr "გაფართოებები"
+
+#: piper/mouseperspective.py:78
+msgid "Buttons"
+msgstr "ღილაკები"
+
+#: piper/mouseperspective.py:80
+msgid "LEDs"
+msgstr "LED-ები"
+
+#: piper/ratbagd.py:717
+msgid "Left mouse button click"
+msgstr "თაგუნას მარცხენა წკაპი"
+
+#: piper/ratbagd.py:718
+msgid "Right mouse button click"
+msgstr "თაგუნას მარჯვენა წკაპი"
+
+#: piper/ratbagd.py:719
+msgid "Middle mouse button click"
+msgstr "თაგუნას შუა წკაპი"
+
+#: piper/ratbagd.py:720
+msgid "Backward"
+msgstr "უკან"
+
+#: piper/ratbagd.py:721
+msgid "Forward"
+msgstr "წინ"
+
+#: piper/ratbagd.py:726
+msgid "Invalid"
+msgstr "არასწორი"
+
+#: piper/ratbagd.py:728
+msgid "Doubleclick"
+msgstr "ორმაგი წკაპი"
+
+#: piper/ratbagd.py:729
+msgid "Wheel Left"
+msgstr "ბორბალი მარცხნივ"
+
+#: piper/ratbagd.py:730
+msgid "Wheel Right"
+msgstr "ბორბალი მარჯვნივ"
+
+#: piper/ratbagd.py:731
+msgid "Wheel Up"
+msgstr "რგოლი მაღლა"
+
+#: piper/ratbagd.py:732
+msgid "Wheel Down"
+msgstr "რგოლი დაბლა"
+
+#: piper/ratbagd.py:733
+msgid "Ratchet Mode"
+msgstr "ჭრიალა რეჟიმი"
+
+#: piper/ratbagd.py:734
+msgid "Cycle Resolution Up"
+msgstr "გარჩევადობის აწევა ციკლურად"
+
+#: piper/ratbagd.py:735
+msgid "Cycle Resolution Down"
+msgstr "გარჩევადობის დაწევა ციკლურად"
+
+#: piper/ratbagd.py:736
+msgid "Resolution Up"
+msgstr "გარჩევადობის აწევა"
+
+#: piper/ratbagd.py:737
+msgid "Resolution Down"
+msgstr "გარჩევადობის დაწევა"
+
+#: piper/ratbagd.py:738
+msgid "Resolution Switch"
+msgstr "გარჩევადობის გადართვა"
+
+#: piper/ratbagd.py:739
+msgid "Default Resolution"
+msgstr "ნაგულისხმები გარჩევადობ"
+
+#: piper/ratbagd.py:740
+msgid "Cycle Profile Up"
+msgstr "პროფილის აწევა ციკლურად"
+
+#: piper/ratbagd.py:741
+msgid "Cycle Profile Down"
+msgstr "პროფილის დაწევა ციკლურად"
+
+#: piper/ratbagd.py:742
+msgid "Profile Up"
+msgstr "პროფილის აწევა"
+
+#: piper/ratbagd.py:743
+msgid "Profile Down"
+msgstr "პროფილის დაწევა"
+
+#: piper/ratbagd.py:744
+msgid "Second Mode"
+msgstr "მეორე რეჟიმი"
+
+#: piper/ratbagd.py:745
+msgid "Battery Level"
+msgstr "ელემენტის მუხტის დონე"
+
+#. Translators: this is used when there is no macro to preview.
+#: piper/ratbagd.py:895 data/ui/ButtonDialog.ui:106 data/ui/ButtonDialog.ui:187
+msgid "None"
+msgstr "არაფერი"
+
+#. Translators: the LED is off.
+#: piper/ratbagd.py:977 data/ui/LedDialog.ui:395
+msgid "Off"
+msgstr "გამორთული"
+
+#. Translators: the LED has a single, solid color.
+#: piper/ratbagd.py:979 data/ui/LedDialog.ui:66
+msgid "Solid"
+msgstr "მყარი"
+
+#. Translators: the LED is cycling between red, green and blue.
+#: piper/ratbagd.py:981 data/ui/LedDialog.ui:189
+msgid "Cycle"
+msgstr "ციკლი"
+
+#. Translators: the LED's is pulsating a single color on different
+#. brightnesses.
+#: piper/ratbagd.py:984 data/ui/LedDialog.ui:355
+msgid "Breathing"
+msgstr "პულსაცია"
+
+#: piper/window.py:42
+msgid "Cannot connect to ratbagd"
+msgstr "შეცდომა ratbagd-თან მიერთებისას"
+
+#: piper/window.py:43
+msgid ""
+"Please make sure ratbagd is running and your user is in the required group"
+msgstr ""
+"დარწმუნდით, რომ ratbagd გაშვებულია და თქვენი მომხმარებელი შესაბამის ჯგუფში "
+"იმყოფება"
+
+#: piper/window.py:46
+msgid "Incompatible ratbagd API version (required: {}, provided: {})"
+msgstr "Ratbagd-ის API-ის შეუთავსებელი ვერსია (საჭიროა: {}, მოწოდებულია: {})"
+
+#: piper/window.py:47
+msgid "Please update both piper and libratbag to the latest versions"
+msgstr "ორივე, piper და libratbag უახლეს ვერსიებამდე გაანახლეთ"
+
+#: piper/window.py:61 piper/window.py:115
+msgid "Cannot find any devices"
+msgstr "მოწყობილობები აღმოჩენილი არაა"
+
+#: piper/window.py:62 piper/window.py:116
+msgid "Please make sure your device is supported and plugged in"
+msgstr "დარწმუნდით, რომ მოწყობილობა შეერთებული და მხარდაჭერილია"
+
+#: piper/window.py:74
+msgid "There are unapplied changes. Are you sure you want to quit?"
+msgstr ""
+"არსებობს გადაუტარებელი ცვლილებები. დარწმუნებული ბრძანდებით, რომ გნებავთ, "
+"გახვიდეთ?"
+
+#: piper/window.py:83
+msgid "Ooops. ratbagd has disappeared"
+msgstr "ვაი, ratbagd გაუჩინარდა"
+
+#: piper/window.py:84
+msgid "Please restart Piper"
+msgstr "გადატვირთეთ Piper"
+
+#. The current device disconnected, which can only happen from the
+#. mouse perspective as we'd otherwise be in the welcome screen with
+#. more than one device remaining. Hence, we display the error
+#. perspective.
+#: piper/window.py:107
+msgid "Your device disconnected!"
+msgstr "თქვენი მოწყობილობა გამოერთებულია!"
+
+#: piper/window.py:108
+msgid "Please make sure your device is plugged in"
+msgstr "დარწმუნდით, რომ მოწყობილობა შეერთებულია"
+
+#: piper/window.py:147
+msgid "Cannot display device SVG"
+msgstr "მოწყობილობის SVG-ის ჩვენების შეცდომა"
+
+#: piper/window.py:154
+msgid "Newer version of ratbagd required"
+msgstr "აუცილებელია ratbagd-ის უფრო ახალი ვერსია"
+
+#: piper/window.py:155
+msgid "Please update to the latest available version"
+msgstr "განაახლეთ უახლეს ხელმისაწვდომ ვერსიამდე"
+
+#: piper/window.py:157
+msgid "Unknown exception occurred"
+msgstr "ნაპოვნია უცნობი გამონაკლისი"
+
+#: data/ui/AboutDialog.ui.in:10
+msgid "Version: @version@"
+msgstr "ვერსია: @version@"
+
+#: data/ui/AboutDialog.ui.in:12
+msgid "Visit Piper on GitHub"
+msgstr "იპოვეთ Piper-ი GitHub-ზე"
+
+#: data/ui/AboutDialog.ui.in:13
+msgid "translator-credits"
+msgstr "მთარგმნელის შესახებ"
+
+#: data/ui/ButtonDialog.ui:65
+msgid "Search for a button mapping"
+msgstr "ღილაკის მიბმის მოძებნა"
+
+#: data/ui/ButtonDialog.ui:91
+msgid "Capture a macro for this button"
+msgstr "ამ ღილაკისთვის მაკროს ჩაჭერა"
+
+#: data/ui/ButtonDialog.ui:104
+msgid "The currently set macro"
+msgstr "ამჟამად დაყენებული მაკრო"
+
+#: data/ui/ButtonDialog.ui:129
+msgid "Send keystroke"
+msgstr "ღილაკების კომბინაციის გაგზავნა"
+
+#: data/ui/ButtonDialog.ui:169
+msgid "Enter a new key sequence for the macro."
+msgstr "მაკროსთვის ახალი ღილაკების მიმდევრობის შეყვანა აუცილებელია."
+
+#: data/ui/ButtonDialog.ui:235
+msgid "Set the device’s handedness."
+msgstr "მოწყობილობის ხელის მხრის დაყენება."
+
+#: data/ui/ButtonDialog.ui:253
+msgid ""
+"This allows you to swap the order of the primary mouse buttons. In left-"
+"handed mode, the physical left mouse button generates a right mouse click "
+"and vice versa."
+msgstr ""
+"ეს საშუალებას გალევთ თაგუნას ძირითადი ღილაკების მიმდევრობა შეცვალოთ. ცაციის "
+"რეჟიმში თაგუნას ფიზიკური მარცხენა ღილაკი მარჯვენას წკაპს აგენერირებს და "
+"პირიქით."
+
+#: data/ui/ButtonDialog.ui:273
+msgid "Left Handed"
+msgstr "ცაცია"
+
+#: data/ui/ButtonDialog.ui:278
+msgid "The left mouse button generates a left mouse click"
+msgstr "თაგუნას მარცხენა ღილაკი თაგუნას მარცხენა ღილაკს აგენერირებს"
+
+#: data/ui/ButtonDialog.ui:292
+msgid "Right Handed"
+msgstr "მარჯვენახელიანი"
+
+#: data/ui/ButtonDialog.ui:297
+msgid "The left mouse button generates a right mouse click"
+msgstr "თაგუნას მარცხენა ღილაკი თაგუნას მარჯვენა ღილაკს აგენერირებს"
+
+#: data/ui/ButtonDialog.ui:337 data/ui/LedDialog.ui:414
+msgid "Cancel"
+msgstr "გაუქმება"
+
+#: data/ui/ButtonDialog.ui:339 data/ui/LedDialog.ui:418
+msgid "Ignore any changes made"
+msgstr "ცვლილებების იგნორი"
+
+#: data/ui/ButtonDialog.ui:345 data/ui/LedDialog.ui:430
+#: data/ui/MousePerspective.ui:132
+msgid "Apply"
+msgstr "გამოყენება"
+
+#: data/ui/ButtonDialog.ui:348 data/ui/LedDialog.ui:435
+msgid "Apply any changes made"
+msgstr "ცვლილებების გადატარება"
+
+#: data/ui/ButtonDialog.ui:388
+msgid "No button mapping found"
+msgstr "ღილაკის მიბმა აღმოჩენილი არაა"
+
+#: data/ui/ButtonDialog.ui:404
+msgid "Try a different search"
+msgstr "სცადეთ სხვა ძებნა"
+
+#: data/ui/ErrorPerspective.ui:16
+msgid "Here, rodent, rodent, rodent…"
+msgstr "აქეთ, თაგუნა, თაგუნა, თაგუნა…"
+
+#: data/ui/ErrorPerspective.ui:69
+msgid "Uh Oh! Something went wrong…"
+msgstr "რაღაც არასწორად წავიდა…"
+
+#: data/ui/LedDialog.ui:58 data/ui/LedDialog.ui:209
+msgid "Choose a color for the LED"
+msgstr "აირჩიეთ LED-ის ფერი"
+
+#: data/ui/LedDialog.ui:90 data/ui/LedDialog.ui:257
+msgid "Choose a brightness for the LED"
+msgstr "აირჩიეთ LED-ის სიკაშკაშე"
+
+#: data/ui/LedDialog.ui:104 data/ui/LedDialog.ui:270
+msgid "Brightness"
+msgstr "სიკაშკაშე"
+
+#: data/ui/LedDialog.ui:135 data/ui/LedDialog.ui:301
+msgid "Choose an effect duration for the LED"
+msgstr "აირჩიეთ LED-ის ეფექტის ხანგრძლივობა"
+
+#: data/ui/LedDialog.ui:153 data/ui/LedDialog.ui:319
+msgid "ms"
+msgstr "მწმ"
+
+#: data/ui/LedDialog.ui:175 data/ui/LedDialog.ui:341
+msgid "Effect duration"
+msgstr "ეფექტის ხანგრძლივობა"
+
+#: data/ui/LedDialog.ui:212
+msgid "Pick a Color for the LED"
+msgstr "აირჩიეთ LED-ის ფერი"
+
+#: data/ui/LedDialog.ui:226
+msgid "Color"
+msgstr "ფერი"
+
+#: data/ui/LedDialog.ui:380
+msgid "This LED is off"
+msgstr "ეს LED გამორთულია"
+
+#: data/ui/MousePerspective.ui:44
+msgid "Something went wrong. The device has been reset to a previous state."
+msgstr "რაღაც არასწორად წავიდა. მოწყობილობა წინა მდგომარეობაზე დაბრუნდა."
+
+#: data/ui/MousePerspective.ui:101
+msgid "Select another profile"
+msgstr "აირჩიეთ სხვა პროფილი"
+
+#: data/ui/MousePerspective.ui:126
+msgid "Commit the changes to the device"
+msgstr "ცვლილებების მოწყობილობაზე გადაცემა"
+
+#: data/ui/MousePerspective.ui:170
+msgid "Click to switch to another profile"
+msgstr "დააწკაპუნეთ სხვა პროფილზე გადასართავად"
+
+#: data/ui/MousePerspective.ui:185
+msgid "Add profile"
+msgstr "პროფილის დამატება"
+
+#: data/ui/MousePerspective.ui:189
+msgid "Add a new profile to the device"
+msgstr "მოწყობილობაზე ახალი პროფილის დამატება"
+
+#: data/ui/OptionButton.ui:9
+msgid "Open the configuration dialog"
+msgstr "მორგების ფანჯრის გახსნა"
+
+#: data/ui/ProfileRow.ui:16
+msgid "Remove this profile from the device"
+msgstr "მოწყობილობიდან ამ პროფილის წაშლა"
+
+#. Translators: this is used to indicate the active resolution.
+#: data/ui/ResolutionRow.ui:37
+msgid "active"
+msgstr "აქტიური"
+
+#: data/ui/ResolutionRow.ui:69
+msgid "Set this resolution's dpi"
+msgstr "გადახედვის გარჩევადობა DPI დაყენება"
+
+#: data/ui/ResolutionRow.ui:95
+msgid "Disable"
+msgstr "გამორთვა"
+
+#: data/ui/ResolutionRow.ui:101
+msgid "Disable this resolution"
+msgstr "ამ გარჩევადობის გამორთვა"
+
+#: data/ui/ResolutionRow.ui:112
+msgid "Set active"
+msgstr "აქტიურად მონიშვნა"
+
+#: data/ui/ResolutionRow.ui:117
+msgid "Set this resolution as active"
+msgstr "ამ გაფართოების აქტიურად მონიშვნა"
+
+#. Translators: the rate at which the device reports movement.
+#: data/ui/ResolutionsPage.ui:43
+msgid "Report rate"
+msgstr "ანგარიშის სიხშირეა"
+
+#: data/ui/ResolutionsPage.ui:60
+msgid "Change the profile’s report rate"
+msgstr "პროფილის ანგარიშის სიხშირის შეცვლა"
+
+#: data/ui/ResolutionsPage.ui:136
+msgid "Hz"
+msgstr "ჰც"
+
+#. Translators: the sensitivity of the device's sensor.
+#: data/ui/ResolutionsPage.ui:156
+msgid "Sensitivity"
+msgstr "მგრძნობიარობა"
+
+#: data/ui/ResolutionsPage.ui:205
+msgid "Add a new resolution to the profile"
+msgstr "პროფილზე ახალი გაფართოების დამატება"
+
+#: data/ui/WelcomePerspective.ui:20
+msgid "Welcome"
+msgstr "კეთილი იყოს თქვენი მობრძანება"
+
+#: data/ui/WelcomePerspective.ui:38
+msgctxt "A subtitle under the \"Welcome\" title."
+msgid "Select a device to configure it"
+msgstr "აირჩიეთ მოსარგები მოწყობილობა"
+
+#: data/ui/WelcomePerspective.ui:89
+msgctxt "A tooltip over the list of devices."
+msgid "Select a device to configure it"
+msgstr "აირჩიეთ მოსარგები მოწყობილობა"
+
+#: data/ui/WelcomePerspective.ui:119
+msgid "Select a Device"
+msgstr "აირჩიეთ მოწყობილობა"
+
+#: data/ui/Window.ui:8
+msgid "_About Piper"
+msgstr "Piper-ის _შესახებ"

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.40.0 -->
+<interface>
+  <requires lib="gtk+" version="3.22"/>
+  <menu id="primary_menu">
+    <item>
+      <attribute name="action">app.about</attribute>
+      <attribute name="label" translatable="yes">_About Piper</attribute>
+    </item>
+  </menu>
+  <template class="Window" parent="GtkApplicationWindow">
+    <!-- This size is determined to be the best one with the current set of
+	 device SVGs in libratbag. It is set to ensure that the jump in size
+	 caused by the MousePerspective populating itself when switched to is
+	 minimal and the least disturbing. We can't populate the MousePerspective
+	 in advance because we need to know the device. -->
+    <property name="width-request">1012</property>
+    <property name="height-request">596</property>
+    <property name="can-focus">False</property>
+    <child>
+      <object class="GtkStack" id="stack_perspectives">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="transition-duration">300</property>
+        <property name="transition-type">crossfade</property>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+    <child type="titlebar">
+      <object class="GtkStack" id="stack_titlebar">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="hhomogeneous">False</property>
+        <property name="vhomogeneous">False</property>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

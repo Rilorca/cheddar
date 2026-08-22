@@ -1,0 +1,4 @@
+option('runtime-dependency-checks',
+	type: 'boolean',
+	value: true,
+	description: 'Check for runtime dependencies during installation (default=yes)')

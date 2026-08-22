@@ -1,0 +1,14 @@
+# systemd user unit for the Piper AutoPilot daemon.
+# Enable with:  systemctl --user enable --now piper-autopilot
+[Unit]
+Description=Piper AutoPilot — per-game mouse profile switching
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m piper.autopilot_daemon
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

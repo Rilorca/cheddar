@@ -1,0 +1,551 @@
+# This file is distributed under the same license as the piper package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: piper\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-03 19:03+0200\n"
+"PO-Revision-Date: 2024-07-03 20:18+0200\n"
+"Last-Translator: Vincent Verdier <vincentverdier25@gmail.com>\n"
+"Language-Team: French <>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: data/org.freedesktop.Piper.desktop.in:3
+#: data/org.freedesktop.Piper.appdata.xml.in.in:7
+msgid "Piper"
+msgstr "Piper"
+
+#: data/org.freedesktop.Piper.desktop.in:4
+msgid "Configurable mouse configuration utility"
+msgstr "Outil de configuration de souris programmable"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/org.freedesktop.Piper.desktop.in:12
+msgid "gaming;configuration;mouse;mice;"
+msgstr "gaming;configuration;souris;souris;"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:8
+msgid "Gaming mouse configuration utility"
+msgstr "Outil de configuration de souris gaming"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:10
+msgid ""
+"Piper is a graphical user interface to configure gaming mice. Configuration "
+"options include changing the resolution (DPI) of the mouse, adding and "
+"removing profiles, setting LED colors and changing button behaviors."
+msgstr ""
+"Piper est une interface graphique pour configurer votre souris. Les options "
+"de configuration comprennent changer la resolution (DPI) de la souris, "
+"ajouter et supprimer des profils, définir la couleurs des LEDs et changer "
+"le comportement des boutons."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:16
+msgid ""
+"Piper requires libratbag’s ratbagd, the daemon to actually communicate with "
+"the mice. Piper is merely a front end to ratbagd, ratbagd must be installed "
+"and running when Piper is launched."
+msgstr ""
+"Piper a besoin de ratbagd, le démon de libratbag qui permet de communiquer "
+"avec la souris. Piper est seulement une interface à ratbagd, ratbagd doit "
+"donc être installé et en cours d’exécution quand Piper est lancé."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:27
+msgid "The button configuraton page"
+msgstr "La page de configuration des boutons"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:31
+msgid "The LED configuraton page"
+msgstr "La page de configuration des LEDs"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:35
+msgid "The resolution configuraton page"
+msgstr "La page de configuration de la résolution"
+
+#: piper/buttondialog.py:156
+msgid "Button mapping"
+msgstr "Mappage des boutons"
+
+#: piper/buttondialog.py:172
+msgid "Special mapping"
+msgstr "Mappage spécial"
+
+#: piper/buttondialog.py:182 data/ui/ResolutionRow.ui:95
+msgid "Disable"
+msgstr "Désactiver"
+
+#: piper/buttondialog.py:182
+msgid "Other"
+msgstr "Autre"
+
+#. Translators: the {} will be replaced with the button index, e.g.
+#. "Button 1 click".
+#: piper/buttondialog.py:257 piper/buttonspage.py:105
+msgid "Button {} click"
+msgstr "Clic du bouton {}"
+
+#: piper/buttonspage.py:109
+msgid "Macro: {}"
+msgstr "Macro: {}"
+
+#: piper/buttonspage.py:111
+msgid "Key: {}"
+msgstr "Touche: {}"
+
+#. Translators: the button is turned disabled, e.g. off.
+#: piper/buttonspage.py:114
+msgid "Disabled"
+msgstr "Désactivé"
+
+#. Translators: the button has an unknown function.
+#: piper/buttonspage.py:117 piper/ratbagd.py:866
+msgid "Unknown"
+msgstr "Inconnue"
+
+#: piper/buttonspage.py:131
+msgid "Configure button {}"
+msgstr "Configurer le bouton {}"
+
+#: piper/mouseperspective.py:121 data/ui/ResolutionsPage.ui:78
+msgid "Resolutions"
+msgstr "Résolutions"
+
+#: piper/mouseperspective.py:125
+msgid "Buttons"
+msgstr "Boutons"
+
+#: piper/mouseperspective.py:128
+msgid "LEDs"
+msgstr "LEDs"
+
+#: piper/mouseperspective.py:139
+msgid "Advanced"
+msgstr "Avancé"
+
+#: piper/ratbagd.py:856
+msgid "Left mouse button click"
+msgstr "Clic gauche"
+
+#: piper/ratbagd.py:857
+msgid "Right mouse button click"
+msgstr "Clic droit"
+
+#: piper/ratbagd.py:858
+msgid "Middle mouse button click"
+msgstr "Clic milieu"
+
+#: piper/ratbagd.py:859
+msgid "Backward"
+msgstr "Précédent"
+
+#: piper/ratbagd.py:860
+msgid "Forward"
+msgstr "Suivant"
+
+#: piper/ratbagd.py:865
+msgid "Invalid"
+msgstr "Invalide"
+
+#: piper/ratbagd.py:867
+msgid "Doubleclick"
+msgstr "Double clic"
+
+#: piper/ratbagd.py:868
+msgid "Wheel Left"
+msgstr "Molette Gauche"
+
+#: piper/ratbagd.py:869
+msgid "Wheel Right"
+msgstr "Molette Droite"
+
+#: piper/ratbagd.py:870
+msgid "Wheel Up"
+msgstr "Molette Haut"
+
+#: piper/ratbagd.py:871
+msgid "Wheel Down"
+msgstr "Molette Bas"
+
+#: piper/ratbagd.py:872
+msgid "Ratchet Mode"
+msgstr "Mode Précision"
+
+#: piper/ratbagd.py:873
+msgid "Cycle Resolution Up"
+msgstr "Cycle la résolution vers le haut"
+
+#: piper/ratbagd.py:874
+msgid "Cycle Resolution Down"
+msgstr "Cycle la résolution vers le bas"
+
+#: piper/ratbagd.py:875
+msgid "Resolution Up"
+msgstr "Augmente la résolution"
+
+#: piper/ratbagd.py:876
+msgid "Resolution Down"
+msgstr "Diminue la résolution"
+
+#: piper/ratbagd.py:877
+msgid "Resolution Switch"
+msgstr "Change la résolution"
+
+#: piper/ratbagd.py:878
+msgid "Default Resolution"
+msgstr "Résolution par défaut"
+
+#: piper/ratbagd.py:879
+msgid "Cycle Profile Up"
+msgstr "Cycle les profils vers le haut"
+
+#: piper/ratbagd.py:880
+msgid "Cycle Profile Down"
+msgstr "Cycle les profils vers le bas"
+
+#: piper/ratbagd.py:881
+msgid "Profile Up"
+msgstr "Profil suivant"
+
+#: piper/ratbagd.py:882
+msgid "Profile Down"
+msgstr "Profil précédent"
+
+#: piper/ratbagd.py:883
+msgid "Second Mode"
+msgstr "Second mode"
+
+#: piper/ratbagd.py:884
+msgid "Battery Level"
+msgstr "Niveau de batterie"
+
+#. Translators: this is used when there is no macro to preview.
+#: piper/ratbagd.py:1030 data/ui/ButtonDialog.ui:100
+#: data/ui/ButtonDialog.ui:181
+msgid "None"
+msgstr "Rien"
+
+#. Translators: the LED is off.
+#: piper/ratbagd.py:1106 data/ui/LedDialog.ui:368
+msgid "Off"
+msgstr "Désactivé"
+
+#. Translators: the LED has a single, solid color.
+#: piper/ratbagd.py:1108 data/ui/LedDialog.ui:59
+msgid "Solid"
+msgstr "Solide"
+
+#. Translators: the LED is cycling between red, green and blue.
+#: piper/ratbagd.py:1110 data/ui/LedDialog.ui:172
+msgid "Cycle"
+msgstr "Cycle"
+
+#. Translators: the LED's is pulsating a single color on different
+#. brightnesses.
+#: piper/ratbagd.py:1113 data/ui/LedDialog.ui:328
+msgid "Breathing"
+msgstr "Pulsations"
+
+#: piper/window.py:48
+msgid "Cannot connect to ratbagd"
+msgstr "Impossible de se connecter à ratbagd"
+
+#: piper/window.py:50
+msgid ""
+"Please make sure ratbagd is running and your user is in the required group"
+msgstr ""
+"Merci de vérifier que ratbagd est lancé et que l'utilisateur est dans le "
+"groupe requis"
+
+#: piper/window.py:57
+#, python-brace-format
+msgid ""
+"Incompatible ratbagd API version (required: {e.required_version}, provided: "
+"{e.ratbagd_version})"
+msgstr ""
+"Version de l'API ratbagd incompatible (requise: {e.required_version}, "
+"présente: {e.ratbagd_version})"
+
+#: piper/window.py:59
+msgid "Please update both piper and libratbag to the latest versions"
+msgstr "Merci de mettre à jour piper et libratbag vers leur dernière version"
+
+#: piper/window.py:75 piper/window.py:139
+msgid "Cannot find any devices"
+msgstr "Impossible de trouver un périphérique"
+
+#: piper/window.py:76 piper/window.py:140
+msgid "Please make sure your device is supported and plugged in"
+msgstr "Merci de vérifier que votre périphérique est supporté et branché"
+
+#: piper/window.py:91
+msgid "There are unapplied changes. Are you sure you want to quit?"
+msgstr ""
+"Les changements ne sont pas appliqués. Voulez-vous quitter quand même ?"
+
+#: piper/window.py:102
+msgid "Ooops. ratbagd has disappeared"
+msgstr "Oups. ratbagd a disparu"
+
+#: piper/window.py:102
+msgid "Please restart Piper"
+msgstr "Veuillez redémarrer Piper"
+
+#: piper/window.py:129
+msgid "Your device disconnected!"
+msgstr "Votre périphérique s'est déconnecté !"
+
+#: piper/window.py:130
+msgid "Please make sure your device is plugged in"
+msgstr "Veuillez vérifier que votre périphérique est branché"
+
+#: piper/window.py:176
+msgid "Cannot display device SVG"
+msgstr "Le SVG de l'appareil ne peut être affiché"
+
+#: piper/window.py:184
+msgid "Newer version of ratbagd required"
+msgstr "Une version plus récente de ratbagd est requise"
+
+#: piper/window.py:185
+msgid "Please update to the latest available version"
+msgstr "Merci mettre à jour vers la dernière version"
+
+#: piper/window.py:189
+msgid "Unknown exception occurred"
+msgstr "Une erreur inconnue s'est produite"
+
+#: data/ui/AboutDialog.ui.in:12
+msgid "Visit Piper on GitHub"
+msgstr "Visitez Piper sur GitHub"
+
+#: data/ui/AboutDialog.ui.in:13
+msgid "translator-credits"
+msgstr ""
+"Mallory Macrez <mallory.macrez@outlook.fr>, 2019\n"
+"Théo Launay <launatheo@gmail.com>, 2020\n"
+"Vincent Verdier <vincentverdier25@gmail.com>, 2024"
+
+#. Translators: the rate at which the device reports movement.
+#: data/ui/AdvancedPage.ui:33
+msgid "Report rate"
+msgstr "Taux d'interrogation"
+
+#: data/ui/AdvancedPage.ui:50
+msgid "Change the profile’s report rate"
+msgstr "Changer le taux d'interrogation de ce profil"
+
+#: data/ui/AdvancedPage.ui:125
+msgid "Hz"
+msgstr "Hz"
+
+#: data/ui/AdvancedPage.ui:154
+msgid "Debounce time"
+msgstr "Temps d'anti-rebond"
+
+#: data/ui/AdvancedPage.ui:183 data/ui/LedDialog.ui:138
+#: data/ui/LedDialog.ui:294
+msgid "ms"
+msgstr "ms"
+
+#: data/ui/AdvancedPage.ui:212
+msgid "Angle snapping"
+msgstr "Snapping d'angle"
+
+#: data/ui/ButtonDialog.ui:59
+msgid "Search for a button mapping"
+msgstr "Chercher un mappage de bouton"
+
+#: data/ui/ButtonDialog.ui:85
+msgid "Capture a macro for this button"
+msgstr "Enregistrer une macro pour ce bouton"
+
+#: data/ui/ButtonDialog.ui:98
+msgid "The currently set macro"
+msgstr "La macro actuellement définie"
+
+#: data/ui/ButtonDialog.ui:123
+msgid "Send keystroke"
+msgstr "Combinaison de touches envoyée"
+
+#: data/ui/ButtonDialog.ui:163
+msgid "Enter a new key sequence for the macro."
+msgstr "Entrez une nouvelle séquence de touches pour la macro."
+
+#: data/ui/ButtonDialog.ui:229
+msgid "Set the device’s handedness."
+msgstr "Définir pour les droitiers ou les gauchers."
+
+#: data/ui/ButtonDialog.ui:247
+msgid ""
+"This allows you to swap the order of the primary mouse buttons. In left-"
+"handed mode, the physical left mouse button generates a right mouse click "
+"and vice versa."
+msgstr ""
+"Ceci vous permet de changer l'ordre des boutons primaires de la souris. En "
+"mode gaucher, le bouton physique de gauche génère un clique droit, et "
+"inversement."
+
+#: data/ui/ButtonDialog.ui:267
+msgid "Left Handed"
+msgstr "Gaucher"
+
+#: data/ui/ButtonDialog.ui:272
+msgid "The left mouse button generates a left mouse click"
+msgstr "Le bouton gauche génère un clic gauche"
+
+#: data/ui/ButtonDialog.ui:286
+msgid "Right Handed"
+msgstr "Droitier"
+
+#: data/ui/ButtonDialog.ui:291
+msgid "The left mouse button generates a right mouse click"
+msgstr "Le bouton droit génère un clic droit"
+
+#: data/ui/ButtonDialog.ui:331 data/ui/LedDialog.ui:394
+msgid "Cancel"
+msgstr "Annuler"
+
+#: data/ui/ButtonDialog.ui:333 data/ui/LedDialog.ui:398
+msgid "Ignore any changes made"
+msgstr "Ignorer les modifications"
+
+#: data/ui/ButtonDialog.ui:339 data/ui/LedDialog.ui:403
+#: data/ui/MousePerspective.ui:187
+msgid "Apply"
+msgstr "Appliquer"
+
+#: data/ui/ButtonDialog.ui:342 data/ui/LedDialog.ui:408
+msgid "Apply any changes made"
+msgstr "Appliquer les modifications"
+
+#: data/ui/ButtonDialog.ui:382
+msgid "No button mapping found"
+msgstr "Aucun mappage de bouton trouvé"
+
+#: data/ui/ButtonDialog.ui:398
+msgid "Try a different search"
+msgstr "Essayez une recherche différente"
+
+#: data/ui/ErrorPerspective.ui:16
+msgid "Here, rodent, rodent, rodent…"
+msgstr "Où es-tu petit rongeur ?"
+
+#: data/ui/ErrorPerspective.ui:69
+msgid "Uh Oh! Something went wrong…"
+msgstr "Oups, quelque chose s'est mal passé..."
+
+#: data/ui/LedDialog.ui:51 data/ui/LedDialog.ui:192
+msgid "Choose a color for the LED"
+msgstr "Choisissez une couleur pour la LED"
+
+#: data/ui/LedDialog.ui:78 data/ui/LedDialog.ui:235
+msgid "Choose a brightness for the LED"
+msgstr "Choisissez une valeur de luminosité pour la LED"
+
+#: data/ui/LedDialog.ui:92 data/ui/LedDialog.ui:248
+msgid "Brightness"
+msgstr "Luminosité"
+
+#: data/ui/LedDialog.ui:120 data/ui/LedDialog.ui:276
+msgid "Choose an effect duration for the LED"
+msgstr "Choisissez une durée d'effet pour la LED"
+
+#: data/ui/LedDialog.ui:158 data/ui/LedDialog.ui:314
+msgid "Effect duration"
+msgstr "Durée de l'effet"
+
+#: data/ui/LedDialog.ui:195
+msgid "Pick a Color for the LED"
+msgstr "Sélectionnez une couleur pour la LED"
+
+#: data/ui/LedDialog.ui:209
+msgid "Color"
+msgstr "Couleur"
+
+#: data/ui/LedDialog.ui:355
+msgid "This LED is off"
+msgstr "Cette LED est éteinte"
+
+#: data/ui/MousePerspective.ui:43
+msgid "Something went wrong. The device has been reset to a previous state."
+msgstr ""
+"Quelque chose s'est mal passé. Le périphérique a été remis à un état "
+"antérieur."
+
+#: data/ui/MousePerspective.ui:116
+msgid "Click to switch to another profile"
+msgstr "Cliquez pour choisir un autre profil"
+
+#: data/ui/MousePerspective.ui:131
+msgid "Add profile"
+msgstr "Ajouter un profil"
+
+#: data/ui/MousePerspective.ui:135
+msgid "Add a new profile to the device"
+msgstr "Ajouter un profil au périphérique"
+
+#: data/ui/MousePerspective.ui:163
+msgid "Select another profile"
+msgstr "Choisir un autre profil"
+
+#: data/ui/MousePerspective.ui:181
+msgid "Commit the changes to the device"
+msgstr "Appliquer les changements au périphérique"
+
+#: data/ui/OptionButton.ui:9
+msgid "Open the configuration dialog"
+msgstr "Ouvrir le panneau de configuration"
+
+#: data/ui/ProfileRow.ui:16
+msgid "Remove this profile from the device"
+msgstr "Supprimer ce profil du périphérique"
+
+#. Translators: this is used to indicate the active resolution.
+#: data/ui/ResolutionRow.ui:37
+msgid "active"
+msgstr "actif"
+
+#: data/ui/ResolutionRow.ui:69
+msgid "Set this resolution's dpi"
+msgstr "Définir le DPI de cette résolution"
+
+#: data/ui/ResolutionRow.ui:101
+msgid "Disable this resolution"
+msgstr "Désactiver cette résolution"
+
+#: data/ui/ResolutionRow.ui:112
+msgid "Set active"
+msgstr "Définir comme actif"
+
+#: data/ui/ResolutionRow.ui:117
+msgid "Set this resolution as active"
+msgstr "Définir cette résolution comme active"
+
+#: data/ui/ResolutionsPage.ui:45
+msgid "Add a new resolution to the profile"
+msgstr "Ajouter une nouvelle résolution au profil"
+
+#: data/ui/WelcomePerspective.ui:20
+msgid "Welcome"
+msgstr "Bienvenue"
+
+#: data/ui/WelcomePerspective.ui:38
+msgctxt "A subtitle under the \"Welcome\" title."
+msgid "Select a device to configure it"
+msgstr "Sélectionnez un périphérique pour le configurer"
+
+#: data/ui/WelcomePerspective.ui:88
+msgctxt "A tooltip over the list of devices."
+msgid "Select a device to configure it"
+msgstr "Sélectionnez un périphérique pour le configurer"
+
+#: data/ui/WelcomePerspective.ui:118
+msgid "Select a Device"
+msgstr "Sélectionnez un périphérique"
+
+#: data/ui/Window.ui:8
+msgid "_About Piper"
+msgstr "_À propos de Piper"

@@ -1,0 +1,518 @@
+# Ukrainian translation for Piper.
+# Copyright © 2017-2021 the piper authors.
+# This file is distributed under the same license as the piper package.
+# Kyrylo Domskyi <justphoenixer@outlook.com>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: piper\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-08-17 22:40+0300\n"
+"PO-Revision-Date: 2021-08-17 23:48+0300\n"
+"Last-Translator: Kyrylo Domskyi <justphoenixer@outlook.com>\n"
+"Language-Team: \n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: data/org.freedesktop.Piper.desktop.in:3
+#: data/org.freedesktop.Piper.appdata.xml.in.in:7
+msgid "Piper"
+msgstr "Piper"
+
+#: data/org.freedesktop.Piper.desktop.in:4
+#: data/org.freedesktop.Piper.appdata.xml.in.in:8
+msgid "Configurable mouse configuration utility"
+msgstr "Налаштовуємий додаток для налаштування миші"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/org.freedesktop.Piper.desktop.in:12
+msgid "gaming;configuration;mouse;mice;"
+msgstr "ігри;ґеймінг;налаштування;конфіґурація;миша;"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:10
+msgid ""
+"Piper is a graphical user interface to configure gaming mice. Configuration "
+"options include changing the resolution (DPI) of the mouse, adding and "
+"removing profiles, setting LED colors and changing button behaviors."
+msgstr ""
+"Piper це ґрафічний інтерфейс для налаштування ігрової миші. Опції "
+"налаштувань включають зміну роздільної здатности (DPI) миші, додання і "
+"видалення профілей, налаштування LED підсвітки і зміни поведінки клавіш."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:16
+msgid ""
+"Piper requires libratbag’s ratbagd, the daemon to actually communicate with "
+"the mice. Piper is merely a front end to ratbagd, ratbagd must be installed "
+"and running when Piper is launched."
+msgstr ""
+"Piper потребує бібліотеку libratbagd від сервісу ratbagd, щоб комунікувати з "
+"мишою. Piper це просто ґрафічний інтерфейс, ratbagd має бути встановлений "
+"і запущений перед запуском Piper."
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:27
+msgid "The button configuraton page"
+msgstr "Сторінка налаштування клавіш"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:31
+msgid "The LED configuraton page"
+msgstr "Сторінка налаштування LED підсвітки"
+
+#: data/org.freedesktop.Piper.appdata.xml.in.in:35
+msgid "The resolution configuraton page"
+msgstr "Сторінка налаштування роздільної здатности"
+
+#. Translators: section header for mapping one button's click to another.
+#: piper/buttondialog.py:127
+msgid "Button mapping"
+msgstr "Прив'язка клавіш"
+
+#. Translators: section header for assigning special functions to buttons.
+#: piper/buttondialog.py:136
+msgid "Special mapping"
+msgstr "Особлива прив'язка"
+
+#. Translators: the {} will be replaced with the button index, e.g.
+#. "Button 1 click".
+#: piper/buttondialog.py:208 piper/buttonspage.py:76
+msgid "Button {} click"
+msgstr "Клік клавіші {}"
+
+#: piper/buttonspage.py:80
+msgid "Macro: {}"
+msgstr "Макрос: {}"
+
+#. Translators: the button is turned disabled, e.g. off.
+#: piper/buttonspage.py:83
+msgid "Disabled"
+msgstr "Вимкнена"
+
+#. Translators: the button has an unknown function.
+#: piper/buttonspage.py:86 piper/ratbagd.py:665
+msgid "Unknown"
+msgstr "Невідомо"
+
+#: piper/buttonspage.py:94
+msgid "Configure button {}"
+msgstr "Налаштувати клавішу {}"
+
+#: piper/mouseperspective.py:76 data/ui/ResolutionsPage.ui:209
+msgid "Resolutions"
+msgstr "Роздільна здатність"
+
+#: piper/mouseperspective.py:78
+msgid "Buttons"
+msgstr "Клавіші"
+
+#: piper/mouseperspective.py:80
+msgid "LEDs"
+msgstr "LED підсвітка"
+
+#: piper/ratbagd.py:655
+msgid "Left mouse button click"
+msgstr "Ліва клавіша миші"
+
+#: piper/ratbagd.py:656
+msgid "Right mouse button click"
+msgstr "Права клавіша миші"
+
+#: piper/ratbagd.py:657
+msgid "Middle mouse button click"
+msgstr "Середня клавіша миші"
+
+#: piper/ratbagd.py:658
+msgid "Backward"
+msgstr "Назад"
+
+#: piper/ratbagd.py:659
+msgid "Forward"
+msgstr "Вперед"
+
+#: piper/ratbagd.py:664
+msgid "Invalid"
+msgstr "Несправжній"
+
+#: piper/ratbagd.py:666
+msgid "Doubleclick"
+msgstr "Подвійний клік"
+
+#: piper/ratbagd.py:667
+msgid "Wheel Left"
+msgstr "Колесо наліво"
+
+#: piper/ratbagd.py:668
+msgid "Wheel Right"
+msgstr "Колесо направо"
+
+#: piper/ratbagd.py:669
+msgid "Wheel Up"
+msgstr "Колесо вгору"
+
+#: piper/ratbagd.py:670
+msgid "Wheel Down"
+msgstr "Колесо вниз"
+
+#: piper/ratbagd.py:671
+msgid "Ratchet Mode"
+msgstr "Режим тріскачки"
+
+#: piper/ratbagd.py:672
+msgid "Cycle Resolution Up"
+msgstr "Циклічно збільшити роздільну здатність"
+
+#: piper/ratbagd.py:673
+msgid "Cycle Resolution Down"
+msgstr "Циклічно зменшити роздільну здатність"
+
+#: piper/ratbagd.py:674
+msgid "Resolution Up"
+msgstr "Збільшити роздільну здатність"
+
+#: piper/ratbagd.py:675
+msgid "Resolution Down"
+msgstr "Зденшити роздільну здатність"
+
+#: piper/ratbagd.py:676
+msgid "Resolution Switch"
+msgstr "Перемкнути роздільну здатність"
+
+#: piper/ratbagd.py:677
+msgid "Default Resolution"
+msgstr "Стандартна роздільна здатність"
+
+#: piper/ratbagd.py:678
+msgid "Cycle Profile Up"
+msgstr "Циклічно перемкнути на профіль вище"
+
+#: piper/ratbagd.py:679
+msgid "Cycle Profile Down"
+msgstr "Циклічно перемкнути на профіль нижче"
+
+#: piper/ratbagd.py:680
+msgid "Profile Up"
+msgstr "Перемкнути на профіль вище"
+
+#: piper/ratbagd.py:681
+msgid "Profile Down"
+msgstr "Перемкнути на профіль нижче"
+
+#: piper/ratbagd.py:682
+msgid "Second Mode"
+msgstr "Другий режим"
+
+#: piper/ratbagd.py:683
+msgid "Battery Level"
+msgstr "Рівень батареї"
+
+#. Translators: this is used when there is no macro to preview.
+#: piper/ratbagd.py:813 data/ui/ButtonDialog.ui:106 data/ui/ButtonDialog.ui:187
+msgid "None"
+msgstr "Нічого"
+
+#. Translators: the LED is off.
+#: piper/ratbagd.py:895 data/ui/LedDialog.ui:395
+msgid "Off"
+msgstr "Вимкнути"
+
+#. Translators: the LED has a single, solid color.
+#: piper/ratbagd.py:897 data/ui/LedDialog.ui:66
+msgid "Solid"
+msgstr "Один колір"
+
+#. Translators: the LED is cycling between red, green and blue.
+#: piper/ratbagd.py:899 data/ui/LedDialog.ui:189
+msgid "Cycle"
+msgstr "Циклічна зміна"
+
+#. Translators: the LED's is pulsating a single color on different
+#. brightnesses.
+#: piper/ratbagd.py:902 data/ui/LedDialog.ui:355
+msgid "Breathing"
+msgstr "Дихання"
+
+#: piper/window.py:40
+msgid "Cannot connect to ratbagd"
+msgstr "Неможливо підключитись до ratbagd"
+
+#: piper/window.py:41
+msgid ""
+"Please make sure ratbagd is running and your user is in the required group"
+msgstr ""
+"Будь ласка затвердьтесь що ratbagd запущений і ваш користувач у відповідній групі"
+
+#: piper/window.py:44
+msgid "Incompatible ratbagd API version (required: {}, provided: {})"
+msgstr "Несумісна версія ratbagd API (потрібна: {}, надана: {})"
+
+#: piper/window.py:45
+msgid "Please update both piper and libratbag to the latest versions"
+msgstr "Будь ласка оновіть piper і libratbag до останньої версії"
+
+#: piper/window.py:59 piper/window.py:113
+msgid "Cannot find any devices"
+msgstr "Не знайдено жодного пристрою"
+
+#: piper/window.py:60 piper/window.py:114
+msgid "Please make sure your device is supported and plugged in"
+msgstr "Будь ласка затвердьтесь що пристрій підтримується і підключений"
+
+#: piper/window.py:72
+msgid "There are unapplied changes. Are you sure you want to quit?"
+msgstr "Ви маєте неприйняті зміни. Впевнені що хочете вийти?"
+
+#: piper/window.py:81
+msgid "Ooops. ratbagd has disappeared"
+msgstr "Упс. ratbagd зник"
+
+#: piper/window.py:82
+msgid "Please restart Piper"
+msgstr "Будь ласка перезапустіть Piper"
+
+#. The current device disconnected, which can only happen from the
+#. mouse perspective as we'd otherwise be in the welcome screen with
+#. more than one device remaining. Hence, we display the error
+#. perspective.
+#: piper/window.py:105
+msgid "Your device disconnected!"
+msgstr "Ваш пристрій відключено!"
+
+#: piper/window.py:106
+msgid "Please make sure your device is plugged in"
+msgstr "Будь ласка затвердьтесь що ваш пристій підключений"
+
+#: piper/window.py:145
+msgid "Cannot display device SVG"
+msgstr "Не вдається показати SVG пристрою"
+
+#: piper/window.py:152
+msgid "Newer version of ratbagd required"
+msgstr "Вимагається новіша версія ratbagd"
+
+#: piper/window.py:153
+msgid "Please update to the latest available version"
+msgstr "Будь ласка оновіться до останньої доступної версії"
+
+#: piper/window.py:155
+msgid "Unknown exception occurred"
+msgstr "Відбулася невідома помилка"
+
+#: data/ui/AboutDialog.ui.in:10
+msgid "Version: @version@"
+msgstr "Версія: @version@"
+
+#: data/ui/AboutDialog.ui.in:12
+msgid "Visit Piper on GitHub"
+msgstr "Відвідайте Piper на GitHub"
+
+#: data/ui/AboutDialog.ui.in:13
+msgid "translator-credits"
+msgstr "Kyrylo Domskyi <justphoenixer@outlook.com>"
+
+#: data/ui/ButtonDialog.ui:65
+msgid "Search for a button mapping"
+msgstr "Пошук для прив'язки клавіш"
+
+#: data/ui/ButtonDialog.ui:91
+msgid "Capture a macro for this button"
+msgstr "Записати макрос для цієї клавіші"
+
+#: data/ui/ButtonDialog.ui:104
+msgid "The currently set macro"
+msgstr "Наразі встановлений макрос"
+
+#: data/ui/ButtonDialog.ui:129
+msgid "Send keystroke"
+msgstr "Надіслати натиск клавіші"
+
+#: data/ui/ButtonDialog.ui:169
+msgid "Enter a new key sequence for the macro."
+msgstr "Введіть нову послідовність клавіш для макросу."
+
+#: data/ui/ButtonDialog.ui:235
+msgid "Set the device’s handedness."
+msgstr "Ліва/Права рука"
+
+#: data/ui/ButtonDialog.ui:253
+msgid ""
+"This allows you to swap the order of the primary mouse buttons. In left-"
+"handed mode, the physical left mouse button generates a right mouse click "
+"and vice versa."
+msgstr ""
+"Це дозволяє змінити порядок основних кнопок миші. В режимі для"
+"лівші фізична ліва кнопка ґенеруватиме правий клік і навпаки."
+
+#: data/ui/ButtonDialog.ui:273
+msgid "Left Handed"
+msgstr "Лівша"
+
+#: data/ui/ButtonDialog.ui:278
+msgid "The left mouse button generates a left mouse click"
+msgstr "Ліва клавіша миші ґенерує лівий клік"
+
+#: data/ui/ButtonDialog.ui:292
+msgid "Right Handed"
+msgstr "Правша"
+
+#: data/ui/ButtonDialog.ui:297
+msgid "The left mouse button generates a right mouse click"
+msgstr "Ліва клавіша миші ґенерує правий клік"
+
+#: data/ui/ButtonDialog.ui:337 data/ui/LedDialog.ui:414
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: data/ui/ButtonDialog.ui:339 data/ui/LedDialog.ui:418
+msgid "Ignore any changes made"
+msgstr "Іґнорувати будь які зроблені зміни"
+
+#: data/ui/ButtonDialog.ui:345 data/ui/LedDialog.ui:430
+#: data/ui/MousePerspective.ui:132
+msgid "Apply"
+msgstr "Застосувати"
+
+#: data/ui/ButtonDialog.ui:348 data/ui/LedDialog.ui:435
+msgid "Apply any changes made"
+msgstr "Застосувати будь які зроблені зміни"
+
+#: data/ui/ButtonDialog.ui:388
+msgid "No button mapping found"
+msgstr "Не знайдено жодних прив'язань"
+
+#: data/ui/ButtonDialog.ui:404
+msgid "Try a different search"
+msgstr "Спробуйте инше слово для пошуку"
+
+#: data/ui/ErrorPerspective.ui:16
+msgid "Here, rodent, rodent, rodent…"
+msgstr "Тут миша, миша, миша..."
+
+#: data/ui/ErrorPerspective.ui:69
+msgid "Uh Oh! Something went wrong…"
+msgstr "Уф. Щось пішло не так."
+
+#: data/ui/ErrorPerspective.ui:73 data/ui/WelcomePerspective.ui:123
+msgid "Quit"
+msgstr "Вийти"
+
+#: data/ui/LedDialog.ui:58 data/ui/LedDialog.ui:209
+msgid "Choose a color for the LED"
+msgstr "Оберіть колір для LED"
+
+#: data/ui/LedDialog.ui:90 data/ui/LedDialog.ui:257
+msgid "Choose a brightness for the LED"
+msgstr "Оберіть яскравість для LED"
+
+#: data/ui/LedDialog.ui:104 data/ui/LedDialog.ui:270
+msgid "Brightness"
+msgstr "Яскравість"
+
+#: data/ui/LedDialog.ui:135 data/ui/LedDialog.ui:301
+msgid "Choose an effect duration for the LED"
+msgstr "Оберіть тривалість ефекту для LED"
+
+#: data/ui/LedDialog.ui:153 data/ui/LedDialog.ui:319
+msgid "ms"
+msgstr "мс"
+
+#: data/ui/LedDialog.ui:175 data/ui/LedDialog.ui:341
+msgid "Effect duration"
+msgstr "Тривалість ефекту"
+
+#: data/ui/LedDialog.ui:212
+msgid "Pick a Color for the LED"
+msgstr "Оберіть колір для LED"
+
+#: data/ui/LedDialog.ui:226
+msgid "Color"
+msgstr "Колір"
+
+#: data/ui/LedDialog.ui:380
+msgid "This LED is off"
+msgstr "Цей LED вимкнений"
+
+#: data/ui/MousePerspective.ui:44
+msgid "Something went wrong. The device has been reset to a previous state."
+msgstr "Щось пішло не так. Пристрій був відновлений до попереднього стану."
+
+#: data/ui/MousePerspective.ui:101
+msgid "Select another profile"
+msgstr "Оберіть инший профіль"
+
+#: data/ui/MousePerspective.ui:126
+msgid "Commit the changes to the device"
+msgstr "Застосувати зміни до пристроя"
+
+#: data/ui/MousePerspective.ui:170
+msgid "Click to switch to another profile"
+msgstr "Натисніть щоб перемкнутись на инший профіль"
+
+#: data/ui/MousePerspective.ui:185
+msgid "Add profile"
+msgstr "Додати профіль"
+
+#: data/ui/MousePerspective.ui:189
+msgid "Add a new profile to the device"
+msgstr "Додати новий пррофіль до цього пристрою"
+
+#: data/ui/OptionButton.ui:9
+msgid "Open the configuration dialog"
+msgstr "Відкрити вікно конфіґурації"
+
+#: data/ui/ProfileRow.ui:16
+msgid "Remove this profile from the device"
+msgstr "Видалити цей профіль з пристрою"
+
+#. Translators: this is used to indicate the active resolution.
+#: data/ui/ResolutionRow.ui:37
+msgid "Active"
+msgstr "Активний"
+
+#: data/ui/ResolutionRow.ui:77
+msgid "Set this resolution’s DPI"
+msgstr "Застосувати роздільну здатність DPI"
+
+#. Translators: the rate at which the device reports movement.
+#: data/ui/ResolutionsPage.ui:43
+msgid "Report rate"
+msgstr "Швидкість відгуку"
+
+#: data/ui/ResolutionsPage.ui:60
+msgid "Change the profile’s report rate"
+msgstr "Змінити швидкість відгуку профіля"
+
+#: data/ui/ResolutionsPage.ui:105
+msgid "Hz"
+msgstr "Гц"
+
+#. Translators: the sensitivity of the device's sensor.
+#: data/ui/ResolutionsPage.ui:125
+msgid "Sensitivity"
+msgstr "Чутливість"
+
+#: data/ui/ResolutionsPage.ui:174
+msgid "Add a new resolution to the profile"
+msgstr "Додати нову роздільну здатність до цього профілю"
+
+#: data/ui/WelcomePerspective.ui:20
+msgid "Welcome"
+msgstr "Вітаємо"
+
+#: data/ui/WelcomePerspective.ui:38
+msgctxt "A subtitle under the \"Welcome\" title."
+msgid "Select a device to configure it"
+msgstr "Оберіть пристрій щоб його налаштувати"
+
+#: data/ui/WelcomePerspective.ui:89
+msgctxt "A tooltip over the list of devices."
+msgid "Select a device to configure it"
+msgstr "Оберіть пристрій щоб його налаштувати"
+
+#: data/ui/WelcomePerspective.ui:119
+msgid "Select a Device"
+msgstr "Оберіть пристрій"
+
+#: data/ui/Window.ui:8
+msgid "_About Piper"
+msgstr "_Про Piper"
