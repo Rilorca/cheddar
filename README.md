@@ -1,18 +1,16 @@
-Piper AutoPilot
-===============
+Cheddar
+=======
 
-**Piper AutoPilot** is a fork of [Piper](https://github.com/libratbag/piper)
-— the GTK frontend for configuring gaming mice — that adds **automatic
-per-game profile switching** on Linux, the way Logitech G HUB does on Windows.
+**Cheddar** is a Linux app for gaming mice that adds **automatic per-game
+profile switching** — the way Logitech G HUB does on Windows. Set your mouse up
+the way you like it for each game, map games to those setups, and Cheddar
+switches the mouse automatically when you launch or alt-tab into a game, even
+while its window is closed.
 
-Set up your mouse the way you like it for each game, map games to those
-profiles, and Piper AutoPilot switches the mouse automatically when you launch
-or alt-tab into a game — even while its window is closed, thanks to a small
-background service.
-
-Everything the original Piper does (buttons, DPI/resolutions, LEDs, macros)
-still works exactly the same; AutoPilot is an extra tab plus a background
-daemon.
+Cheddar is a fork of [Piper](https://github.com/libratbag/piper), the GTK
+mouse-configuration frontend, and keeps everything Piper does — buttons,
+DPI/resolutions, LEDs, macros — adding an AutoPilot tab and a small background
+service on top.
 
 Features
 --------
@@ -26,7 +24,7 @@ Features
 - **Pick games from a list.** The rule editor lists your installed games with
   their icons, so you don't have to type executable names.
 - **Unlimited profiles.** The mouse only has a few onboard slots (3 on the
-  G600); AutoPilot stores as many named profiles as you want on your PC and
+  G600); Cheddar stores as many named profiles as you want on your PC and
   loads them onto the mouse on demand — the same trick G HUB uses.
 - **Runs in the background.** A systemd user service keeps switching profiles
   with no window open.
@@ -34,7 +32,7 @@ Features
 Requirements
 ------------
 
-Piper AutoPilot is a frontend for **ratbagd** (from
+Cheddar is a frontend for **ratbagd** (from
 [libratbag](https://github.com/libratbag/libratbag)), which does the actual
 talking to the mouse. Your mouse must be
 [supported by libratbag](https://github.com/libratbag/libratbag/tree/master/data/devices)
@@ -46,9 +44,9 @@ Runtime dependencies:
 - GTK 3, PyGObject
 - Python 3 with the modules `lxml`, `evdev`, `cairo`, `gi`
 - `xprop` — *optional but recommended*; enables focus-based switching. Without
-  it, AutoPilot still switches to whichever mapped game is running, just
-  without the focus preference. It ships in `xorg-xprop` (Arch) /
-  `x11-utils` (Debian/Ubuntu).
+  it, Cheddar still switches to whichever mapped game is running, just without
+  the focus preference. It ships in `xorg-xprop` (Arch) / `x11-utils`
+  (Debian/Ubuntu).
 
 Installation
 ------------
@@ -64,8 +62,8 @@ sudo pacman -S --needed meson ninja libratbag gtk3 python-gobject \
                         python-lxml python-evdev python-cairo xorg-xprop
 
 # 2. Get the source and build
-git clone <this-repository-url> piper-autopilot
-cd piper-autopilot
+git clone <this-repository-url> cheddar
+cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
@@ -79,8 +77,8 @@ sudo systemctl enable --now ratbagd
 ```sh
 sudo apt install meson ninja-build ratbagd gir1.2-gtk-3.0 python3-gi \
                  python3-lxml python3-evdev python3-cairo x11-utils
-git clone <this-repository-url> piper-autopilot
-cd piper-autopilot
+git clone <this-repository-url> cheddar
+cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
@@ -92,51 +90,52 @@ sudo systemctl enable --now ratbagd
 ```sh
 sudo dnf install meson ninja-build libratbag-ratbagd gtk3 python3-gobject \
                  python3-lxml python3-evdev python3-cairo xprop
-git clone <this-repository-url> piper-autopilot
-cd piper-autopilot
+git clone <this-repository-url> cheddar
+cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
 sudo systemctl enable --now ratbagd
 ```
 
-After installing, launch **Piper** from your application menu (or run `piper`).
+After installing, launch **Cheddar** from your application menu (or run
+`cheddar`).
 
-> **Note on Flatpak:** the upstream Piper is on Flathub, but that is the
-> *original* Piper without AutoPilot. This fork is not packaged as a Flatpak
-> (a sandboxed Flatpak also couldn't watch host processes or the focused
-> window), so build from source as above.
+> **Note on Flatpak:** upstream Piper is on Flathub, but that is the original
+> Piper without Cheddar's AutoPilot. Cheddar is not packaged as a Flatpak — a
+> sandboxed app couldn't watch host processes or the focused window, which
+> AutoPilot needs — so build from source as above.
 
 Enabling the background service
 -------------------------------
 
-For profiles to keep switching while Piper's window is closed, enable the
+For profiles to keep switching while Cheddar's window is closed, enable the
 per-user service once:
 
 ```sh
-systemctl --user enable --now piper-autopilot
+systemctl --user enable --now cheddar-autopilot
 ```
 
 It starts on every login and reads the same settings the GUI writes, applying
 rule changes live. Check what it's doing with:
 
 ```sh
-journalctl --user -u piper-autopilot -f
+journalctl --user -u cheddar-autopilot -f
 ```
 
-If you prefer, you can skip the service and just keep Piper's window open —
+If you prefer, you can skip the service and just keep Cheddar's window open —
 the AutoPilot tab has its own switch that does the same thing while it's open.
 
 Using AutoPilot
 ---------------
 
-1. Open Piper and select your mouse. Alongside the usual tabs (Resolutions,
+1. Open Cheddar and select your mouse. Alongside the usual tabs (Resolutions,
    Buttons, LEDs, Advanced) you'll see a new **AutoPilot** tab.
 2. **Create your profiles.** Set the mouse up how you want for a game in the
    Buttons / LEDs / Resolutions tabs, then open the profile menu (top-left)
-   and click **Añadir perfil / Add profile** to save it under a name (e.g.
-   "Overwatch"). Your profiles appear in that menu with a person icon; click
-   one to load it, tweak it, and hit **Apply** to save the changes back.
+   and click **Add profile** to save it under a name (e.g. "Overwatch"). Your
+   profiles appear in that menu with a person icon; click one to load it, tweak
+   it, and hit **Apply** to save the changes back.
 3. **Set the default profile** in the AutoPilot tab — used when no mapped game
    is running.
 4. **Add rules.** Click **+ Add rule**, pick a game from the list (or type its
@@ -144,7 +143,8 @@ Using AutoPilot
 5. **Turn on the switch** ("Enable AutoPilot"). Done — launch a game and the
    mouse follows.
 
-Settings live in `~/.config/piper/`:
+Settings live in `~/.config/cheddar/` (automatically migrated from
+`~/.config/piper/` if you used an earlier build):
 
 - `autopilot.json` — rules, default profile, on/off
 - `autopilot_profiles.json` — your named profiles
@@ -153,17 +153,16 @@ Settings live in `~/.config/piper/`:
 How it works (and one thing to know)
 ------------------------------------
 
-AutoPilot watches running processes via `/proc` (no root needed, works on
+Cheddar watches running processes via `/proc` (no root needed, works on
 Wayland). For Wine/Proton games it reads the game's Windows-style path from the
 process command line, since the Linux executable is just the Wine loader.
 
-Because the mouse only has a few onboard slots, your named ("software")
-profiles are stored on your PC and written into **one reserved onboard slot**
-when needed (the last slot by default). While AutoPilot is enabled that slot is
-hidden from the profile menu, because AutoPilot manages it and overwrites it on
-game launches. If you want AutoPilot to use a different slot, set
-`"scratch_slot"` in `~/.config/piper/autopilot.json`. Your other onboard slots
-are never touched.
+Because the mouse only has a few onboard slots, your named profiles are stored
+on your PC and written into **one reserved onboard slot** when needed (the last
+slot by default). While AutoPilot is enabled that slot is hidden from the
+profile menu, because Cheddar manages it and overwrites it on game launches. If
+you want a different slot, set `"scratch_slot"` in
+`~/.config/cheddar/autopilot.json`. Your other onboard slots are never touched.
 
 Troubleshooting
 ---------------
@@ -174,14 +173,14 @@ the mouse.
 
 **Solaar breaks detection (Logitech mice).** If [Solaar](https://pwr-solaar.github.io/Solaar/)
 is running when ratbagd starts, ratbagd may fail to read the mouse
-(`Error while requesting profile: -32`, `invalid dpi list`) and Piper shows no
-devices. This looks like a libratbag bug but isn't — the fix is to **stop
+(`Error while requesting profile: -32`, `invalid dpi list`) and Cheddar shows
+no devices. This looks like a libratbag bug but isn't — the fix is to **stop
 Solaar first**, then `sudo systemctl restart ratbagd` (or replug the mouse).
 Keep Solaar out of autostart, or configure it to ignore the mouse, if you use
 both.
 
 **A game isn't detected.** Watch the daemon log while launching it:
-`journalctl --user -u piper-autopilot -f`. Then add a rule for the executable
+`journalctl --user -u cheddar-autopilot -f`. Then add a rule for the executable
 name you see. Names are case-insensitive and the `.exe` is optional.
 
 Contributing / development
@@ -192,16 +191,17 @@ in-tree binary:
 
 ```sh
 ninja -C builddir
-./builddir/piper.devel
+./builddir/cheddar.devel
 ```
 
 Code is formatted with `black` and linted with `ruff` (run `meson test -C
-builddir`). This fork's code lives in `piper/autopilot_*.py` and
-`data/piper-autopilot.service`, with small edits to `piper/mouseperspective.py`
-and `piper/window.py`.
+builddir`). Cheddar's own code lives in `cheddar/autopilot_*.py` and
+`data/cheddar-autopilot.service`, with small edits to
+`cheddar/mouseperspective.py` and `cheddar/window.py`.
 
 License
 -------
 
 GPL-2.0-or-later, same as upstream Piper. See [COPYING](COPYING).
-Based on [Piper](https://github.com/libratbag/piper) by the libratbag project.
+Cheddar is based on [Piper](https://github.com/libratbag/piper) by the
+libratbag project.

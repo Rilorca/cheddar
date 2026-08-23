@@ -10,7 +10,7 @@ assignees: ''
 **Information**
 <!-- If your issue is related to a Logitech device please make sure you are running at least Linux 5.2 -->
 - `ratbagd` version (`ratbagd --version`):
-- Piper version: 
+- Cheddar version: 
 - Distribution: 
 - Device: 
 - Kernel version (ex. `uname -srmo`): `KERNEL VERSION HERE`

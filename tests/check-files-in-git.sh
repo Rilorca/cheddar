@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# Usage: check-files-in-git.sh /path/to/piper/
+# Usage: check-files-in-git.sh /path/to/cheddar/
 
 if [ -z "$top_srcdir" ]; then
     top_srcdir="$1"
 fi
 if [ -z "$top_srcdir" ]; then
-    echo "Usage: `basename $0` /path/to/piper"
+    echo "Usage: `basename $0` /path/to/cheddar"
     exit 1
 fi
 

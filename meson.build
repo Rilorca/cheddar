@@ -1,4 +1,4 @@
-project('piper',
+project('cheddar',
     version: '0.8',
     license: 'GPL-2.0-or-later',
     meson_version: '>= 0.51.0')
@@ -7,7 +7,7 @@ version_date='2024-09-24'
 
 # The DBus API version of ratbagd that we are compatible with. Anything
 # higher or lower will not be compatible so make sure you bumpt that to the
-# latest released ratbagd version whenever a piper release is made.
+# latest released ratbagd version whenever a cheddar release is made.
 ratbagd_api_version = 2
 
 
@@ -24,7 +24,7 @@ if enable_runtime_dependency_checks
         ************************ ERROR ***********************
         * _???_     Dependency libratbag not found in $PATH! *
         *(_)_(_)    ratbagd must be installed and running    *
-        * (o o)     for Piper to work.                       *
+        * (o o)     for Cheddar to work.                       *
         *==\o/==                                             *
         ******************************************************
         ''')
@@ -36,7 +36,7 @@ if enable_runtime_dependency_checks
             *                 (   )(                                   *
             *         (\-.     ) (  )    ratbagd found in $PATH is too *
             *         / _`> .---------.  old and  will  not  work with *
-            * _)     / _)=  |'-------'|  this version of Piper. Please *
+            * _)     / _)=  |'-------'|  this version of Cheddar. Please *
             *(      / _/    |O   O   o|  update libratbag/ratbagd.     *
             * `-.__(___)_   | o O . o |                                *
             ************************************************************
@@ -44,7 +44,7 @@ if enable_runtime_dependency_checks
         endif
     endif
 
-    # external python modules that are required for running piper
+    # external python modules that are required for running cheddar
     python_modules = [
         'lxml',
         'evdev',
@@ -54,7 +54,7 @@ if enable_runtime_dependency_checks
 
     dependency('pygobject-3.0', required: true)
 else
-    # external python modules that are required for building piper
+    # external python modules that are required for building cheddar
     python_modules = ['lxml']
 endif
 
@@ -79,7 +79,7 @@ subdir('po')
 pymod = import('python')
 py3 = pymod.find_installation(modules: python_modules)
 python_dir = py3.get_install_dir()
-install_subdir('piper',
+install_subdir('cheddar',
                install_dir: python_dir,
                exclude_directories: '__pycache__')
 
@@ -99,13 +99,13 @@ sys.path.insert(1, '@0@')
 print('Running from source tree, using local files')
 '''.format(meson.current_source_dir()))
 
-configure_file(input: 'piper.in',
-               output: 'piper',
+configure_file(input: 'cheddar.in',
+               output: 'cheddar',
                configuration: config_piper,
                install_dir: bindir)
 
-configure_file(input: 'piper.in',
-               output: 'piper.devel',
+configure_file(input: 'cheddar.in',
+               output: 'cheddar.devel',
                configuration: config_piper_devel)
 
 if meson.version().version_compare('>=0.59.0')

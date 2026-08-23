@@ -14,7 +14,7 @@
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="tooltip-text" translatable="yes">Here, rodent, rodent, rodent…</property>
-        <property name="resource">/org/freedesktop/Piper/404.svg</property>
+        <property name="resource">/io/github/rilorca/Cheddar/404.svg</property>
       </object>
       <packing>
         <property name="expand">False</property>

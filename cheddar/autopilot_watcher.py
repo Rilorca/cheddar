@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# autopilot_watcher.py — part of Piper AutoPilot fork
+# autopilot_watcher.py — part of Cheddar AutoPilot fork
 # Polls /proc every POLL_INTERVAL seconds to detect running game executables
 # and fires callbacks to switch ratbagd profiles accordingly.
 

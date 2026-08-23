@@ -1,9 +1,9 @@
 {
-    "app-id": "org.freedesktop.Piper",
+    "app-id": "io.github.rilorca.Cheddar",
     "runtime": "org.gnome.Platform",
     "runtime-version": "43",
     "sdk": "org.gnome.Sdk",
-    "command": "piper",
+    "command": "cheddar",
       "finish-args": [
         "--share=ipc",
         "--socket=x11",
@@ -54,13 +54,13 @@
             ]
         },
         {
-            "name": "Piper",
+            "name": "Cheddar",
             "buildsystem": "meson",
             "config-opts": [ "-Druntime-dependency-checks=false" ],
             "sources": [
                 {
                     "type": "git",
-                    "url": "https://github.com/libratbag/piper"
+                    "url": "<this-repository-url>"
                 }
             ]
         }

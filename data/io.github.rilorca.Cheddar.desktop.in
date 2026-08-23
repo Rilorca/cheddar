@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=Piper
+Name=Cheddar
 Comment=Configurable mouse configuration utility
-Exec=piper
+Exec=cheddar
 # Translators: Do NOT translate or transliterate this text (this is an icon file name)!
-Icon=org.freedesktop.Piper
+Icon=io.github.rilorca.Cheddar
 Type=Application
 StartupNotify=true
 Categories=GTK;GNOME;Utility;

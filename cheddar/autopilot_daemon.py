@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# autopilot_daemon.py — part of Piper AutoPilot fork
+# autopilot_daemon.py — part of Cheddar AutoPilot fork
 #
 # Headless AutoPilot: runs the game watcher against ratbagd without the GUI,
-# so profiles keep switching while Piper is closed — the same role G HUB's
+# so profiles keep switching while Cheddar is closed — the same role G HUB's
 # background service plays on Windows.
 #
 # Usage:
-#     python3 -m piper.autopilot_daemon [-v]
+#     python3 -m cheddar.autopilot_daemon [-v]
 #
-# Reads the same config the GUI writes (~/.config/piper/autopilot.json) and
+# Reads the same config the GUI writes (~/.config/cheddar/autopilot.json) and
 # reloads it automatically when the GUI saves changes, so rules edited in the
 # AutoPilot tab apply live. Profile switches are idempotent in ratbagd, so
 # running the daemon alongside the GUI is harmless.
@@ -28,7 +28,7 @@ from .ratbagd import Ratbagd, RatbagdIncompatibleError, RatbagdUnavailableError
 
 RATBAGD_API_VERSION = 2
 
-logger = logging.getLogger("piper.autopilot")
+logger = logging.getLogger("cheddar.autopilot")
 
 
 class AutoPilotDaemon:
@@ -120,7 +120,7 @@ class AutoPilotDaemon:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Piper AutoPilot daemon: switch mouse profiles per game, headless"
+        description="Cheddar AutoPilot daemon: switch mouse profiles per game, headless"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
     args = parser.parse_args()

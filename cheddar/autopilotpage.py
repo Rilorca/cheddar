@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# autopilotpage.py — part of Piper AutoPilot fork
+# autopilotpage.py — part of Cheddar AutoPilot fork
 #
-# Adds an "AutoPilot" tab to Piper's per-device stack switcher.
+# Adds an "AutoPilot" tab to Cheddar's per-device stack switcher.
 # The page lets users:
 #   • Map game executables to profiles (Add / Edit / Delete rules)
 #   • Choose a default profile (used when no mapped game is running)
 #   • Start / stop the background process watcher
 #
 # Design: pure-Python GTK3 widget — no extra .ui file required.
-# Follows the same style conventions as Piper's other pages.
+# Follows the same style conventions as Cheddar's other pages.
 
 import threading
 from gettext import gettext as _
@@ -228,7 +228,7 @@ class _RuleDialog(Gtk.Dialog):
 
 class AutoPilotPage(Gtk.Box):
     """
-    The AutoPilot tab shown inside Piper's per-device stack-switcher.
+    The AutoPilot tab shown inside Cheddar's per-device stack-switcher.
 
     Integrates with MousePerspective exactly like ResolutionsPage or
     AdvancedPage: constructed with (device, profile) and added to the
@@ -404,7 +404,7 @@ class AutoPilotPage(Gtk.Box):
         self._refresh_rules()
 
     def _rules_header_func(self, row, before):
-        """Add a separator between rows (Piper style)."""
+        """Add a separator between rows (Cheddar style)."""
         if before is not None and row.get_header() is None:
             row.set_header(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL))
 
@@ -548,7 +548,7 @@ class AutoPilotPage(Gtk.Box):
 
     def load_user_profile(self, name: str) -> bool:
         """Write a saved profile onto the mouse and activate it, so the user
-        can use it or tweak it with Piper's regular tabs."""
+        can use it or tweak it with Cheddar's regular tabs."""
         try:
             ap.activate_target(self._device, ap.SW_PREFIX + name, self._config)
         except Exception as exc:

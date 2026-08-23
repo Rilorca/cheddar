@@ -53,7 +53,7 @@ class UserProfileRow(Gtk.ListBoxRow):
         return self.sw_name
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/MousePerspective.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/MousePerspective.ui")
 class MousePerspective(Gtk.Overlay):
     """The perspective to configure a mouse."""
 

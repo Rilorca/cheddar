@@ -39,7 +39,7 @@ class _DPIEntry(Gtk.Entry, Gtk.Editable):
         return position + new_text_length
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/ResolutionRow.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/ResolutionRow.ui")
 class ResolutionRow(Gtk.ListBoxRow):
     """A Gtk.ListBoxRow subclass containing the widgets to configure a
     resolution."""

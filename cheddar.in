@@ -13,7 +13,7 @@ if gtk_version < (@gtk_major_version@, @gtk_minor_version@):
     sys.exit(1)
 
 @devel@
-resource = Gio.resource_load(os.path.join('@pkgdatadir@', 'piper.gresource'))
+resource = Gio.resource_load(os.path.join('@pkgdatadir@', 'cheddar.gresource'))
 Gio.Resource._register(resource)
 
 
@@ -33,14 +33,14 @@ if __name__ == "__main__":
     import gettext
     import locale
     import signal
-    from piper.application import Application
+    from cheddar.application import Application
 
     install_excepthook()
 
-    locale.bindtextdomain('piper', '@localedir@')
-    locale.textdomain('piper')
-    gettext.bindtextdomain('piper', '@localedir@')
-    gettext.textdomain('piper')
+    locale.bindtextdomain('cheddar', '@localedir@')
+    locale.textdomain('cheddar')
+    gettext.bindtextdomain('cheddar', '@localedir@')
+    gettext.textdomain('cheddar')
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = Application(@RATBAGD_API_VERSION@).run(sys.argv)

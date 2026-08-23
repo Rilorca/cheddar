@@ -1,10 +1,10 @@
-.TH PIPER 1 "@version_date@" "@version@" "User Commands"
+.TH CHEDDAR 1 "@version_date@" "@version@" "User Commands"
 .SH NAME
-Piper \- GTK application to configure gaming devices
+Cheddar \- GTK application to configure gaming devices
 .SH DESCRIPTION
 .SS "Usage:"
 .IP
-piper [OPTION]
+cheddar [OPTION]
 .SS "Help Options:"
 .TP
 \fB\-h\fR, \fB\-\-help\fR

@@ -8,7 +8,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GObject, Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/ErrorPerspective.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/ErrorPerspective.ui")
 class ErrorPerspective(Gtk.Box):
     """A perspective to present an error condition in a user-friendly manner."""
 

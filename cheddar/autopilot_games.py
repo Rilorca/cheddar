@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# autopilot_games.py — part of Piper AutoPilot fork
+# autopilot_games.py — part of Cheddar AutoPilot fork
 #
 # Discovers installed games so the rule dialog can offer a picker (the way
 # G HUB lists installed titles) instead of making the user type executable

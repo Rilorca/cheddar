@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GObject, Gtk  # noqa: E402
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/AdvancedPage.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/AdvancedPage.ui")
 class AdvancedPage(Gtk.Box):
     """
     Advanced settings stack.

@@ -7,7 +7,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/OptionButton.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/OptionButton.ui")
 class OptionButton(Gtk.Button):
     """A Gtk.Button subclass that displays a label, a separator and a cog."""
 

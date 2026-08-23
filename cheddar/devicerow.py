@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from piper.svg import get_svg
+from cheddar.svg import get_svg
 
 import sys
 
@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GdkPixbuf, GObject, Gtk, Rsvg  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/DeviceRow.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/DeviceRow.ui")
 class DeviceRow(Gtk.ListBoxRow):
     """A Gtk.ListBoxRow subclass to present devices in the welcome
     perspective."""

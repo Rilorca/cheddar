@@ -10,7 +10,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, GObject, Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/LedDialog.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/LedDialog.ui")
 class LedDialog(Gtk.Dialog):
     """A Gtk.Dialog subclass to implement the dialog that shows the
     configuration options for the LED effects."""

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-     <gresource prefix="/org/freedesktop/Piper">
+     <gresource prefix="/io/github/rilorca/Cheddar">
         <file>404.svg</file>
         <file>enter-keyboard-shortcut.svg</file>
         <file>led-off.svg</file>

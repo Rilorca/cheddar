@@ -13,7 +13,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, GObject, Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/ButtonRow.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/ButtonRow.ui")
 class ButtonRow(Gtk.ListBoxRow):
     """A Gtk.ListBoxRow subclass to implement the rows that show up in the
     ButtonDialog's Gtk.ListBox. It doesn't do much besides moving UI code into a
@@ -54,7 +54,7 @@ class ButtonRow(Gtk.ListBoxRow):
         return self.description_label.get_text()
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/ButtonDialog.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/ButtonDialog.ui")
 class ButtonDialog(Gtk.Dialog):
     """A Gtk.Dialog subclass to implement the dialog that shows the
     configuration options for button mappings."""

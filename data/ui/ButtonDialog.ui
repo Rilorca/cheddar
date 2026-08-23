@@ -200,7 +200,7 @@
                   <object class="GtkImage">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="resource">/org/freedesktop/Piper/enter-keyboard-shortcut.svg</property>
+                    <property name="resource">/io/github/rilorca/Cheddar/enter-keyboard-shortcut.svg</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>

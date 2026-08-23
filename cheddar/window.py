@@ -19,7 +19,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, GLib, Gtk, Gio  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/Window.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/Window.ui")
 class Window(Gtk.ApplicationWindow):
     """A Gtk.ApplicationWindow subclass to implement the main application
     window. This window displays the different perspectives (error, mouse and
@@ -38,7 +38,7 @@ class Window(Gtk.ApplicationWindow):
         """
         Gtk.ApplicationWindow.__init__(self, *args, **kwargs)
 
-        self.set_icon_name("org.freedesktop.Piper")
+        self.set_icon_name("io.github.rilorca.Cheddar")
 
         self._add_perspective(ErrorPerspective(), None)
         try:
@@ -56,7 +56,7 @@ class Window(Gtk.ApplicationWindow):
                 _(
                     f"Incompatible ratbagd API version (required: {e.required_version}, provided: {e.ratbagd_version})"
                 ),
-                _("Please update both piper and libratbag to the latest versions"),
+                _("Please update both cheddar and libratbag to the latest versions"),
             )
             return
 
@@ -112,7 +112,7 @@ class Window(Gtk.ApplicationWindow):
 
     def _on_daemon_disappeared(self, ratbag: Ratbagd) -> None:
         self._present_error_perspective(
-            _("Ooops. ratbagd has disappeared"), _("Please restart Piper")
+            _("Ooops. ratbagd has disappeared"), _("Please restart Cheddar")
         )
 
     def _on_device_added(self, ratbag: Ratbagd, device: RatbagdDevice) -> None:

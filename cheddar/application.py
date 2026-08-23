@@ -22,10 +22,10 @@ class Application(Gtk.Application):
         """Instantiates a new Application."""
         Gtk.Application.__init__(
             self,
-            application_id="org.freedesktop.Piper",
+            application_id="io.github.rilorca.Cheddar",
             flags=Gio.ApplicationFlags.FLAGS_NONE,
         )
-        GLib.set_application_name("Piper")
+        GLib.set_application_name("Cheddar")
         self._required_ratbagd_version = ratbagd_api_version
 
     def do_startup(self) -> None:
@@ -58,7 +58,7 @@ class Application(Gtk.Application):
     def _about(self, action: Gio.SimpleAction, param: None) -> None:
         # Set up the about dialog.
         builder = Gtk.Builder().new_from_resource(
-            "/org/freedesktop/Piper/AboutDialog.ui"
+            "/io/github/rilorca/Cheddar/AboutDialog.ui"
         )
         about: Optional[Gtk.AboutDialog] = builder.get_object("about_dialog")  # type: ignore
         assert about is not None

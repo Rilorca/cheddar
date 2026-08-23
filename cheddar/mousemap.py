@@ -7,7 +7,7 @@ import gi
 import sys
 from lxml import etree
 
-from piper.svg import get_svg
+from cheddar.svg import get_svg
 from .ratbagd import RatbagdDevice
 
 gi.require_version("Gdk", "3.0")

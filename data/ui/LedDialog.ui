@@ -338,7 +338,7 @@
                   <object class="GtkImage" id="led_off_image">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="resource">/org/freedesktop/Piper/led-off.svg</property>
+                    <property name="resource">/io/github/rilorca/Cheddar/led-off.svg</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>

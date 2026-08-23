@@ -5,7 +5,7 @@ from typing import Optional
 
 import gi
 
-from piper.ratbagd import RatbagdProfile
+from cheddar.ratbagd import RatbagdProfile
 
 from .util.gobject import connect_signal_with_weak_ref
 
@@ -13,7 +13,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GObject, Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/ProfileRow.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/ProfileRow.ui")
 class ProfileRow(Gtk.ListBoxRow):
     """A Gtk.ListBoxRow subclass containing the widgets to display a profile in
     the profile poper."""

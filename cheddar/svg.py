@@ -8,7 +8,7 @@ import configparser
 
 def get_svg(model: str) -> Optional[bytes]:
     resource = Gio.resources_lookup_data(
-        "/org/freedesktop/Piper/svgs/svg-lookup.ini", Gio.ResourceLookupFlags.NONE
+        "/io/github/rilorca/Cheddar/svgs/svg-lookup.ini", Gio.ResourceLookupFlags.NONE
     )
 
     data = resource.get_data()
@@ -32,7 +32,7 @@ def get_svg(model: str) -> Optional[bytes]:
                 break
 
     resource = Gio.resources_lookup_data(
-        f"/org/freedesktop/Piper/svgs/{filename}", Gio.ResourceLookupFlags.NONE
+        f"/io/github/rilorca/Cheddar/svgs/{filename}", Gio.ResourceLookupFlags.NONE
     )
 
     return resource.get_data()

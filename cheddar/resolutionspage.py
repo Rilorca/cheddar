@@ -13,7 +13,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/ResolutionsPage.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/ResolutionsPage.ui")
 class ResolutionsPage(Gtk.Box):
     """The first stack page, exposing the resolution configuration with its
     report rate buttons and resolutions list."""

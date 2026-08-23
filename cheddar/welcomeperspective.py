@@ -11,7 +11,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GObject, Gtk  # noqa
 
 
-@Gtk.Template(resource_path="/org/freedesktop/Piper/ui/WelcomePerspective.ui")
+@Gtk.Template(resource_path="/io/github/rilorca/Cheddar/ui/WelcomePerspective.ui")
 class WelcomePerspective(Gtk.Box):
     """A perspective to present a list of devices for the user to pick one to
     configure."""

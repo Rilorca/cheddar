@@ -1,1 +1,1 @@
-i18n.gettext('piper', preset: 'glib')
+i18n.gettext('cheddar', preset: 'glib')

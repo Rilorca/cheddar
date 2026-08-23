@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
-# autopilot_profiles.py — part of Piper AutoPilot fork
+# autopilot_profiles.py — part of Cheddar AutoPilot fork
 #
 # Software profiles, the trick behind G HUB's "unlimited profiles": the mouse
 # only has a few onboard slots, so extra profiles live on the PC as JSON and
 # get written into a designated onboard slot right before activating it.
 #
-# A software profile captures everything Piper can configure on a profile:
+# A software profile captures everything Cheddar can configure on a profile:
 # report rate, resolutions, every button mapping (including macros) and LEDs.
-# Store: ~/.config/piper/autopilot_profiles.json  {name: profile-data}
+# Store: ~/.config/cheddar/autopilot_profiles.json  {name: profile-data}
 
 import json
 import logging
@@ -19,7 +19,7 @@ from .ratbagd import RatbagdButton, RatbagdDevice, RatbagdMacro, RatbagdProfile
 
 logger = logging.getLogger(__name__)
 
-_STORE_DIR = os.path.expanduser("~/.config/piper")
+_STORE_DIR = os.path.expanduser("~/.config/cheddar")
 _STORE_FILE = os.path.join(_STORE_DIR, "autopilot_profiles.json")
 # Records which user profile (if any) is currently written on the scratch
 # slot, so the GUI can label it by name even when the daemon did the switch.

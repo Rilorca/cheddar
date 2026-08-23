@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.freedesktop.Piper</id>
+  <id>io.github.rilorca.Cheddar</id>
   <developer id="io.github.libratbag">
     <name>libratbag developers</name>
   </developer>
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <content_rating type="oars-1.1" />
-  <name translatable="no">Piper</name>
+  <name translatable="no">Cheddar</name>
   <summary>Gaming mouse configuration utility</summary>
   <description>
     <p>
-      Piper is a graphical user interface to configure gaming mice.
+      Cheddar is a graphical user interface to configure gaming mice.
       Configuration options include changing the resolution (DPI) of the
       mouse, adding and removing profiles, setting LED colors and changing
       button behaviors.
     </p>
     <p>
-      Piper requires libratbag’s ratbagd, the daemon to actually communicate with the
-      mice. Piper is merely a front end to ratbagd, ratbagd must be
-      installed and running when Piper is launched.
+      Cheddar requires libratbag’s ratbagd, the daemon to actually communicate with the
+      mice. Cheddar is merely a front end to ratbagd, ratbagd must be
+      installed and running when Cheddar is launched.
     </p>
   </description>
 
-  <launchable type="desktop-id">org.freedesktop.Piper.desktop</launchable>
+  <launchable type="desktop-id">io.github.rilorca.Cheddar.desktop</launchable>
 
   <screenshots>
     <screenshot type="default">
       <caption>The button configuraton page</caption>
-      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/piper-buttonpage.png</image>
+      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/cheddar-buttonpage.png</image>
     </screenshot>
     <screenshot>
       <caption>The LED configuraton page</caption>
-      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/piper-ledpage.png</image>
+      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/cheddar-ledpage.png</image>
     </screenshot>
     <screenshot>
       <caption>The resolution configuraton page</caption>
-      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/piper-resolutionpage.png</image>
+      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/cheddar-resolutionpage.png</image>
     </screenshot>
   </screenshots>
 
@@ -44,10 +44,10 @@
   <url type="bugtracker">https://github.com/libratbag/piper/issues</url>
   <url type="help">https://github.com/libratbag/piper/wiki</url>
 
-  <translation type="gettext">piper</translation>
+  <translation type="gettext">cheddar</translation>
 
   <provides>
-    <binary>piper</binary>
+    <binary>cheddar</binary>
   </provides>
 
   <releases>
