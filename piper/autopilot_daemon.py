@@ -51,7 +51,7 @@ class AutoPilotDaemon:
         self._config = cfg_load()
         config = self._config
         self._watcher = AutoPilotWatcher(
-            rules=config.get("rules", {}),
+            rules=self._effective_rules(),
             on_switch=self._on_switch,
             default_profile=config.get("default_profile", 0),
         )
@@ -63,11 +63,26 @@ class AutoPilotDaemon:
         self._monitor.connect("changed", self._on_config_changed)
 
         self._watcher.start()
+        if not config.get("enabled", False):
+            logger.info("AutoPilot is disabled in the config — paused")
         logger.info(
             "watching for games (%d rule(s), default profile %d)",
-            len(config.get("rules", {})),
+            len(self._effective_rules()),
             config.get("default_profile", 0),
         )
+
+    def _effective_rules(self) -> dict:
+        """The rules to act on: none while the user has AutoPilot disabled.
+
+        The GUI toggle only stops the GUI's own watcher; this daemon must
+        honor the same `enabled` flag or switching keeps happening with the
+        toggle off. An empty rule set makes the watcher's tick a no-op, so
+        toggling re-enables instantly via the config file monitor without
+        restarting the thread.
+        """
+        if not self._config.get("enabled", False):
+            return {}
+        return self._config.get("rules", {})
 
     def _on_config_changed(self, _monitor, _file, _other, event) -> None:
         if event not in (
@@ -78,9 +93,13 @@ class AutoPilotDaemon:
         self._config = cfg_load()
         config = self._config
         self._watcher.update_rules(
-            config.get("rules", {}), config.get("default_profile", 0)
+            self._effective_rules(), config.get("default_profile", 0)
         )
-        logger.info("config reloaded (%d rule(s))", len(config.get("rules", {})))
+        logger.info(
+            "config reloaded (%d rule(s)%s)",
+            len(self._effective_rules()),
+            "" if config.get("enabled", False) else ", AutoPilot disabled — paused",
+        )
 
     def _on_switch(self, target: RuleTarget, exe_name: str) -> None:
         # Called from the watcher thread; hop onto the main loop for D-Bus.

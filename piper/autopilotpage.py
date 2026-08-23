@@ -247,7 +247,6 @@ class AutoPilotPage(Gtk.Box):
         self._config: Dict = cfg_load()
         self._watcher: Optional[AutoPilotWatcher] = None
         self._editing_name: Optional[str] = None
-        self._current_sw: Optional[str] = None
 
         # Map rule exes to installed games so rule rows can show the game's
         # title and icon (keyed with and without the .exe suffix).
@@ -535,9 +534,14 @@ class AutoPilotPage(Gtk.Box):
 
     @property
     def current_user_profile(self) -> Optional[str]:
-        """Name of the user profile currently loaded on the scratch slot via
-        this GUI, if any — used by the switcher to label the active profile."""
-        return self._current_sw
+        """Name of the user profile currently on the scratch slot, if any —
+        used by the switcher to label the active profile. Reads the shared
+        state file, which every switch (this GUI's and the background
+        daemon's) writes via activate_target, so it stays correct whoever
+        performed the switch."""
+        name = ap.active_user_profile()
+        # Guard against a stale name that was since deleted.
+        return name if name in ap.load_store() else None
 
     def user_profile_names(self) -> List[str]:
         return sorted(ap.load_store())
@@ -551,8 +555,14 @@ class AutoPilotPage(Gtk.Box):
             self._update_status_label(error=str(exc))
             return False
         self._editing_name = name
-        self._current_sw = name
         return True
+
+    def save_active_as_user_profile(self, name: str) -> None:
+        """Re-capture the mouse's current setup and store it under `name`.
+        Used when the user edits a loaded profile and hits Apply."""
+        store = ap.load_store()
+        store[name] = ap.capture_profile(self._device.active_profile)
+        ap.save_store(store)
 
     def save_current_setup_dialog(self, parent: Gtk.Widget) -> Optional[str]:
         """Prompt for a name and save the mouse's current setup under it.
@@ -611,8 +621,6 @@ class AutoPilotPage(Gtk.Box):
         cfg_save(self._config)
         self._sync_watcher_rules()
         self._refresh_rules()
-        if self._current_sw == name:
-            self._current_sw = None
 
     def _target_label(self, target: RuleTarget) -> str:
         """Display name for a rule target: onboard profile name, or the
@@ -631,9 +639,6 @@ class AutoPilotPage(Gtk.Box):
     def _switch_profile_main_thread(self, target: RuleTarget, exe_name: str) -> bool:
         try:
             ap.activate_target(self._device, target, self._config)
-            self._current_sw = (
-                ap.target_label(target) if ap.is_software_target(target) else None
-            )
             self._update_status_label(last_switch=(exe_name, target))
         except Exception as exc:
             self._update_status_label(error=str(exc))

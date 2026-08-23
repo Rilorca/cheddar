@@ -3,6 +3,7 @@
 from gettext import gettext as _
 from typing import Optional
 
+from . import autopilot_profiles as ap
 from .autopilotpage import AutoPilotPage
 from .buttonspage import ButtonsPage
 from .profilerow import ProfileRow
@@ -15,7 +16,7 @@ from .util.gobject import connect_signal_with_weak_ref
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, GObject, Gtk  # noqa
+from gi.repository import Gio, GLib, GObject, Gtk  # noqa
 
 
 class UserProfileRow(Gtk.ListBoxRow):
@@ -154,6 +155,33 @@ class MousePerspective(Gtk.Overlay):
 
         # The user's own profiles list right below the onboard ones.
         self._refresh_user_profile_rows()
+
+        # Two games mapped to different user profiles share the scratch slot,
+        # so switching between them never fires active-profile-changed. Watch
+        # the shared state file instead — every activate_target (ours or the
+        # background daemon's) rewrites it — and refresh the label from it.
+        self._state_monitor = Gio.File.new_for_path(ap._STATE_FILE).monitor_file(
+            Gio.FileMonitorFlags.NONE, None
+        )
+        self._state_monitor.connect("changed", self._on_autopilot_state_changed)
+
+    def _on_autopilot_state_changed(self, _monitor, _file, _other, event) -> None:
+        if event not in (
+            Gio.FileMonitorEvent.CHANGES_DONE_HINT,
+            Gio.FileMonitorEvent.CREATED,
+        ):
+            return
+        # Defer briefly: this file event races the D-Bus active-profile
+        # update, and refreshing with a stale active index would label the
+        # wrong row. A short delay lets both settle.
+        GLib.timeout_add(400, self._refresh_active_label)
+
+    def _refresh_active_label(self) -> bool:
+        if self._device is not None:
+            active = self._device.active_profile
+            if active is not None:
+                self._select_profile_row(active)
+        return False  # one-shot
 
     def _update_reserved_slot_row(self) -> None:
         page = self._autopilot_page
@@ -303,6 +331,21 @@ class MousePerspective(Gtk.Overlay):
     def _on_save_button_clicked(self, _button: Gtk.Button) -> None:
         assert self._device is not None
         self._device.commit()
+        # If the active profile is a user profile loaded on the scratch slot,
+        # persist the edits back to its stored definition too — otherwise
+        # "Apply" would only touch the mouse's scratch slot, which gets
+        # overwritten on the next game launch, losing the changes.
+        page = self._autopilot_page
+        if page is None or not page.autopilot_enabled:
+            return
+        name = page.current_user_profile
+        active = self._device.active_profile
+        if (
+            name is not None
+            and active is not None
+            and active.index == page.scratch_slot
+        ):
+            page.save_active_as_user_profile(name)
 
     @Gtk.Template.Callback("_on_notification_error_close_clicked")
     def _on_notification_error_close_clicked(self, button: Gtk.Button) -> None:

@@ -13,7 +13,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from .ratbagd import RatbagdButton, RatbagdDevice, RatbagdMacro, RatbagdProfile
 
@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 _STORE_DIR = os.path.expanduser("~/.config/piper")
 _STORE_FILE = os.path.join(_STORE_DIR, "autopilot_profiles.json")
+# Records which user profile (if any) is currently written on the scratch
+# slot, so the GUI can label it by name even when the daemon did the switch.
+_STATE_FILE = os.path.join(_STORE_DIR, "autopilot_state.json")
 
 # Rule targets: an int selects an onboard profile by index; "sw:<name>"
 # selects a stored software profile.
@@ -47,6 +50,27 @@ def save_store(store: Dict[str, Dict]) -> None:
             json.dump(store, f, indent=2, ensure_ascii=False)
     except OSError as e:
         logger.error("could not save software profiles: %s", e)
+
+
+def active_user_profile() -> Optional[str]:
+    """Name of the user profile currently on the scratch slot, or None if an
+    onboard profile is active. Written by activate_target(), so the GUI sees
+    switches the daemon made too."""
+    try:
+        with open(_STATE_FILE, encoding="utf-8") as f:
+            name = json.load(f).get("active_user_profile")
+        return name if isinstance(name, str) else None
+    except (OSError, ValueError):
+        return None
+
+
+def _set_active_user_profile(name: Optional[str]) -> None:
+    os.makedirs(_STORE_DIR, exist_ok=True)
+    try:
+        with open(_STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"active_user_profile": name}, f)
+    except OSError as e:
+        logger.error("could not save autopilot state: %s", e)
 
 
 # ── Capture ────────────────────────────────────────────────────────────────────
@@ -213,6 +237,7 @@ def activate_target(device: RatbagdDevice, target: RuleTarget, config: Dict) -> 
                 apply_profile(data, profile)
                 profile.set_active()
                 device.commit()
+                _set_active_user_profile(name)
                 logger.info("software profile '%s' -> slot %d", name, slot)
                 return
         raise IndexError(f"scratch slot {slot} not found")
@@ -222,5 +247,6 @@ def activate_target(device: RatbagdDevice, target: RuleTarget, config: Dict) -> 
         if profile.index == index:
             profile.set_active()
             device.commit()
+            _set_active_user_profile(None)
             return
     raise IndexError(f"profile {index} not found on {device.name}")
