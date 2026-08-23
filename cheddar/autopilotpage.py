@@ -240,7 +240,7 @@ class AutoPilotPage(Gtk.Box):
 
     def __init__(self, device: RatbagdDevice) -> None:
         super().__init__(
-            orientation=Gtk.Orientation.HORIZONTAL,
+            orientation=Gtk.Orientation.VERTICAL,
             spacing=0,
         )
         self._device = device
@@ -266,142 +266,122 @@ class AutoPilotPage(Gtk.Box):
     # ── UI construction ────────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
-        # Left column: controls
-        left = Gtk.Box(
+        # Single scrolling column (Direction A home): master status card on
+        # top, the games list in the middle, the default-profile row at the
+        # bottom.
+        outer = Gtk.ScrolledWindow(
+            hscrollbar_policy=Gtk.PolicyType.NEVER,
+            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
+        )
+        self.pack_start(outer, True, True, 0)
+
+        col = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
-            spacing=0,
-            border_width=20,
-            width_request=320,
+            spacing=16,
+            border_width=24,
         )
-        self.pack_start(left, False, False, 0)
+        outer.add(col)
 
-        # ── Section: Status ───────────────────────────────────────────────────
-        status_lbl = Gtk.Label(xalign=0)
-        status_lbl.set_markup(f'<span weight="bold">{_("Auto-switch profiles")}</span>')
-        left.pack_start(status_lbl, False, False, 0)
-
-        desc = Gtk.Label(
-            xalign=0,
-            wrap=True,
-            max_width_chars=36,
-            margin_top=4,
-            margin_bottom=16,
+        # ── Master status + on/off ────────────────────────────────────────────
+        status_card = Gtk.Frame()
+        status_card.get_style_context().add_class("view")
+        status_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=14, border_width=16
         )
-        desc.set_markup(
-            '<span size="small" foreground="grey">'
-            + GLib.markup_escape_text(
-                _(
-                    "AutoPilot watches running processes and switches your "
-                    "{} profile automatically when a mapped game is detected."
-                ).format(self._device.name)
-            )
+        status_card.add(status_row)
+
+        status_text = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=3, hexpand=True
+        )
+        title = Gtk.Label(xalign=0)
+        title.set_markup(
+            '<span size="large" weight="bold">'
+            + _("Automatic profile switching")
             + "</span>"
         )
-        left.pack_start(desc, False, False, 0)
+        status_text.pack_start(title, False, False, 0)
+        self._status_label = Gtk.Label(xalign=0)
+        self._update_status_label()
+        status_text.pack_start(self._status_label, False, False, 0)
+        status_row.pack_start(status_text, True, True, 0)
 
-        # Start/stop toggle
-        toggle_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        toggle_lbl = Gtk.Label(label=_("Enable AutoPilot"), xalign=0, hexpand=True)
         self._toggle = Gtk.Switch(valign=Gtk.Align.CENTER)
         self._toggle.set_active(self._config.get("enabled", False))
         self._toggle.connect("notify::active", self._on_toggle_changed)
-        toggle_row.pack_start(toggle_lbl, True, True, 0)
-        toggle_row.pack_start(self._toggle, False, False, 0)
-        left.pack_start(toggle_row, False, False, 0)
+        status_row.pack_start(self._toggle, False, False, 0)
+        col.pack_start(status_card, False, False, 0)
 
-        # Status indicator
-        self._status_label = Gtk.Label(
-            xalign=0,
-            margin_top=6,
-            margin_bottom=18,
+        # ── Games header ──────────────────────────────────────────────────────
+        games_header = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=8, margin_top=6
         )
-        self._update_status_label()
-        left.pack_start(self._status_label, False, False, 0)
-
-        sep1 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL, margin_bottom=16)
-        left.pack_start(sep1, False, False, 0)
-
-        # ── Section: Default profile ──────────────────────────────────────────
-        def_lbl = Gtk.Label(xalign=0, margin_bottom=6)
-        def_lbl.set_markup(
-            '<span size="small" weight="bold">'
-            + _("DEFAULT PROFILE").upper()
-            + "</span>"
-        )
-        left.pack_start(def_lbl, False, False, 0)
-
-        def_sub = Gtk.Label(xalign=0, wrap=True, max_width_chars=36, margin_bottom=8)
-        def_sub.set_markup(
+        gh_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        gh_title = Gtk.Label(xalign=0)
+        gh_title.set_markup(f'<span weight="bold">{_("Your games")}</span>')
+        gh_text.pack_start(gh_title, False, False, 0)
+        gh_sub = Gtk.Label(xalign=0)
+        gh_sub.set_markup(
             '<span size="small" foreground="grey">'
-            + _("Profile to use when no mapped game is running.")
+            + _(
+                "When a game starts, its profile is loaded onto the mouse automatically."
+            )
             + "</span>"
         )
-        left.pack_start(def_sub, False, False, 0)
+        gh_text.pack_start(gh_sub, False, False, 0)
+        games_header.pack_start(gh_text, True, True, 0)
 
-        self._default_combo = Gtk.ComboBoxText()
+        self._add_btn = Gtk.Button(label=_("+ Add game"))
+        self._add_btn.get_style_context().add_class("suggested-action")
+        self._add_btn.set_valign(Gtk.Align.CENTER)
+        self._add_btn.connect("clicked", self._on_add_rule)
+        games_header.pack_start(self._add_btn, False, False, 0)
+        col.pack_start(games_header, False, False, 0)
+
+        # ── Games list ────────────────────────────────────────────────────────
+        rules_card = Gtk.Frame()
+        rules_card.get_style_context().add_class("view")
+        self._rules_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self._rules_box.set_header_func(self._rules_header_func)
+        rules_card.add(self._rules_box)
+        col.pack_start(rules_card, False, False, 0)
+        self._refresh_rules()
+
+        # ── Default profile ───────────────────────────────────────────────────
+        default_card = Gtk.Frame()
+        default_card.get_style_context().add_class("view")
+        default_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=12, border_width=12
+        )
+        default_card.add(default_row)
+        d_icon = Gtk.Image.new_from_icon_name(
+            "video-display-symbolic", Gtk.IconSize.LARGE_TOOLBAR
+        )
+        default_row.pack_start(d_icon, False, False, 4)
+        d_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1, hexpand=True)
+        d_title = Gtk.Label(label=_("When no game is running"), xalign=0)
+        d_text.pack_start(d_title, False, False, 0)
+        d_sub = Gtk.Label(xalign=0)
+        d_sub.set_markup(
+            '<span size="small" foreground="grey">'
+            + _("Your everyday profile")
+            + "</span>"
+        )
+        d_text.pack_start(d_sub, False, False, 0)
+        default_row.pack_start(d_text, True, True, 0)
+
+        self._default_combo = Gtk.ComboBoxText(valign=Gtk.Align.CENTER)
         for p in self._device.profiles:
             self._default_combo.append(str(p.index), _profile_label(p))
         self._default_combo.set_active_id(str(self._config.get("default_profile", 0)))
         if self._default_combo.get_active_id() is None:
             self._default_combo.set_active(0)
         self._default_combo.connect("changed", self._on_default_changed)
-        left.pack_start(self._default_combo, False, False, 0)
+        default_row.pack_start(self._default_combo, False, False, 0)
+        col.pack_start(default_card, False, False, 0)
 
         # User-created profiles are managed from the profile switcher popover
         # (top-left), where they list alongside the onboard ones — see
-        # MousePerspective. This tab only maps games to profiles.
-
-        # ─── Right column: rules list ─────────────────────────────────────────
-        right = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=0,
-            border_width=20,
-            hexpand=True,
-        )
-        self.pack_start(right, True, True, 0)
-
-        # Header
-        rules_header = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL,
-            spacing=8,
-            margin_bottom=8,
-        )
-        rules_title = Gtk.Label(hexpand=True)
-        rules_title.set_markup(f'<span weight="bold">{_("Game rules")}</span>')
-        rules_title.set_xalign(0)
-        self._add_btn = Gtk.Button(label=_("+ Add rule"))
-        self._add_btn.get_style_context().add_class("suggested-action")
-        self._add_btn.connect("clicked", self._on_add_rule)
-        rules_header.pack_start(rules_title, True, True, 0)
-        rules_header.pack_start(self._add_btn, False, False, 0)
-        right.pack_start(rules_header, False, False, 0)
-
-        sub2 = Gtk.Label(xalign=0, margin_bottom=14)
-        sub2.set_markup(
-            '<span size="small" foreground="grey">'
-            + _(
-                "Each rule maps a game's executable name to a profile. "
-                "AutoPilot checks every 2 seconds."
-            )
-            + "</span>"
-        )
-        right.pack_start(sub2, False, False, 0)
-
-        # Scrollable rules list
-        scroll = Gtk.ScrolledWindow(
-            hscrollbar_policy=Gtk.PolicyType.NEVER,
-            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
-            hexpand=True,
-            vexpand=True,
-        )
-        self._rules_box = Gtk.ListBox(
-            selection_mode=Gtk.SelectionMode.NONE,
-        )
-        self._rules_box.set_header_func(self._rules_header_func)
-        scroll.add(self._rules_box)
-        right.pack_start(scroll, True, True, 0)
-
-        self._refresh_rules()
+        # MousePerspective. This view only maps games to profiles.
 
     def _rules_header_func(self, row, before):
         """Add a separator between rows (Cheddar style)."""
