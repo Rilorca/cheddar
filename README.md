@@ -1,205 +1,207 @@
-Piper
-=====
+Piper AutoPilot
+===============
 
-Piper is a GTK+ application to configure gaming mice. Piper is merely a
-graphical frontend to the ratbagd DBus daemon, see [the libratbag
-README](https://github.com/libratbag/libratbag/blob/master/README.md#running-ratbagd-as-dbus-activated-systemd-service)
-for instructions on how to run ratbagd.
+**Piper AutoPilot** is a fork of [Piper](https://github.com/libratbag/piper)
+— the GTK frontend for configuring gaming mice — that adds **automatic
+per-game profile switching** on Linux, the way Logitech G HUB does on Windows.
 
-If you are running piper from git, we recommend using libratbag from git
-as well to make sure the latest bugfixes are applied.
+Set up your mouse the way you like it for each game, map games to those
+profiles, and Piper AutoPilot switches the mouse automatically when you launch
+or alt-tab into a game — even while its window is closed, thanks to a small
+background service.
 
-Supported Devices
-=================
-Piper is merely a frontend, the list of supported devices depends on
-libratbag. See [the libratbag device
-files](https://github.com/libratbag/libratbag/tree/master/data/devices) for
-a list of all known devices.  The device-specific protocols usually have to
-be reverse-engineered and the features available may vary to the
-manufacturer's advertized features.
+Everything the original Piper does (buttons, DPI/resolutions, LEDs, macros)
+still works exactly the same; AutoPilot is an extra tab plus a background
+daemon.
 
-Screenshots
-===========
+Features
+--------
 
-![resolution configuration screenshot](https://github.com/libratbag/piper/blob/wiki/screenshots/piper-resolutionpage.png)
+- **Per-game profile switching.** Map a game to a profile; the mouse switches
+  to it when the game runs and back to your default when it closes.
+- **Follows the focused game.** With several games open, the one whose window
+  is focused wins — alt-tab and the mouse follows.
+- **Steam / Proton, Lutris and Heroic aware.** Detects Windows games running
+  under Wine/Proton, not just native Linux binaries.
+- **Pick games from a list.** The rule editor lists your installed games with
+  their icons, so you don't have to type executable names.
+- **Unlimited profiles.** The mouse only has a few onboard slots (3 on the
+  G600); AutoPilot stores as many named profiles as you want on your PC and
+  loads them onto the mouse on demand — the same trick G HUB uses.
+- **Runs in the background.** A systemd user service keeps switching profiles
+  with no window open.
 
-![button configuration screenshot](https://github.com/libratbag/piper/blob/wiki/screenshots/piper-buttonpage.png)
+Requirements
+------------
 
-![LED configuration screenshot](https://github.com/libratbag/piper/blob/wiki/screenshots/piper-ledpage.png)
+Piper AutoPilot is a frontend for **ratbagd** (from
+[libratbag](https://github.com/libratbag/libratbag)), which does the actual
+talking to the mouse. Your mouse must be
+[supported by libratbag](https://github.com/libratbag/libratbag/tree/master/data/devices)
+and have onboard profiles (most Logitech gaming mice do).
 
-And if you see the mousetrap, something isn't right. Usually this means that
-either ratbagd is not running (like in this screenshot), ratbagd needs to be
-updated to a newer version, or some other unexpected error occured.
+Runtime dependencies:
 
-![The error page](https://github.com/libratbag/piper/blob/wiki/screenshots/piper-errorpage.png)
+- `ratbagd` / `libratbag` (0.18 or newer)
+- GTK 3, PyGObject
+- Python 3 with the modules `lxml`, `evdev`, `cairo`, `gi`
+- `xprop` — *optional but recommended*; enables focus-based switching. Without
+  it, AutoPilot still switches to whichever mapped game is running, just
+  without the focus preference. It ships in `xorg-xprop` (Arch) /
+  `x11-utils` (Debian/Ubuntu).
 
-Installing Piper
-================
+Installation
+------------
 
-See [our Wiki](https://github.com/libratbag/piper/wiki/Installation) for how to install Piper.
+There is no distribution package yet, so install by building from source. It's
+a Python/GTK app — the build is quick and needs no compiler.
 
-Building Piper from git
-=======================
-
-Piper uses the [meson build system](http://mesonbuild.com/). Run the following
-commands to clone Piper and initialize the build:
+### Arch Linux / CachyOS / Manjaro
 
 ```sh
-git clone https://github.com/libratbag/piper.git
-cd piper
-meson builddir --prefix=/usr/
-```
+# 1. Dependencies
+sudo pacman -S --needed meson ninja libratbag gtk3 python-gobject \
+                        python-lxml python-evdev python-cairo xorg-xprop
 
-To build or re-build after code-changes and install, run:
-
-```sh
+# 2. Get the source and build
+git clone <this-repository-url> piper-autopilot
+cd piper-autopilot
+meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
+
+# 3. Make sure ratbagd is running
+sudo systemctl enable --now ratbagd
 ```
 
-Note: `builddir` is the build output directory and can be changed to any other
-directory name.
-
-See [our Wiki](https://github.com/libratbag/piper/wiki/Installation) for what
-to do when you encounter missing dependencies.
-
-Contributing
-============
-
-Yes please. It's best to contact us first to see what you could do. Note that
-the devices displayed by Piper come from libratbag.
-
-For quicker development iteration, there is a special binary `piper.devel`
-that uses data files from the git directory. This removes the need to
-install piper after every code change.
+### Debian / Ubuntu
 
 ```sh
+sudo apt install meson ninja-build ratbagd gir1.2-gtk-3.0 python3-gi \
+                 python3-lxml python3-evdev python3-cairo x11-utils
+git clone <this-repository-url> piper-autopilot
+cd piper-autopilot
+meson setup builddir --prefix=/usr
 ninja -C builddir
-./builddir/piper.devel
+sudo ninja -C builddir install
+sudo systemctl enable --now ratbagd
 ```
-Note that this still requires ratbagd to run on the system bus.
 
-Piper tries to conform to Python's PEP8 style guide using the `black` formatter.
-Checking if code is formatted is done as a part of the test suite.
-
-You can check if your code passes tests before submitting changes using the
-following command:
+### Fedora
 
 ```sh
-meson test -C builddir
+sudo dnf install meson ninja-build libratbag-ratbagd gtk3 python3-gobject \
+                 python3-lxml python3-evdev python3-cairo xprop
+git clone <this-repository-url> piper-autopilot
+cd piper-autopilot
+meson setup builddir --prefix=/usr
+ninja -C builddir
+sudo ninja -C builddir install
+sudo systemctl enable --now ratbagd
 ```
 
-Source
-======
+After installing, launch **Piper** from your application menu (or run `piper`).
 
-```sh
-git clone https://github.com/libratbag/piper.git
-```
+> **Note on Flatpak:** the upstream Piper is on Flathub, but that is the
+> *original* Piper without AutoPilot. This fork is not packaged as a Flatpak
+> (a sandboxed Flatpak also couldn't watch host processes or the focused
+> window), so build from source as above.
 
-Bugs
-====
+Enabling the background service
+-------------------------------
 
-Bugs can be reported in the issue tracker on our GitHub repo:
-https://github.com/libratbag/piper/issues
-
-License
-=======
-
-Licensed under the GPLv2. See the
-[COPYING](https://github.com/libratbag/piper/blob/master/COPYING) file for the
-full license information.
-
----
-
-## AutoPilot — automatic profile switching (fork addition)
-
-This fork adds an **AutoPilot** tab to every device's configuration screen.
-
-### What it does
-
-AutoPilot watches running processes (`/proc`) every 2 seconds. When a mapped
-game executable is detected, it automatically switches the G600 to the
-configured profile. When the game closes, it returns to the default profile.
-
-Both native Linux games and **Wine/Proton games** (Steam, Lutris, Heroic) are
-detected: for Proton titles `/proc/PID/exe` points at the wine preloader, so
-the watcher also inspects the Windows-style path in `argv[0]`
-(e.g. `Z:\Games\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe` → `cyberpunk2077.exe`).
-Rules match case-insensitively and the `.exe` extension is optional.
-
-### How to use
-
-1. Open Piper as usual (`piper` or `./piper.in`)
-2. Select your G600 — you'll see the normal tabs (Resolutions, Buttons, LEDs,
-   Advanced) **plus a new "AutoPilot" tab**
-3. In the AutoPilot tab:
-   - Set the **Default Profile** (used when no game is running)
-   - Click **+ Add rule** and map an executable (e.g. `cs2`) to a profile
-   - Toggle **Enable AutoPilot** — the watcher starts immediately
-4. Rules are saved to `~/.config/piper/autopilot.json` and auto-restored
-
-### Headless daemon (no GUI needed)
-
-Profile switching should not require keeping a window open — that's the job
-G HUB's background service does on Windows. This fork ships a headless daemon
-that runs the same watcher against ratbagd directly:
-
-```sh
-python3 -m piper.autopilot_daemon        # foreground, Ctrl+C to stop
-```
-
-It reads the same `~/.config/piper/autopilot.json` the GUI writes and reloads
-it live when you edit rules in the AutoPilot tab. Running it alongside the GUI
-is harmless (switches are idempotent).
-
-A systemd **user** unit is installed with the app; enable it to start on login:
+For profiles to keep switching while Piper's window is closed, enable the
+per-user service once:
 
 ```sh
 systemctl --user enable --now piper-autopilot
 ```
 
-### Software profiles (unlimited, like G HUB)
+It starts on every login and reads the same settings the GUI writes, applying
+rule changes live. Check what it's doing with:
 
-The mouse's onboard memory only holds a few profile slots (3 on the G600).
-Like G HUB, AutoPilot works around this with unlimited **user profiles**,
-managed straight from the profile switcher (top-left): "Añadir perfil"
-captures the mouse's current setup (buttons, macros, LEDs, resolutions,
-report rate) under a name, into `~/.config/piper/autopilot_profiles.json`.
-User profiles list in the switcher marked with a person icon — click one to
-load it onto the mouse (then tweak it in the other tabs and save it again
-under the same name). Game rules can target them like any profile.
+```sh
+journalctl --user -u piper-autopilot -f
+```
 
-Under the hood a scratch onboard slot receives them (the last slot by
-default; `"scratch_slot"` in `autopilot.json` overrides). While AutoPilot is
-enabled that slot is hidden from the switcher, since its contents are
-managed by AutoPilot and get overwritten on game launches.
+If you prefer, you can skip the service and just keep Piper's window open —
+the AutoPilot tab has its own switch that does the same thing while it's open.
 
-Per-profile backups of the onboard configuration are also written to
-`~/.config/piper/backups/` the first time you experiment — keep them.
+Using AutoPilot
+---------------
 
-### Files added / modified
+1. Open Piper and select your mouse. Alongside the usual tabs (Resolutions,
+   Buttons, LEDs, Advanced) you'll see a new **AutoPilot** tab.
+2. **Create your profiles.** Set the mouse up how you want for a game in the
+   Buttons / LEDs / Resolutions tabs, then open the profile menu (top-left)
+   and click **Añadir perfil / Add profile** to save it under a name (e.g.
+   "Overwatch"). Your profiles appear in that menu with a person icon; click
+   one to load it, tweak it, and hit **Apply** to save the changes back.
+3. **Set the default profile** in the AutoPilot tab — used when no mapped game
+   is running.
+4. **Add rules.** Click **+ Add rule**, pick a game from the list (or type its
+   executable name), and choose the profile to switch to.
+5. **Turn on the switch** ("Enable AutoPilot"). Done — launch a game and the
+   mouse follows.
 
-| File | Change |
-|---|---|
-| `piper/autopilotpage.py` | New — the AutoPilot tab widget |
-| `piper/autopilot_watcher.py` | New — `/proc` scanner background thread (native + Wine/Proton) |
-| `piper/autopilot_config.py` | New — JSON config persistence |
-| `piper/autopilot_daemon.py` | New — headless daemon (`python3 -m piper.autopilot_daemon`) |
-| `data/piper-autopilot.service` | New — systemd user unit for the daemon |
-| `piper/mouseperspective.py` | Modified — adds AutoPilot tab to stack |
-| `piper/window.py` | Modified — perspective shutdown on window destroy |
+Settings live in `~/.config/piper/`:
 
-### Why /proc?
+- `autopilot.json` — rules, default profile, on/off
+- `autopilot_profiles.json` — your named profiles
+- `backups/` — automatic backups of your mouse's onboard profiles
 
-- No root required
-- Works on Wayland (no X11 dependency)
-- No extra dependencies beyond what Piper already needs
+How it works (and one thing to know)
+------------------------------------
 
-### Known conflict: Solaar (Arch/CachyOS)
+AutoPilot watches running processes via `/proc` (no root needed, works on
+Wayland). For Wine/Proton games it reads the game's Windows-style path from the
+process command line, since the Linux executable is just the Wine loader.
 
-If Solaar is running when ratbagd starts, ratbagd may fail to enumerate the
-G600 (`Error while requesting profile: -32`, `invalid dpi list`) and Piper
-will report no devices — the symptoms mimic upstream libratbag bug #1291 but
-the fix is local: stop Solaar **first**, then `sudo systemctl restart ratbagd`
-(or replug the mouse). Keep Solaar out of autostart, or configure it to ignore
-the G600.
+Because the mouse only has a few onboard slots, your named ("software")
+profiles are stored on your PC and written into **one reserved onboard slot**
+when needed (the last slot by default). While AutoPilot is enabled that slot is
+hidden from the profile menu, because AutoPilot manages it and overwrites it on
+game launches. If you want AutoPilot to use a different slot, set
+`"scratch_slot"` in `~/.config/piper/autopilot.json`. Your other onboard slots
+are never touched.
+
+Troubleshooting
+---------------
+
+**"Cannot find any devices" / the mousetrap screen.** ratbagd isn't running or
+can't see your mouse. Start it with `sudo systemctl start ratbagd` and replug
+the mouse.
+
+**Solaar breaks detection (Logitech mice).** If [Solaar](https://pwr-solaar.github.io/Solaar/)
+is running when ratbagd starts, ratbagd may fail to read the mouse
+(`Error while requesting profile: -32`, `invalid dpi list`) and Piper shows no
+devices. This looks like a libratbag bug but isn't — the fix is to **stop
+Solaar first**, then `sudo systemctl restart ratbagd` (or replug the mouse).
+Keep Solaar out of autostart, or configure it to ignore the mouse, if you use
+both.
+
+**A game isn't detected.** Watch the daemon log while launching it:
+`journalctl --user -u piper-autopilot -f`. Then add a rule for the executable
+name you see. Names are case-insensitive and the `.exe` is optional.
+
+Contributing / development
+--------------------------
+
+For quick iteration without installing, `meson setup builddir` then run the
+in-tree binary:
+
+```sh
+ninja -C builddir
+./builddir/piper.devel
+```
+
+Code is formatted with `black` and linted with `ruff` (run `meson test -C
+builddir`). This fork's code lives in `piper/autopilot_*.py` and
+`data/piper-autopilot.service`, with small edits to `piper/mouseperspective.py`
+and `piper/window.py`.
+
+License
+-------
+
+GPL-2.0-or-later, same as upstream Piper. See [COPYING](COPYING).
+Based on [Piper](https://github.com/libratbag/piper) by the libratbag project.
