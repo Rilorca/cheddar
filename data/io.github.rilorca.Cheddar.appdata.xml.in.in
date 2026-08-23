@@ -1,48 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.rilorca.Cheddar</id>
-  <developer id="io.github.libratbag">
-    <name>libratbag developers</name>
+  <developer id="io.github.rilorca">
+    <name>Rilorca</name>
   </developer>
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <content_rating type="oars-1.1" />
   <name translatable="no">Cheddar</name>
-  <summary>Gaming mouse configuration utility</summary>
+  <summary>Automatic per-game profile switching for gaming mice</summary>
   <description>
     <p>
-      Cheddar is a graphical user interface to configure gaming mice.
-      Configuration options include changing the resolution (DPI) of the
-      mouse, adding and removing profiles, setting LED colors and changing
-      button behaviors.
+      Cheddar configures gaming mice on Linux and switches the mouse's profile
+      automatically depending on which game is running — the way Logitech
+      G HUB does on Windows. Set the mouse up the way you like it for each
+      game, map games to those profiles, and Cheddar switches automatically
+      when you launch or alt-tab into a game.
     </p>
     <p>
-      Cheddar requires libratbag’s ratbagd, the daemon to actually communicate with the
-      mice. Cheddar is merely a front end to ratbagd, ratbagd must be
-      installed and running when Cheddar is launched.
+      It detects native Linux games as well as Windows games run through
+      Steam/Proton, Lutris and Heroic, and stores unlimited named profiles on
+      your PC even though the mouse only has a few onboard slots. It keeps the
+      full configuration ability of Piper, which it is based on: resolution
+      (DPI), profiles, LED colors and button behaviors.
+    </p>
+    <p>
+      Cheddar is a front end to libratbag's ratbagd, which must be installed
+      and running for the mouse to be detected.
     </p>
   </description>
 
   <launchable type="desktop-id">io.github.rilorca.Cheddar.desktop</launchable>
 
-  <screenshots>
-    <screenshot type="default">
-      <caption>The button configuraton page</caption>
-      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/cheddar-buttonpage.png</image>
-    </screenshot>
-    <screenshot>
-      <caption>The LED configuraton page</caption>
-      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/cheddar-ledpage.png</image>
-    </screenshot>
-    <screenshot>
-      <caption>The resolution configuraton page</caption>
-      <image>https://github.com/libratbag/piper/raw/wiki/screenshots/flathub/cheddar-resolutionpage.png</image>
-    </screenshot>
-  </screenshots>
-
-  <url type="homepage">https://github.com/libratbag/piper/</url>
-  <url type="bugtracker">https://github.com/libratbag/piper/issues</url>
-  <url type="help">https://github.com/libratbag/piper/wiki</url>
+  <url type="homepage">https://github.com/Rilorca/cheddar</url>
+  <url type="bugtracker">https://github.com/Rilorca/cheddar/issues</url>
 
   <translation type="gettext">cheddar</translation>
 

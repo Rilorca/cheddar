@@ -1,0 +1,34 @@
+# Maintainer: Rilorca <roilorcas@gmail.com>
+pkgname=cheddar-git
+_pkgname=cheddar
+pkgver=0.8.r0.g0000000
+pkgrel=1
+pkgdesc="Automatic per-game profile switching for gaming mice (a Piper fork)"
+arch=('any')
+url="https://github.com/Rilorca/cheddar"
+license=('GPL-2.0-or-later')
+depends=('libratbag' 'gtk3' 'python-gobject' 'python-lxml' 'python-evdev'
+         'python-cairo')
+optdepends=('xorg-xprop: focus-based profile switching (recommended)')
+makedepends=('meson' 'git')
+provides=('cheddar')
+conflicts=('cheddar')
+install="$_pkgname.install"
+source=("$_pkgname::git+https://github.com/Rilorca/cheddar.git")
+sha256sums=('SKIP')
+
+pkgver() {
+	cd "$_pkgname"
+	printf '0.8.r%s.g%s' \
+		"$(git rev-list --count HEAD)" \
+		"$(git rev-parse --short HEAD)"
+}
+
+build() {
+	arch-meson "$_pkgname" build
+	meson compile -C build
+}
+
+package() {
+	meson install -C build --destdir "$pkgdir"
+}
