@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&display=swap">
+  <style>
+    :root{
+      --bg:#242424;--hb:#2f2f2f;--card:#333333;--line:rgba(255,255,255,.08);
+      --txt:#ffffff;--dim:rgba(255,255,255,.56);--dim2:rgba(255,255,255,.4);
+      --acc:#3584e4;--grn:#33d17a;
+    }
+    body{margin:0;font-family:'Cantarell',system-ui,sans-serif;}
+    a{color:var(--acc);} a:hover{color:#5a9bec;}
+    .win{width:1040px;height:680px;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden;font-size:14px;}
+    .hb{height:47px;flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--hb);border-bottom:1px solid var(--line);}
+    .devbtn{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:6px;color:var(--txt);font-weight:600;}
+    .switcher{display:flex;background:rgba(255,255,255,.06);border-radius:9px;padding:3px;gap:2px;}
+    .seg{display:flex;align-items:center;gap:7px;padding:6px 15px;border-radius:6px;color:var(--dim);font-weight:700;font-size:13px;}
+    .seg.on{background:rgba(255,255,255,.13);color:var(--txt);}
+    .wctl{display:flex;gap:2px;color:var(--dim2);}
+    .wc{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+    .toolbar{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:13px 24px;border-bottom:1px solid var(--line);}
+    .pill{display:inline-flex;align-items:center;gap:9px;padding:8px 12px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--txt);}
+    .subswitch{display:flex;background:rgba(255,255,255,.06);border-radius:8px;padding:3px;gap:2px;}
+    .sub{display:flex;align-items:center;gap:7px;padding:6px 13px;border-radius:6px;color:var(--dim);font-weight:600;font-size:13px;}
+    .sub.on{background:rgba(255,255,255,.12);color:var(--txt);}
+    .btn-acc{display:inline-flex;align-items:center;gap:6px;background:var(--acc);color:#fff;font-weight:700;font-size:13px;padding:9px 15px;border-radius:7px;}
+    .stage{flex:1;overflow:hidden;display:flex;align-items:stretch;padding:14px 20px 18px;gap:6px;}
+    .col{width:212px;flex:0 0 auto;display:flex;flex-direction:column;justify-content:space-between;padding:4px 0;}
+    .map{flex:1;display:flex;align-items:center;justify-content:center;}
+    .map img{width:100%;height:100%;object-fit:contain;}
+    .arow{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+    .arow.sel{background:rgba(53,132,228,.16);border-color:var(--acc);}
+    .tag{font-size:10px;font-weight:800;color:var(--dim2);letter-spacing:.03em;width:26px;flex:0 0 auto;}
+    .arow.sel .tag{color:#89b4f0;}
+    .ti{color:var(--dim);display:flex;flex:0 0 auto;}
+    .lab{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .lab.empty{color:var(--dim2);font-weight:500;}
+  </style>
+</helmet>
+<div class="win">
+  <div class="hb">
+    <div class="devbtn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>
+      <span>Logitech G600</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div style="flex:1;display:flex;justify-content:center;">
+      <div class="switcher">
+        <div class="seg">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="5"/><line x1="7" y1="11" x2="9" y2="11"/><line x1="8" y1="10" x2="8" y2="12"/><circle cx="16" cy="11" r=".6" fill="currentColor"/><circle cx="18" cy="13" r=".6" fill="currentColor"/></svg>
+          AutoPilot
+        </div>
+        <div class="seg on">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>
+          Mouse setup
+        </div>
+      </div>
+    </div>
+    <div class="wctl">
+      <div class="wc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg></div>
+      <div class="wc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></div>
+      <div class="wc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <span style="font-size:13px;color:var(--dim);font-weight:600;">Editing profile</span>
+    <div class="pill" style="font-weight:700;">
+      <span style="width:14px;height:14px;border-radius:4px;background:linear-gradient(135deg,#e0483a,#c0362b);"></span>
+      FPS
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div style="flex:1;display:flex;justify-content:center;">
+      <div class="subswitch">
+        <div class="sub on">Buttons</div>
+        <div class="sub">Lighting</div>
+        <div class="sub">Sensitivity</div>
+      </div>
+    </div>
+    <div class="btn-acc">Apply</div>
+  </div>
+
+  <div class="stage">
+    <!-- LEFT column: thumb buttons G9-G20 -->
+    <div class="col">
+      <div class="arow"><span class="tag">G9</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">Semicolon ;</span></div>
+      <div class="arow"><span class="tag">G10</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">E</span></div>
+      <div class="arow"><span class="tag">G11</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">V</span></div>
+      <div class="arow"><span class="tag">G12</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">Paste</span></div>
+      <div class="arow sel"><span class="tag">G13</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">5</span></div>
+      <div class="arow"><span class="tag">G14</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">6</span></div>
+      <div class="arow"><span class="tag">G15</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">F</span></div>
+      <div class="arow"><span class="tag">G16</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">8</span></div>
+      <div class="arow"><span class="tag">G17</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">9</span></div>
+      <div class="arow"><span class="tag">G18</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">0</span></div>
+      <div class="arow"><span class="tag">G19</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">Minus &minus;</span></div>
+      <div class="arow"><span class="tag">G20</span><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">Equal =</span></div>
+    </div>
+
+    <!-- CENTER: Piper's real G600 map, unchanged -->
+    <div class="map"><img src="logitech-g600.svg" alt="Logitech G600 button map"></div>
+
+    <!-- RIGHT column: main buttons -->
+    <div class="col">
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg></span><span class="lab">Left click</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg></span><span class="lab">Right click</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg></span><span class="lab">Middle click</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg></span><span class="lab">Forward</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg></span><span class="lab">Back</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg></span><span class="lab">Esc</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 9 6 9"/><path d="M3.5 13.5a8 8 0 1 0 1.8-8.4L1 9"/></svg></span><span class="lab">Next profile</span></div>
+      <div class="arow"><span class="ti"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 9 6 9"/><path d="M3.5 13.5a8 8 0 1 0 1.8-8.4L1 9"/></svg></span><span class="lab">Cycle DPI</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

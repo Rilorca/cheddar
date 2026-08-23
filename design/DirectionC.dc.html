@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&display=swap">
+  <style>
+    :root{
+      --bg:#242424;--hb:#2f2f2f;--card:#333333;--card2:#3a3a3a;--line:rgba(255,255,255,.08);
+      --txt:#ffffff;--dim:rgba(255,255,255,.56);--dim2:rgba(255,255,255,.38);--acc:#3584e4;--grn:#33d17a;
+    }
+    body{margin:0;font-family:'Cantarell',system-ui,sans-serif;}
+    a{color:var(--acc);} a:hover{color:#5a9bec;}
+    .win{width:1040px;height:680px;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden;font-size:14px;}
+    .hb{height:47px;flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--hb);border-bottom:1px solid var(--line);}
+    .devbtn{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:6px;color:var(--txt);font-weight:700;}
+    .wctl{display:flex;gap:2px;color:var(--dim2);}
+    .wc{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+    .scroll{flex:1;overflow:hidden;padding:26px 32px;display:flex;flex-direction:column;gap:22px;}
+    .hero{background:linear-gradient(135deg,#343434,#2c2c2c);border:1px solid var(--line);border-radius:16px;padding:22px 26px;display:flex;align-items:center;gap:24px;}
+    .master{display:flex;align-items:center;gap:16px;}
+    .sw{width:54px;height:30px;border-radius:20px;background:var(--acc);position:relative;flex:0 0 auto;}
+    .sw::after{content:"";position:absolute;top:3px;left:27px;width:24px;height:24px;border-radius:50%;background:#fff;}
+    .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--dim);text-transform:uppercase;}
+    .pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;width:150px;flex:0 0 auto;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;}
+    .pdot{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;}
+    .pname{font-weight:700;font-size:14px;}
+    .padd{border:1.5px dashed rgba(255,255,255,.2);background:transparent;color:var(--dim);justify-content:center;}
+    .grow{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 18px;}
+    .gicon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;color:#fff;flex:0 0 auto;}
+    .pill{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:14px;font-weight:600;color:var(--txt);}
+    .arrow{color:var(--dim2);display:flex;}
+    .title{font-size:16px;font-weight:700;}
+    .sub{font-size:13px;color:var(--dim);margin-top:2px;}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--grn);background:rgba(51,209,122,.13);padding:5px 11px;border-radius:20px;}
+  </style>
+</helmet>
+<div class="win">
+  <div class="hb">
+    <div class="devbtn">
+      <span style="width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#ffd34d,#f0a92b);display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a4e12" stroke-width="2.4" stroke-linecap="round"><path d="M4 8l16-1-11 12z"/></svg>
+      </span>
+      Cheddar
+    </div>
+    <div style="flex:1;"></div>
+    <div class="wctl">
+      <div class="wc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg></div>
+      <div class="wc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></div>
+      <div class="wc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <!-- hero: device + master switch -->
+    <div class="hero">
+      <svg width="72" height="108" viewBox="0 0 72 108" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2"><rect x="6" y="4" width="60" height="100" rx="29"/><line x1="36" y1="6" x2="36" y2="44"/><rect x="30" y="16" width="12" height="22" rx="6" fill="rgba(255,255,255,.16)" stroke="none"/></svg>
+      <div style="flex:1;">
+        <div style="font-size:22px;font-weight:700;">Logitech G600</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <span class="chip">● Desktop profile active</span>
+          <span class="sub" style="margin:0;">no game running</span>
+        </div>
+      </div>
+      <div class="master">
+        <div style="text-align:right;"><div style="font-weight:700;font-size:15px;">AutoPilot</div><div class="sub">On</div></div>
+        <div class="sw"></div>
+      </div>
+    </div>
+
+    <!-- profiles -->
+    <div>
+      <div class="lbl" style="margin-bottom:12px;">Your profiles</div>
+      <div style="display:flex;gap:14px;">
+        <div class="pcard"><div class="pdot" style="background:rgba(255,255,255,.08);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8"/></svg></div><div class="pname">Desktop</div></div>
+        <div class="pcard"><div class="pdot" style="background:linear-gradient(135deg,#e0483a,#c0362b);"></div><div class="pname">FPS</div></div>
+        <div class="pcard"><div class="pdot" style="background:linear-gradient(135deg,#3584e4,#2b6fc4);"></div><div class="pname">MMO</div></div>
+        <div class="pcard"><div class="pdot" style="background:linear-gradient(135deg,#f0731e,#e85d1a);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></div><div class="pname">Overwatch</div></div>
+        <div class="pcard padd"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><div class="pname" style="color:var(--dim);">New</div></div>
+      </div>
+    </div>
+
+    <!-- rules -->
+    <div>
+      <div style="display:flex;align-items:center;margin-bottom:12px;">
+        <div class="lbl" style="flex:1;">Which profile for each game</div>
+        <a href="#" style="font-size:13px;font-weight:700;text-decoration:none;">+ Add game</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="grow">
+          <div class="gicon" style="background:linear-gradient(135deg,#f0731e,#e85d1a);">O</div>
+          <div style="flex:1;"><div class="title">Overwatch</div><div class="sub">overwatch.exe</div></div>
+          <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></span>
+          <div class="pill">Overwatch<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+        <div class="grow">
+          <div class="gicon" style="background:linear-gradient(135deg,#6f57c9,#513f9e);">D</div>
+          <div style="flex:1;"><div class="title">Disco Elysium</div><div class="sub">disco.exe</div></div>
+          <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></span>
+          <div class="pill">Disco<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

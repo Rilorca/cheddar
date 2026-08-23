@@ -1,0 +1,18 @@
+{
+  "pages": [
+    { "id": "page-a", "name": "Direction A" },
+    { "id": "page-alt", "name": "Other directions" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "page-a", "x": 0, "y": 0, "w": 1040, "h": 680, "title": "AutoPilot  (home)" },
+    { "file": "MouseSetup.dc.html", "page": "page-a", "x": 1160, "y": 0, "w": 1040, "h": 680, "title": "Mouse setup  (2nd tab)" },
+    { "file": "DirectionB.dc.html", "page": "page-alt", "x": 0, "y": 0, "w": 1040, "h": 680, "title": "B · Unified sidebar" },
+    { "file": "DirectionC.dc.html", "page": "page-alt", "x": 1160, "y": 0, "w": 1040, "h": 680, "title": "C · Calm cards" }
+  ],
+  "annotations": [
+    { "id": "note-home", "page": "page-a", "x": 0, "y": -150, "w": 520, "text": "TAB 1 · AUTOPILOT (home)\nThe view you picked — the game→profile list, front and center, with the master On/Off." },
+    { "id": "note-setup", "page": "page-a", "x": 1160, "y": -150, "w": 520, "text": "TAB 2 · MOUSE SETUP  ← new\nThe second segment of the top switcher. Pick which profile you're editing (top-left), then Buttons / Lighting / Sensitivity. Click a thumb button on the map to change what it does in the panel on the right. One \"Apply\" writes it to the mouse." },
+    { "id": "note-alt", "page": "page-alt", "x": 0, "y": -110, "w": 620, "text": "The two directions you didn't pick, kept here for reference." }
+  ],
+  "launch": { "view": "canvas", "page": "page-a" }
+}

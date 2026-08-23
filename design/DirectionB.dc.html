@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&display=swap">
+  <style>
+    :root{
+      --bg:#242424;--hb:#2f2f2f;--side:#2a2a2a;--card:#333333;--line:rgba(255,255,255,.08);
+      --txt:#ffffff;--dim:rgba(255,255,255,.56);--dim2:rgba(255,255,255,.38);--acc:#3584e4;--grn:#33d17a;
+    }
+    body{margin:0;font-family:'Cantarell',system-ui,sans-serif;}
+    a{color:var(--acc);} a:hover{color:#5a9bec;}
+    .win{width:1040px;height:680px;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden;font-size:14px;}
+    .hb{height:47px;flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--hb);border-bottom:1px solid var(--line);}
+    .devbtn{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:6px;color:var(--txt);font-weight:600;}
+    .wctl{display:flex;gap:2px;color:var(--dim2);}
+    .wc{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+    .body2{flex:1;display:flex;overflow:hidden;}
+    .side{width:270px;flex:0 0 auto;border-right:1px solid var(--line);background:var(--side);display:flex;flex-direction:column;padding:14px 12px;gap:3px;}
+    .h2{font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--dim2);text-transform:uppercase;margin:6px 8px 6px;}
+    .srow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:7px;color:var(--txt);font-size:14px;font-weight:600;}
+    .srow.sel{background:rgba(53,132,228,.18);}
+    .srow .ic{color:var(--dim);display:flex;flex:0 0 auto;}
+    .srow.sel .ic{color:#89b4f0;}
+    .badge{margin-left:auto;font-size:11px;font-weight:700;color:var(--grn);background:rgba(51,209,122,.13);padding:2px 8px;border-radius:20px;}
+    .gic{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex:0 0 auto;}
+    .addrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:7px;color:var(--acc);font-size:14px;font-weight:700;}
+    .swrow{margin-top:auto;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);}
+    .sw{width:42px;height:24px;border-radius:20px;background:var(--acc);position:relative;flex:0 0 auto;}
+    .sw::after{content:"";position:absolute;top:3px;left:21px;width:18px;height:18px;border-radius:50%;background:#fff;}
+    .pane{flex:1;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:18px;}
+    .ptitle{font-size:20px;font-weight:700;}
+    .psub{font-size:13px;color:var(--dim);margin-top:3px;}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 18px;}
+    .grouplbl{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-bottom:12px;}
+    .setrow{display:flex;align-items:center;gap:12px;padding:8px 0;}
+    .setrow+.setrow{border-top:1px solid var(--line);}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--txt);}
+    .dot{width:16px;height:16px;border-radius:5px;flex:0 0 auto;}
+  </style>
+</helmet>
+<div class="win">
+  <div class="hb">
+    <div class="devbtn">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>
+      Logitech G600
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="wctl">
+      <div class="wc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg></div>
+      <div class="wc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></div>
+      <div class="wc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></div>
+    </div>
+  </div>
+
+  <div class="body2">
+    <div class="side">
+      <div class="h2">Profiles</div>
+      <div class="srow"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/></svg></span>Desktop</div>
+      <div class="srow sel"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/></svg></span>FPS</div>
+      <div class="srow"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/></svg></span>MMO</div>
+      <div class="srow"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></span>Overwatch</div>
+      <div class="addrow"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New profile</div>
+
+      <div class="h2" style="margin-top:14px;">Games</div>
+      <div class="srow"><span class="gic" style="background:linear-gradient(135deg,#f0731e,#e85d1a);">O</span>Overwatch<span class="badge">now</span></div>
+      <div class="srow"><span class="gic" style="background:linear-gradient(135deg,#6f57c9,#513f9e);">D</span>Disco Elysium</div>
+      <div class="addrow"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add game</div>
+
+      <div class="swrow">
+        <div style="flex:1;"><div style="font-weight:700;font-size:13.5px;">AutoPilot</div><div style="font-size:11.5px;color:var(--dim);">Switching automatically</div></div>
+        <div class="sw"></div>
+      </div>
+    </div>
+
+    <div class="pane">
+      <div style="display:flex;align-items:flex-start;">
+        <div style="flex:1;">
+          <div class="ptitle">FPS</div>
+          <div class="psub">A profile stored on this PC · used by 1 game</div>
+        </div>
+        <div class="pill">Rename</div>
+      </div>
+
+      <div class="card">
+        <div class="grouplbl">Buttons</div>
+        <div style="display:flex;align-items:center;gap:20px;">
+          <svg width="70" height="104" viewBox="0 0 72 108" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><rect x="6" y="4" width="60" height="100" rx="29"/><line x1="36" y1="6" x2="36" y2="44"/><rect x="30" y="16" width="12" height="22" rx="6" fill="rgba(255,255,255,.14)" stroke="none"/></svg>
+          <div style="flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+            <div class="pill" style="justify-content:center;">G9 · Reload</div>
+            <div class="pill" style="justify-content:center;">G10 · Melee</div>
+            <div class="pill" style="justify-content:center;">G11 · Push</div>
+            <div class="pill" style="justify-content:center;">G12 · Ping</div>
+            <div class="pill" style="justify-content:center;color:var(--dim);">G13 · —</div>
+            <div class="pill" style="justify-content:center;color:var(--dim);">G14 · —</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;">
+        <div class="card" style="flex:1;">
+          <div class="grouplbl">Lighting</div>
+          <div class="setrow"><span class="dot" style="background:#f5c211;"></span><div style="flex:1;font-weight:600;">Solid yellow</div><div class="pill" style="padding:5px 9px;">Change</div></div>
+        </div>
+        <div class="card" style="flex:1;">
+          <div class="grouplbl">Sensitivity</div>
+          <div class="setrow"><div style="flex:1;font-weight:600;">1200 DPI</div><div class="pill" style="padding:5px 9px;">Edit</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -75,6 +75,9 @@ class MousePerspective(Gtk.Overlay):
         self._profile: Optional[RatbagdProfile] = None
         self._notification_error_timeout_id = 0
         self._autopilot_page: Optional[AutoPilotPage] = None
+        # Sub-stack holding the per-profile mouse-config pages (Resolutions,
+        # Buttons, LEDs, Advanced), nested inside the "Mouse setup" top view.
+        self._config_stack: Optional[Gtk.Stack] = None
 
     @GObject.Property
     def name(self) -> str:
@@ -117,14 +120,39 @@ class MousePerspective(Gtk.Overlay):
             self._on_active_profile_changed,
         )
 
-        # AutoPilot: create once per device (device-scoped, not profile-scoped).
-        # This must happen before _set_profile(), which is what populates the
-        # stack: it re-adds the AutoPilot page on every profile switch, so if
-        # the page did not exist yet the tab would be missing until the user
-        # switched profiles by hand.
+        # Two top-level views (Direction A redesign): "AutoPilot" is the home
+        # — the game→profile automation you touch daily — and "Mouse setup"
+        # holds the per-profile hardware configuration. The header switcher is
+        # bound to `stack`, so its two children become the top-level tabs.
         if self._autopilot_page is not None:
             self._autopilot_page.shutdown()
         self._autopilot_page = AutoPilotPage(device)
+
+        self.stack.foreach(Gtk.Widget.destroy)
+
+        # View 1 — AutoPilot home (device-scoped: it survives profile switches
+        # because only the nested config stack is rebuilt, never this one).
+        self.stack.add_titled(self._autopilot_page, "autopilot", _("AutoPilot"))
+
+        # View 2 — Mouse setup: a centered sub-switcher over the per-profile
+        # config pages. Those pages render the connected device's own SVG map,
+        # so the mouse shape stays correct for whatever mouse is plugged in.
+        mousesetup = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self._config_stack = Gtk.Stack()
+        self._config_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        sub_switcher = Gtk.StackSwitcher(
+            stack=self._config_stack,
+            halign=Gtk.Align.CENTER,
+            margin_top=8,
+            margin_bottom=8,
+        )
+        mousesetup.pack_start(sub_switcher, False, False, 0)
+        mousesetup.pack_start(self._config_stack, True, True, 0)
+        mousesetup.show_all()
+        self.stack.add_titled(mousesetup, "mousesetup", _("Mouse setup"))
+
+        # Open on the AutoPilot home.
+        self.stack.set_visible_child_name("autopilot")
 
         active_profile = device.active_profile
         assert active_profile is not None
@@ -252,33 +280,29 @@ class MousePerspective(Gtk.Overlay):
 
         self._profile = profile
 
-        # Remember the visible tab so profile switches (including the ones
-        # AutoPilot triggers in the background) don't yank the user back to
-        # the first tab.
-        visible_child_name = self.stack.get_visible_child_name()
+        # Only the nested config stack is rebuilt on a profile switch; the
+        # AutoPilot home (top-level view) is left untouched.
+        if self._config_stack is None:
+            return
 
-        # The AutoPilot page is device-scoped and must survive profile
-        # switches, so detach it before the foreach below: Gtk.Widget.destroy
-        # recursively destroys a container's children even while Python holds
-        # a reference, which would leave the tab as an empty shell when
-        # re-added.
-        if (
-            self._autopilot_page is not None
-            and self._autopilot_page.get_parent() is self.stack
-        ):
-            self.stack.remove(self._autopilot_page)
+        # Remember the visible config page so switching profiles (including the
+        # ones AutoPilot triggers in the background) doesn't jump back to the
+        # first page.
+        visible_child_name = self._config_stack.get_visible_child_name()
 
-        self.stack.foreach(Gtk.Widget.destroy)
+        self._config_stack.foreach(Gtk.Widget.destroy)
         if profile.resolutions:
-            self.stack.add_titled(
+            self._config_stack.add_titled(
                 ResolutionsPage(self._device, profile), "resolutions", _("Resolutions")
             )
         if profile.buttons:
-            self.stack.add_titled(
+            self._config_stack.add_titled(
                 ButtonsPage(self._device, profile), "buttons", _("Buttons")
             )
         if profile.leds:
-            self.stack.add_titled(LedsPage(self._device, profile), "leds", _("LEDs"))
+            self._config_stack.add_titled(
+                LedsPage(self._device, profile), "leds", _("LEDs")
+            )
         # TODO: get rid of this duplicated logic.
         are_report_rates_supported = (
             profile.report_rate != 0 and len(profile.report_rates) != 0
@@ -288,20 +312,16 @@ class MousePerspective(Gtk.Overlay):
             or profile.debounces
             or are_report_rates_supported
         ):
-            self.stack.add_titled(
+            self._config_stack.add_titled(
                 AdvancedPage(self._device, profile), "advanced", _("Advanced")
             )
 
-        # AutoPilot tab: always present, device-scoped (re-attach after stack.foreach(destroy))
-        if self._autopilot_page is not None:
-            self.stack.add_titled(self._autopilot_page, "autopilot", _("AutoPilot"))
-
-        # Restore the previously visible tab if it still exists.
+        # Restore the previously visible config page if it still exists.
         if (
             visible_child_name is not None
-            and self.stack.get_child_by_name(visible_child_name) is not None
+            and self._config_stack.get_child_by_name(visible_child_name) is not None
         ):
-            self.stack.set_visible_child_name(visible_child_name)
+            self._config_stack.set_visible_child_name(visible_child_name)
 
         self._on_profile_notify_dirty(profile, None)
 
