@@ -59,20 +59,34 @@ class TrayIcon:
         self._init_tray()
 
     def _init_tray(self) -> None:
-        icon_name = "io.github.rilorca.Cheddar-symbolic"
         self._menu = self._build_menu()
 
         if _Indicator is not None:
             try:
-                self._indicator = _Indicator.new(
-                    "io.github.rilorca.Cheddar",
-                    icon_name,
-                    _IndicatorCategory.APPLICATION_STATUS,
-                )
+                # Use a custom icon path with a non-symbolic icon to prevent
+                # KDE Plasma from recoloring the icon grey via its theme engine.
+                icon_theme_path = self._find_tray_icon_dir()
+                icon_name = "cheddar-tray"
+
+                if icon_theme_path:
+                    self._indicator = _Indicator.new_with_path(
+                        "io.github.rilorca.Cheddar",
+                        icon_name,
+                        _IndicatorCategory.APPLICATION_STATUS,
+                        icon_theme_path,
+                    )
+                else:
+                    # Fallback to standard icon name if custom path not found
+                    self._indicator = _Indicator.new(
+                        "io.github.rilorca.Cheddar",
+                        "io.github.rilorca.Cheddar-symbolic",
+                        _IndicatorCategory.APPLICATION_STATUS,
+                    )
+
                 self._indicator.set_status(_IndicatorStatus.ACTIVE)
                 self._indicator.set_menu(self._menu)
                 self._indicator.set_title("Cheddar")
-                if hasattr(self._indicator, "set_secondary_activate_target") and hasattr(self, "_show_item"):
+                if hasattr(self._indicator, "set_secondary_activate_target"):
                     self._indicator.set_secondary_activate_target(self._show_item)
                 return
             except Exception as e:
@@ -81,7 +95,7 @@ class TrayIcon:
         # Fallback to Gtk.StatusIcon (X11 / older desktops)
         if hasattr(Gtk, "StatusIcon"):
             try:
-                self._status_icon = Gtk.StatusIcon.new_from_icon_name(icon_name)
+                self._status_icon = Gtk.StatusIcon.new_from_icon_name("io.github.rilorca.Cheddar-symbolic")
                 self._status_icon.set_title("Cheddar")
                 self._status_icon.set_tooltip_text("Cheddar - AutoPilot")
                 self._status_icon.connect("activate", lambda *_: self._on_activate_window())
@@ -89,6 +103,19 @@ class TrayIcon:
                 self._status_icon.set_visible(True)
             except Exception as e:
                 logger.warning("Failed to initialize Gtk.StatusIcon: %s", e)
+
+    @staticmethod
+    def _find_tray_icon_dir() -> Optional[str]:
+        """Locate the directory containing the cheddar-tray.png icon."""
+        import os
+        candidates = [
+            os.path.join(d, "cheddar", "icons")
+            for d in ("/usr/share", "/usr/local/share", "/app/share")
+        ]
+        for path in candidates:
+            if os.path.isfile(os.path.join(path, "cheddar-tray.png")):
+                return path
+        return None
 
     def _on_status_icon_popup(self, icon, button, activate_time) -> None:
         self.update_menu()

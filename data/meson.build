@@ -31,6 +31,8 @@ install_data('io.github.rilorca.Cheddar.svg', install_dir: icondir)
 install_data('cheddar-autopilot.service',
              install_dir: join_paths(prefix, 'lib', 'systemd', 'user'))
 install_data('io.github.rilorca.Cheddar-symbolic.svg', install_dir: symbolicicondir)
+install_data('icons/tray/cheddar-tray.png',
+             install_dir: join_paths(pkgdatadir, 'icons'))
 
 i18n.merge_file(input: 'io.github.rilorca.Cheddar.desktop.in',
                 output: 'io.github.rilorca.Cheddar.desktop',
