@@ -72,6 +72,8 @@ class TrayIcon:
                 self._indicator.set_status(_IndicatorStatus.ACTIVE)
                 self._indicator.set_menu(self._menu)
                 self._indicator.set_title("Cheddar")
+                if hasattr(self._indicator, "set_secondary_activate_target") and hasattr(self, "_show_item"):
+                    self._indicator.set_secondary_activate_target(self._show_item)
                 return
             except Exception as e:
                 logger.warning("Failed to initialize AppIndicator tray: %s", e)
@@ -104,9 +106,9 @@ class TrayIcon:
         menu.append(Gtk.SeparatorMenuItem())
 
         # Open window
-        show_item = Gtk.MenuItem(label="Show Cheddar")
-        show_item.connect("activate", lambda *_: self._on_activate_window())
-        menu.append(show_item)
+        self._show_item = Gtk.MenuItem(label="Show Cheddar")
+        self._show_item.connect("activate", lambda *_: self._on_activate_window())
+        menu.append(self._show_item)
 
         # Toggle AutoPilot
         self._autopilot_check_item = Gtk.CheckMenuItem(label="Enable AutoPilot")

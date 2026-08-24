@@ -65,9 +65,10 @@ class Application(Gtk.Application):
         self._show_window()
 
     def _show_window(self) -> None:
-        if self._window is None:
+        if self._window is None or not self._window.get_realized():
             self._window = Window(self.init_ratbagd, application=self)
         self._window.show_all()
+        self._window.deiconify()
         self._window.present()
 
     def _is_autopilot_enabled(self) -> bool:

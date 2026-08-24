@@ -105,6 +105,9 @@ class Window(Gtk.ApplicationWindow):
         # ways the window can go away: the window manager's close button (via
         # delete-event) and the primary menu's Quit action, which destroys the
         # window directly without ever emitting delete-event.
+        if self.props.application is not None and hasattr(self.props.application, "_window"):
+            if self.props.application._window is self:
+                self.props.application._window = None
         stack = self.stack_perspectives
         if stack is not None:
             for perspective in stack.get_children():
