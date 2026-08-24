@@ -13,15 +13,7 @@ if gtk_version < (@gtk_major_version@, @gtk_minor_version@):
     sys.exit(1)
 
 @devel@
-resource_path = os.path.join('@pkgdatadir@', 'cheddar.gresource')
-if not os.path.exists(resource_path):
-    for prefix_dir in ('/usr/share/cheddar', '/usr/local/share/cheddar'):
-        candidate = os.path.join(prefix_dir, 'cheddar.gresource')
-        if os.path.exists(candidate):
-            resource_path = candidate
-            break
-
-resource = Gio.resource_load(resource_path)
+resource = Gio.resource_load(os.path.join('@pkgdatadir@', 'cheddar.gresource'))
 Gio.Resource._register(resource)
 
 
@@ -45,18 +37,12 @@ if __name__ == "__main__":
 
     install_excepthook()
 
-    localedir = '@localedir@'
-    if not os.path.exists(localedir):
-        for candidate in ('/usr/share/locale', '/usr/local/share/locale'):
-            if os.path.exists(candidate):
-                localedir = candidate
-                break
-
-    locale.bindtextdomain('cheddar', localedir)
+    locale.bindtextdomain('cheddar', '@localedir@')
     locale.textdomain('cheddar')
-    gettext.bindtextdomain('cheddar', localedir)
+    gettext.bindtextdomain('cheddar', '@localedir@')
     gettext.textdomain('cheddar')
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     exit_status = Application(@RATBAGD_API_VERSION@).run(sys.argv)
     sys.exit(exit_status)
+
