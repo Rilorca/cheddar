@@ -1,16 +1,10 @@
-Cheddar
-=======
+# Cheddar for Logi Mice (and beyond!) 🧀🖱️
 
-**Cheddar** is a Linux app for gaming mice that adds **automatic per-game
-profile switching** — the way Logitech G HUB does on Windows. Set your mouse up
-the way you like it for each game, map games to those setups, and Cheddar
-switches the mouse automatically when you launch or alt-tab into a game, even
-while its window is closed.
+> **The missing G HUB experience for Linux.** Automatic per-game profile switching, endless custom profiles, and zero hassle.
 
-Cheddar is a fork of [Piper](https://github.com/libratbag/piper), the GTK
-mouse-configuration frontend, and keeps everything Piper does — buttons,
-DPI/resolutions, LEDs, macros — adding an AutoPilot tab and a small background
-service on top.
+**Cheddar** brings the smart, seamless gaming mouse experience of Logitech G HUB to Linux. Set up custom keybinds, DPIs, LEDs, and macros for each of your favorite games—Cheddar automatically detects when you launch or alt-tab into a game and switches your mouse profile on the fly, even with the window closed!
+
+Built as a supercharged fork of [Piper](https://github.com/libratbag/piper) (the GTK mouse-configuration frontend), Cheddar keeps everything you love about Piper while adding our powerful **AutoPilot** engine and a lightweight background service.
 
 Features
 --------
