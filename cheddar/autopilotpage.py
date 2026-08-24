@@ -747,6 +747,9 @@ class AutoPilotPage(Gtk.Box):
                 self._config.get("rules", {}),
                 self._config.get("default_profile", 0),
             )
+        app = Gio.Application.get_default()
+        if app is not None and hasattr(app, "notify_config_changed"):
+            app.notify_config_changed()
 
     # ── Lifecycle ──────────────────────────────────────────────────────────────
 

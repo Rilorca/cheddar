@@ -96,8 +96,8 @@ class Window(Gtk.ApplicationWindow):
                 if response in [Gtk.ResponseType.NO, Gtk.ResponseType.DELETE_EVENT]:
                     return Gdk.EVENT_STOP
 
-        # Hide window to keep running in background tray instead of destroying
-        self.hide()
+        # Destroy window cleanly — Application remains alive in system tray
+        self.destroy()
         return Gdk.EVENT_STOP
 
     def do_destroy(self) -> None:

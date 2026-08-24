@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import logging
 from typing import Optional
 
 from . import autopilot_config as cfg
+from . import autopilot_profiles as ap
+from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import Ratbagd
 from .tray import TrayIcon
 from .window import Window
@@ -13,12 +16,12 @@ gi.require_version("Gio", "2.0")
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gio, GLib, Gtk  # noqa
 
+logger = logging.getLogger("cheddar.application")
+
 
 class Application(Gtk.Application):
-    """A Gtk.Application subclass to handle the application's initialization and
-    integration with the GNOME stack. It implements the do_startup and
-    do_activate methods and is responsible for the application's menus, icons,
-    tray indicator, and lifetime."""
+    """A Gtk.Application subclass handling lifecycle, background AutoPilot
+    watcher, system tray icon, and window management."""
 
     def __init__(self, ratbagd_api_version: int) -> None:
         """Instantiates a new Application."""
@@ -31,21 +34,24 @@ class Application(Gtk.Application):
         self._required_ratbagd_version = ratbagd_api_version
         self._window: Optional[Window] = None
         self._tray: Optional[TrayIcon] = None
+        self._ratbagd: Optional[Ratbagd] = None
+        self._watcher: Optional[AutoPilotWatcher] = None
+        self._config = cfg.load()
         self._held: bool = False
 
     def do_startup(self) -> None:
-        """This function is called when the application is first started. All
-        initialization should be done here, to prevent doing duplicate work in
-        case another window is opened."""
+        """Called once when application first starts."""
         Gtk.Application.do_startup(self)
         self._build_app_menu()
-        self._ratbagd: Optional[Ratbagd] = None
 
-        # Hold application lifetime so it does not terminate when window is hidden
+        # Keep application running in background when window is closed
         self.hold()
         self._held = True
 
-        # Initialize system tray indicator
+        # Initialize background AutoPilot watcher
+        self._sync_watcher()
+
+        # Initialize system tray icon
         self._tray = TrayIcon(
             on_activate_window=self._show_window,
             on_toggle_autopilot=self._toggle_autopilot,
@@ -60,32 +66,69 @@ class Application(Gtk.Application):
         return self._ratbagd
 
     def do_activate(self) -> None:
-        """This function is called when the user requests a new window to be
-        opened or application is launched."""
+        """Called on launch or when user activates application from launcher."""
         self._show_window()
 
     def _show_window(self) -> None:
-        if self._window is None or not self._window.get_realized():
-            self._window = Window(self.init_ratbagd, application=self)
-        self._window.show_all()
-        self._window.deiconify()
+        if self._window is not None:
+            self._window.present()
+            return
+        self._window = Window(self.init_ratbagd, application=self)
         self._window.present()
 
+    # ── AutoPilot background watcher ──────────────────────────────────────────
+
+    def _effective_rules(self) -> dict:
+        if not self._config.get("enabled", False):
+            return {}
+        return self._config.get("rules", {})
+
+    def _sync_watcher(self) -> None:
+        self._config = cfg.load()
+        rules = self._effective_rules()
+        default_profile = self._config.get("default_profile", 0)
+
+        if self._watcher is None:
+            self._watcher = AutoPilotWatcher(
+                rules=rules,
+                on_switch=self._on_watcher_switch,
+                default_profile=default_profile,
+            )
+            self._watcher.start()
+        else:
+            self._watcher.update_rules(rules, default_profile)
+
+    def _on_watcher_switch(self, target: RuleTarget, exe_name: str) -> None:
+        GLib.idle_add(self._switch_main_thread, target, exe_name)
+
+    def _switch_main_thread(self, target: RuleTarget, exe_name: str) -> bool:
+        if self._ratbagd is None:
+            try:
+                self.init_ratbagd()
+            except Exception:
+                return False
+
+        for device in self._ratbagd.devices:
+            try:
+                ap.activate_target(device, target, self._config)
+                logger.info("%s: '%s' -> %s", device.name, exe_name, target)
+            except Exception as exc:
+                logger.error("switch failed on %s: %s", device.name, exc)
+        return False
+
     def _is_autopilot_enabled(self) -> bool:
-        config = cfg.load()
-        return bool(config.get("enabled", False))
+        return bool(self._config.get("enabled", False))
 
     def _get_status_text(self) -> str:
-        enabled = self._is_autopilot_enabled()
-        return "AutoPilot: Active" if enabled else "AutoPilot: Inactive"
+        return "AutoPilot: Active" if self._is_autopilot_enabled() else "AutoPilot: Inactive"
 
     def _toggle_autopilot(self) -> None:
-        config = cfg.load()
-        new_state = not config.get("enabled", False)
-        config["enabled"] = new_state
-        cfg.save(config)
+        new_state = not self._is_autopilot_enabled()
+        self._config["enabled"] = new_state
+        cfg.save(self._config)
+        self._sync_watcher()
 
-        # Update running window GUI if present
+        # Update running window GUI if open
         if self._window is not None:
             try:
                 mouse_perspective = self._window._get_child("mouse_perspective")
@@ -99,8 +142,15 @@ class Application(Gtk.Application):
         if self._tray is not None:
             self._tray.update_menu()
 
+    def notify_config_changed(self) -> None:
+        """Called by GUI when rules or default profile are modified."""
+        self._sync_watcher()
+        if self._tray is not None:
+            self._tray.update_menu()
+
+    # ── Menu & Quit Actions ───────────────────────────────────────────────────
+
     def _build_app_menu(self) -> None:
-        # Set up the app menu
         actions = [("about", self._about), ("quit", self._quit)]
         for name, callback in actions:
             action = Gio.SimpleAction.new(name, None)
@@ -108,7 +158,6 @@ class Application(Gtk.Application):
             self.add_action(action)
 
     def _about(self, action: Gio.SimpleAction, param: None) -> None:
-        # Set up the about dialog.
         builder = Gtk.Builder().new_from_resource(
             "/io/github/rilorca/Cheddar/AboutDialog.ui"
         )
@@ -119,11 +168,14 @@ class Application(Gtk.Application):
         about.show()
 
     def _quit(self, action: Gio.SimpleAction, param: None) -> None:
-        # Primary menu quit action
         self._full_quit()
 
     def _full_quit(self) -> None:
-        """Completely exit the application and destroy all windows."""
+        """Completely exit the application."""
+        if self._watcher is not None:
+            self._watcher.request_stop()
+            self._watcher = None
+
         if self._tray is not None:
             self._tray.set_visible(False)
             self._tray = None
