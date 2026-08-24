@@ -59,7 +59,7 @@ class TrayIcon:
         self._init_tray()
 
     def _init_tray(self) -> None:
-        icon_name = "io.github.rilorca.Cheddar"
+        icon_name = "io.github.rilorca.Cheddar-symbolic"
         self._menu = self._build_menu()
 
         if _Indicator is not None:
