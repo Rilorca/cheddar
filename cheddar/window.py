@@ -88,14 +88,17 @@ class Window(Gtk.ApplicationWindow):
                     Gtk.DialogFlags.MODAL,
                     Gtk.MessageType.QUESTION,
                     Gtk.ButtonsType.YES_NO,
-                    _("There are unapplied changes. Are you sure you want to quit?"),
+                    _("There are unapplied changes. Are you sure you want to close the window?"),
                 )
                 response = dialog.run()
                 dialog.destroy()
 
                 if response in [Gtk.ResponseType.NO, Gtk.ResponseType.DELETE_EVENT]:
                     return Gdk.EVENT_STOP
-        return Gdk.EVENT_PROPAGATE
+
+        # Hide window to keep running in background tray instead of destroying
+        self.hide()
+        return Gdk.EVENT_STOP
 
     def do_destroy(self) -> None:
         # Give perspectives a chance to release resources. This runs for both

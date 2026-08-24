@@ -108,6 +108,10 @@ class MousePerspective(Gtk.Overlay):
         assert self._device is not None
         return self._device
 
+    @property
+    def autopilot_page(self) -> Optional[AutoPilotPage]:
+        return self._autopilot_page
+
     def set_device(self, device: RatbagdDevice) -> None:
         self._device = device
         connect_signal_with_weak_ref(

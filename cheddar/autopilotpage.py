@@ -674,6 +674,11 @@ class AutoPilotPage(Gtk.Box):
         else:
             self._stop_watcher()
 
+        # Update system tray menu if running inside Application
+        app = Gio.Application.get_default()
+        if app is not None and hasattr(app, "_tray") and app._tray:
+            app._tray.update_menu()
+
     def _on_default_changed(self, combo: Gtk.ComboBoxText) -> None:
         aid = combo.get_active_id()
         if aid is not None:
