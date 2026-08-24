@@ -56,7 +56,7 @@ sudo pacman -S --needed meson ninja libratbag gtk3 python-gobject \
                         python-lxml python-evdev python-cairo xorg-xprop
 
 # 2. Get the source and build
-git clone <this-repository-url> cheddar
+git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
@@ -69,26 +69,36 @@ sudo systemctl enable --now ratbagd
 ### Debian / Ubuntu
 
 ```sh
+# 1. Dependencies
 sudo apt install meson ninja-build ratbagd gir1.2-gtk-3.0 python3-gi \
                  python3-lxml python3-evdev python3-cairo x11-utils
-git clone <this-repository-url> cheddar
+
+# 2. Get the source and build
+git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
+
+# 3. Make sure ratbagd is running
 sudo systemctl enable --now ratbagd
 ```
 
 ### Fedora
 
 ```sh
+# 1. Dependencies
 sudo dnf install meson ninja-build libratbag-ratbagd gtk3 python3-gobject \
                  python3-lxml python3-evdev python3-cairo xprop
-git clone <this-repository-url> cheddar
+
+# 2. Get the source and build
+git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
+
+# 3. Make sure ratbagd is running
 sudo systemctl enable --now ratbagd
 ```
 
