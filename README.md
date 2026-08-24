@@ -105,11 +105,6 @@ sudo systemctl enable --now ratbagd
 After installing, launch **Cheddar** from your application menu (or run
 `cheddar`).
 
-> **Note on Flatpak:** upstream Piper is on Flathub, but that is the original
-> Piper without Cheddar's AutoPilot. Cheddar is not packaged as a Flatpak — a
-> sandboxed app couldn't watch host processes or the focused window, which
-> AutoPilot needs — so build from source as above.
-
 Enabling the background service
 -------------------------------
 

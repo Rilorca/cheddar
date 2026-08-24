@@ -30,18 +30,43 @@
     </p>
   </description>
 
+  <screenshots>
+    <screenshot type="default">
+      <caption>Automatic per-game profile switching with Cheddar AutoPilot</caption>
+      <image type="source">https://raw.githubusercontent.com/Rilorca/cheddar/main/data/screenshots/autopilot.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Configuring mouse buttons, macros, and bindings</caption>
+      <image type="source">https://raw.githubusercontent.com/Rilorca/cheddar/main/data/screenshots/buttons.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Adding game profile rules with automatic installed game detection</caption>
+      <image type="source">https://raw.githubusercontent.com/Rilorca/cheddar/main/data/screenshots/rule-editor.png</image>
+    </screenshot>
+  </screenshots>
+
   <launchable type="desktop-id">io.github.rilorca.Cheddar.desktop</launchable>
 
   <url type="homepage">https://github.com/Rilorca/cheddar</url>
   <url type="bugtracker">https://github.com/Rilorca/cheddar/issues</url>
+  <url type="vcs-browser">https://github.com/Rilorca/cheddar</url>
 
   <translation type="gettext">cheddar</translation>
+
+  <branding>
+    <color type="primary" scheme_preference="dark">#2d3238</color>
+    <color type="primary" scheme_preference="light">#e18e11</color>
+  </branding>
 
   <provides>
     <binary>cheddar</binary>
   </provides>
 
   <releases>
-    <release version="@version@" date="@version_date@"/>
+    <release version="@version@" date="@version_date@">
+      <description>
+        <p>Initial release of Cheddar with AutoPilot per-game profile switching for Linux gaming mice.</p>
+      </description>
+    </release>
   </releases>
 </component>

@@ -1,16 +1,19 @@
 {
     "app-id": "io.github.rilorca.Cheddar",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "43",
+    "runtime-version": "47",
     "sdk": "org.gnome.Sdk",
     "command": "cheddar",
-      "finish-args": [
+    "finish-args": [
         "--share=ipc",
-        "--socket=x11",
+        "--socket=fallback-x11",
         "--socket=wayland",
         "--system-talk-name=org.freedesktop.ratbag1",
-        "--device=dri"
-      ],
+        "--device=dri",
+        "--filesystem=/proc:ro",
+        "--filesystem=xdg-data/applications:ro",
+        "--filesystem=~/.local/share/applications:ro"
+    ],
     "modules": [
         {
             "name": "python-evdev",
@@ -56,11 +59,14 @@
         {
             "name": "Cheddar",
             "buildsystem": "meson",
-            "config-opts": [ "-Druntime-dependency-checks=false" ],
+            "config-opts": [
+                "-Druntime-dependency-checks=false"
+            ],
             "sources": [
                 {
                     "type": "git",
-                    "url": "<this-repository-url>"
+                    "url": "https://github.com/Rilorca/cheddar.git",
+                    "branch": "main"
                 }
             ]
         }
