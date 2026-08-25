@@ -45,8 +45,20 @@ Runtime dependencies:
 Installation
 ------------
 
-There is no distribution package yet, so install by building from source. It's
-a Python/GTK app — the build is quick and needs no compiler.
+### 📦 Flatpak Bundle (Universal - Recommended for Any Distro & Steam Deck)
+
+1. Download the latest `io.github.rilorca.Cheddar.flatpak` bundle from [GitHub Releases](https://github.com/Rilorca/cheddar/releases).
+2. Install with a single command (or double-click in your software center):
+
+```sh
+flatpak install io.github.rilorca.Cheddar.flatpak
+```
+
+---
+
+### 🛠️ Building from Source
+
+Cheddar is a Python/GTK3 application—the build is super fast and requires no C/C++ compiler.
 
 ### Arch Linux / CachyOS / Manjaro
 

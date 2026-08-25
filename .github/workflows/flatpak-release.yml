@@ -1,0 +1,38 @@
+name: Build and Release Flatpak
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  flatpak-bundle:
+    name: "Build Flatpak Bundle"
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Flatpak Bundle
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: io.github.rilorca.Cheddar.flatpak
+          manifest-path: io.github.rilorca.Cheddar.json
+          app-id: io.github.rilorca.Cheddar
+
+      - name: Upload Flatpak Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cheddar-Flatpak
+          path: io.github.rilorca.Cheddar.flatpak
+
+      - name: Publish Release Asset
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: io.github.rilorca.Cheddar.flatpak
+          generate_release_notes: true
