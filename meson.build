@@ -142,6 +142,13 @@ test(
   suite : ['all'],
 )
 
+test(
+  'stability-unit-tests',
+  py3,
+  args : [join_paths(meson.current_source_dir(), 'tests/test_stability.py')],
+  env : env_test,
+)
+
 #### code formatting #####
 run_target(
   'python-black',

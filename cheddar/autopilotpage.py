@@ -15,6 +15,7 @@ import threading
 from gettext import gettext as _
 from typing import Dict, List, Optional
 
+from . import autostart
 from . import autopilot_profiles as ap
 from .autopilot_config import load as cfg_load, save as cfg_save
 from .autopilot_games import installed_games
@@ -379,9 +380,41 @@ class AutoPilotPage(Gtk.Box):
         default_row.pack_start(self._default_combo, False, False, 0)
         col.pack_start(default_card, False, False, 0)
 
+        # ── Launch on startup card ────────────────────────────────────────────
+        startup_card = Gtk.Frame()
+        startup_card.get_style_context().add_class("view")
+        startup_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=12, border_width=12
+        )
+        startup_card.add(startup_row)
+        s_icon = Gtk.Image.new_from_icon_name(
+            "system-run-symbolic", Gtk.IconSize.LARGE_TOOLBAR
+        )
+        startup_row.pack_start(s_icon, False, False, 4)
+        s_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1, hexpand=True)
+        s_title = Gtk.Label(label=_("Launch on system startup"), xalign=0)
+        s_text.pack_start(s_title, False, False, 0)
+        s_sub = Gtk.Label(xalign=0)
+        s_sub.set_markup(
+            '<span size="small" foreground="grey">'
+            + _("Start Cheddar in the background tray when you log in")
+            + "</span>"
+        )
+        s_text.pack_start(s_sub, False, False, 0)
+        startup_row.pack_start(s_text, True, True, 0)
+
+        self._startup_toggle = Gtk.Switch(valign=Gtk.Align.CENTER)
+        self._startup_toggle.set_active(autostart.is_autostart_enabled())
+        self._startup_toggle.connect("notify::active", self._on_startup_toggled)
+        startup_row.pack_start(self._startup_toggle, False, False, 0)
+        col.pack_start(startup_card, False, False, 0)
+
         # User-created profiles are managed from the profile switcher popover
         # (top-left), where they list alongside the onboard ones — see
         # MousePerspective. This view only maps games to profiles.
+
+    def _on_startup_toggled(self, switch: Gtk.Switch, _pspec) -> None:
+        autostart.set_autostart_enabled(switch.get_active())
 
     def _rules_header_func(self, row, before):
         """Add a separator between rows (Cheddar style)."""

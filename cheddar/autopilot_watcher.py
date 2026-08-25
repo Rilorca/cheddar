@@ -205,7 +205,10 @@ class AutoPilotWatcher:
 
     def _loop(self) -> None:
         while not self._stop_event.wait(POLL_INTERVAL):
-            self._tick()
+            try:
+                self._tick()
+            except Exception as e:
+                logger.error("AutoPilot watcher error in tick: %s", e)
 
     def _tick(self) -> None:
         if not self._rules:

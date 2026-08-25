@@ -28,9 +28,17 @@ class Application(Gtk.Application):
         Gtk.Application.__init__(
             self,
             application_id="io.github.rilorca.Cheddar",
-            flags=Gio.ApplicationFlags.FLAGS_NONE,
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
         )
         GLib.set_application_name("Cheddar")
+        self.add_main_option(
+            "background",
+            ord("b"),
+            GLib.OptionFlags.NONE,
+            GLib.OptionArg.NONE,
+            "Start minimized to system tray in background",
+            None,
+        )
         self._required_ratbagd_version = ratbagd_api_version
         self._window: Optional[Window] = None
         self._tray: Optional[TrayIcon] = None
@@ -63,7 +71,22 @@ class Application(Gtk.Application):
     def init_ratbagd(self) -> Ratbagd:
         if self._ratbagd is None:
             self._ratbagd = Ratbagd(self._required_ratbagd_version)
+            self._ratbagd.connect("daemon-disappeared", self._on_ratbagd_disappeared)
         return self._ratbagd
+
+    def _on_ratbagd_disappeared(self, *args) -> None:
+        logger.info("ratbagd daemon went idle or stopped; resetting connection")
+        self._ratbagd = None
+
+    def do_command_line(self, command_line: Gio.ApplicationCommandLine) -> int:
+        """Called on primary instance for every invocation."""
+        options = command_line.get_options_dict()
+        start_in_background = options.contains("background")
+
+        if not start_in_background:
+            self._show_window()
+
+        return 0
 
     def do_activate(self) -> None:
         """Called on launch or when user activates application from launcher."""
@@ -102,18 +125,27 @@ class Application(Gtk.Application):
         GLib.idle_add(self._switch_main_thread, target, exe_name)
 
     def _switch_main_thread(self, target: RuleTarget, exe_name: str) -> bool:
-        if self._ratbagd is None:
-            try:
-                self.init_ratbagd()
-            except Exception:
-                return False
+        try:
+            ratbag = self.init_ratbagd()
+        except Exception as exc:
+            logger.debug("ratbagd unavailable for switch: %s", exc)
+            self._ratbagd = None
+            return False
 
-        for device in self._ratbagd.devices:
+        try:
+            devices = list(ratbag.devices)
+        except Exception as exc:
+            logger.debug("Failed to list ratbag devices: %s", exc)
+            self._ratbagd = None
+            return False
+
+        for device in devices:
             try:
                 ap.activate_target(device, target, self._config)
                 logger.info("%s: '%s' -> %s", device.name, exe_name, target)
             except Exception as exc:
                 logger.error("switch failed on %s: %s", device.name, exc)
+                self._ratbagd = None
         return False
 
     def _is_autopilot_enabled(self) -> bool:

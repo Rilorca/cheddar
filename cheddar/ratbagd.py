@@ -366,7 +366,11 @@ class RatbagdDevice(_RatbagdDBus):
 
     def _on_active_profile_changed(self, profile, pspec):
         if profile.is_active:
-            self.emit("active-profile-changed", self._profiles[profile.index])
+            idx = profile.index
+            if idx is not None and isinstance(idx, int) and 0 <= idx < len(self._profiles):
+                self.emit("active-profile-changed", self._profiles[idx])
+            else:
+                self.emit("active-profile-changed", profile)
 
     @GObject.Property
     def id(self):

@@ -66,9 +66,12 @@ class Window(Gtk.ApplicationWindow):
         welcome_perspective: WelcomePerspective = self._get_child("welcome_perspective")  # type: ignore
         welcome_perspective.connect("device-selected", self._on_device_selected)
 
-        ratbag.connect("device-added", self._on_device_added)
-        ratbag.connect("device-removed", self._on_device_removed)
-        ratbag.connect("daemon-disappeared", self._on_daemon_disappeared)
+        self._ratbag: Optional[Ratbagd] = ratbag
+        self._ratbag_handlers = [
+            ratbag.connect("device-added", self._on_device_added),
+            ratbag.connect("device-removed", self._on_device_removed),
+            ratbag.connect("daemon-disappeared", self._on_daemon_disappeared),
+        ]
 
         if len(ratbag.devices) == 0:
             self._present_error_perspective(
@@ -101,10 +104,16 @@ class Window(Gtk.ApplicationWindow):
         return Gdk.EVENT_STOP
 
     def do_destroy(self) -> None:
-        # Give perspectives a chance to release resources. This runs for both
-        # ways the window can go away: the window manager's close button (via
-        # delete-event) and the primary menu's Quit action, which destroys the
-        # window directly without ever emitting delete-event.
+        # Disconnect ratbagd listeners to prevent stale callbacks
+        if hasattr(self, "_ratbag") and self._ratbag is not None:
+            for handler_id in getattr(self, "_ratbag_handlers", []):
+                try:
+                    self._ratbag.disconnect(handler_id)
+                except Exception:
+                    pass
+            self._ratbag_handlers = []
+            self._ratbag = None
+
         if self.props.application is not None and hasattr(self.props.application, "_window"):
             if self.props.application._window is self:
                 self.props.application._window = None
@@ -117,9 +126,12 @@ class Window(Gtk.ApplicationWindow):
         Gtk.ApplicationWindow.do_destroy(self)
 
     def _on_daemon_disappeared(self, ratbag: Ratbagd) -> None:
-        self._present_error_perspective(
-            _("Ooops. ratbagd has disappeared"), _("Please restart Cheddar")
-        )
+        try:
+            self._present_error_perspective(
+                _("Ooops. ratbagd has disappeared"), _("Please restart Cheddar")
+            )
+        except Exception:
+            pass
 
     def _on_device_added(self, ratbag: Ratbagd, device: RatbagdDevice) -> None:
         if len(ratbag.devices) == 1:

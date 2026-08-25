@@ -18,14 +18,11 @@ Gio.Resource._register(resource)
 
 
 def install_excepthook():
-    """Make sure we exit when an unhandled exception occurs."""
+    """Make sure unhandled exceptions are logged with traceback."""
     old_hook = sys.excepthook
 
     def new_hook(etype, evalue, etb):
         old_hook(etype, evalue, etb)
-        while Gtk.main_level():
-            Gtk.main_quit()
-        sys.exit()
     sys.excepthook = new_hook
 
 
