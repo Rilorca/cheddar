@@ -19,15 +19,34 @@ logger = logging.getLogger(__name__)
 POLL_INTERVAL = 2.0  # seconds
 
 
+_ARCH_SUFFIX = re.compile(
+    r"[-_]?(?:x86_64|x86|x64|64|32|win64|win32|shipping)+$", re.IGNORECASE
+)
+
+
 def _add_name(exes: Set[str], name: str) -> None:
-    """Add a lowercase executable name, plus an alias without its .exe
-    extension so rules match whether or not the user typed the extension."""
+    """Add a lowercase executable name, plus aliases (without .exe, without
+    architecture suffixes, and without spaces) so rules match whether or not
+    the user typed the extension, architecture, or spaces."""
     name = name.lower()
     if not name:
         return
     exes.add(name)
-    if name.endswith(".exe"):
-        exes.add(name[:-4])
+    has_exe = name.endswith(".exe")
+    stem = name[:-4] if has_exe else name
+    exes.add(stem)
+
+    # Alias without architecture suffix (e.g. heroesofthestorm_x64 -> heroesofthestorm)
+    base = _ARCH_SUFFIX.sub("", stem)
+    if base and base != stem:
+        exes.add(base)
+        exes.add(base + ".exe")
+
+    # Alias without spaces (e.g. "heroes of the storm" -> "heroesofthestorm")
+    if " " in name:
+        exes.add(name.replace(" ", ""))
+        if has_exe:
+            exes.add(stem.replace(" ", ""))
 
 
 def _basename_any_os(path: str) -> str:
@@ -226,7 +245,7 @@ class AutoPilotWatcher:
         if focused is not None:
             focused_names = procs.get(focused, set()) if focused > 0 else set()
             for exe, profile_idx in self._rules.items():
-                if exe in focused_names:
+                if exe in focused_names or exe.replace(" ", "") in focused_names:
                     matched_profile = profile_idx
                     matched_exe = exe
                     break
@@ -239,12 +258,15 @@ class AutoPilotWatcher:
             running: Set[str] = set()
             for names in procs.values():
                 running |= names
-            if self._last_matched_exe and self._last_matched_exe in running:
+            if self._last_matched_exe and (
+                self._last_matched_exe in running
+                or self._last_matched_exe.replace(" ", "") in running
+            ):
                 matched_exe = self._last_matched_exe
                 matched_profile = self._rules.get(matched_exe)
             if matched_profile is None:
                 for exe, profile_idx in self._rules.items():
-                    if exe in running:
+                    if exe in running or exe.replace(" ", "") in running:
                         matched_profile = profile_idx
                         matched_exe = exe
                         break

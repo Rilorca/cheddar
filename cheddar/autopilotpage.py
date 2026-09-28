@@ -25,8 +25,9 @@ from .ratbagd import RatbagdDevice, RatbagdProfile
 import cairo
 import gi
 
+gi.require_version("Gio", "2.0")
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # noqa
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa
 
 
 def _load_game_icon(path: Optional[str], size: int = 20) -> Optional[GdkPixbuf.Pixbuf]:
@@ -255,6 +256,13 @@ class AutoPilotPage(Gtk.Box):
         for game in installed_games():
             self._game_by_exe.setdefault(game.exe, game)
             self._game_by_exe.setdefault(game.exe.removesuffix(".exe"), game)
+            self._game_by_exe.setdefault(game.exe.lower(), game)
+            self._game_by_exe.setdefault(game.exe.lower().removesuffix(".exe"), game)
+            if " " in game.exe:
+                self._game_by_exe.setdefault(game.exe.lower().replace(" ", ""), game)
+                self._game_by_exe.setdefault(
+                    game.exe.lower().removesuffix(".exe").replace(" ", ""), game
+                )
 
         self._build_ui()
 
@@ -456,7 +464,11 @@ class AutoPilotPage(Gtk.Box):
 
         # Game icon: the game's own artwork when we can match the rule to an
         # installed game, rounded to a uniform square; generic icon otherwise.
-        game = self._game_by_exe.get(exe)
+        game = (
+            self._game_by_exe.get(exe)
+            or self._game_by_exe.get(exe.lower())
+            or self._game_by_exe.get(exe.lower().replace(" ", ""))
+        )
         pixbuf = _load_game_icon(game.icon if game else None)
         if pixbuf is not None:
             icon = Gtk.Image.new_from_pixbuf(pixbuf)

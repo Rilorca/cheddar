@@ -13,15 +13,16 @@ Features
   to it when the game runs and back to your default when it closes.
 - **Follows the focused game.** With several games open, the one whose window
   is focused wins — alt-tab and the mouse follows.
-- **Steam / Proton, Lutris and Heroic aware.** Detects Windows games running
-  under Wine/Proton, not just native Linux binaries.
-- **Pick games from a list.** The rule editor lists your installed games with
-  their icons, so you don't have to type executable names.
+- **Steam / Proton, Lutris, Heroic and Faugus Launcher aware.** Detects Windows games running
+  under Wine/Proton/UMU (including Battle.net, World of Warcraft, Heroes of the Storm, etc.),
+  not just native Linux binaries.
+- **Pick games from a list.** The rule editor automatically indexes your installed games with
+  their high-resolution artwork and icons, so you don't have to guess or type executable names.
 - **Unlimited profiles.** The mouse only has a few onboard slots (3 on the
   G600); Cheddar stores as many named profiles as you want on your PC and
   loads them onto the mouse on demand — the same trick G HUB uses.
-- **Runs in the background.** A systemd user service keeps switching profiles
-  with no window open.
+- **Runs seamlessly in the background.** Includes system tray support, auto-start on login,
+  and a systemd user service so profiles keep switching with no main window open.
 
 Requirements
 ------------
@@ -36,103 +37,95 @@ Runtime dependencies:
 
 - `ratbagd` / `libratbag` (0.18 or newer)
 - GTK 3, PyGObject
-- Python 3 with the modules `lxml`, `evdev`, `cairo`, `gi`
+- Python 3 with modules `lxml`, `evdev`, `cairo`, `gi`
 - `xprop` — *optional but recommended*; enables focus-based switching. Without
   it, Cheddar still switches to whichever mapped game is running, just without
   the focus preference. It ships in `xorg-xprop` (Arch) / `x11-utils`
   (Debian/Ubuntu).
 
-Installation
-------------
+Installation (Complete Setup)
+-----------------------------
 
-### 📦 Flatpak Bundle (Universal - Recommended for Any Distro & Steam Deck)
-
-1. Download the latest `io.github.rilorca.Cheddar.flatpak` bundle from [GitHub Releases](https://github.com/Rilorca/cheddar/releases).
-2. Install with a single command (or double-click in your software center):
-
-```sh
-flatpak install io.github.rilorca.Cheddar.flatpak
-```
-
----
-
-### 🛠️ Building from Source
-
-Cheddar is a Python/GTK3 application—the build is super fast and requires no C/C++ compiler.
+> [!IMPORTANT]
+> **Why native installation?**  
+> Cheddar's core feature—**AutoPilot**—monitors active game processes via `/proc` and tracks focused game windows. Sandboxed container formats like **Flatpak strictly isolate `/proc`** by design, which disables automatic per-game switching.  
+> Installing natively takes less than 30 seconds (no C/C++ compiler needed) and ensures **100% of features work out of the box**.
 
 ### Arch Linux / CachyOS / Manjaro
 
 ```sh
-# 1. Dependencies
+# 1. Install dependencies
 sudo pacman -S --needed meson ninja libratbag gtk3 python-gobject \
                         python-lxml python-evdev python-cairo xorg-xprop
 
-# 2. Get the source and build
+# 2. Clone the repository and install
 git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
 
-# 3. Make sure ratbagd is running
+# 3. Enable and start ratbagd (mouse daemon)
 sudo systemctl enable --now ratbagd
 ```
 
-### Debian / Ubuntu
+*(Optional: If you prefer to install for your user only without `sudo`, replace `--prefix=/usr` with `--prefix=$HOME/.local` and run `ninja -C builddir install`).*
+
+### Debian / Ubuntu / Linux Mint / Pop!_OS
 
 ```sh
-# 1. Dependencies
+# 1. Install dependencies
+sudo apt update
 sudo apt install meson ninja-build ratbagd gir1.2-gtk-3.0 python3-gi \
                  python3-lxml python3-evdev python3-cairo x11-utils
 
-# 2. Get the source and build
+# 2. Clone the repository and install
 git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
 
-# 3. Make sure ratbagd is running
+# 3. Enable and start ratbagd
 sudo systemctl enable --now ratbagd
 ```
 
-### Fedora
+### Fedora / Nobara / RHEL
 
 ```sh
-# 1. Dependencies
+# 1. Install dependencies
 sudo dnf install meson ninja-build libratbag-ratbagd gtk3 python3-gobject \
                  python3-lxml python3-evdev python3-cairo xprop
 
-# 2. Get the source and build
+# 2. Clone the repository and install
 git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
 meson setup builddir --prefix=/usr
 ninja -C builddir
 sudo ninja -C builddir install
 
-# 3. Make sure ratbagd is running
+# 3. Enable and start ratbagd
 sudo systemctl enable --now ratbagd
 ```
 
-After installing, launch **Cheddar** from your application menu (or run
-`cheddar`).
+After installing, launch **Cheddar** from your application menu or run `cheddar` in a terminal.
 
-Enabling the background service
--------------------------------
+Enabling Background Profile Switching
+-------------------------------------
 
-For profiles to keep switching while Cheddar's window is closed, enable the
-per-user service once:
+To have Cheddar automatically switch profiles in the background when games launch:
 
-```sh
-systemctl --user enable --now cheddar-autopilot
-```
+1. **Via the Cheddar UI (Recommended):**  
+   Open Cheddar $\rightarrow$ go to the **AutoPilot** tab $\rightarrow$ toggle **Enable AutoPilot**. You can also toggle **Start minimized at login** so Cheddar quietly sits in your system tray upon booting your PC.
 
-It starts on every login and reads the same settings the GUI writes, applying
-rule changes live. Check what it's doing with:
-
-```sh
-journalctl --user -u cheddar-autopilot -f
-```
+2. **Via systemd user service (Optional):**  
+   ```sh
+   systemctl --user enable --now cheddar-autopilot
+   ```
+   Check daemon activity anytime with:
+   ```sh
+   journalctl --user -u cheddar-autopilot -f
+   ```
 
 If you prefer, you can skip the service and just keep Cheddar's window open —
 the AutoPilot tab has its own switch that does the same thing while it's open.

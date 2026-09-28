@@ -79,8 +79,11 @@ def _steam_icon(steam_root: str, appid: str) -> Optional[str]:
     except OSError:
         return None
     try:
+        import gi
+
+        gi.require_version("GdkPixbuf", "2.0")
         from gi.repository import GdkPixbuf
-    except ImportError:  # headless callers don't need icons
+    except (ImportError, ValueError):  # headless callers don't need icons
         return None
     best: Optional[str] = None
     best_size = 0
@@ -100,15 +103,39 @@ def _normalize(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", s.lower())
 
 
+_ARCH_SUFFIX = re.compile(
+    r"[-_]?(?:x86_64|x86|x64|64|32|win64|win32)+$", re.IGNORECASE
+)
+
+
+def _generate_hints(hint_names: List[str]) -> List[str]:
+    """Generate normalized hint strings, including acronyms for multi-word titles."""
+    hints = set()
+    for h in hint_names:
+        if not h:
+            continue
+        norm = _normalize(h)
+        if norm:
+            hints.add(norm)
+        # Acronym if multiple words (e.g. "World of Warcraft" -> "wow", "Heroes of the Storm" -> "hots")
+        words = re.findall(r"[a-zA-Z0-9]+", h)
+        if len(words) > 1:
+            acronym = _normalize("".join(w[0] for w in words))
+            if len(acronym) >= 2:
+                hints.add(acronym)
+    return list(hints)
+
+
 def _find_game_exe(install_dir: str, hint_names: List[str]) -> Optional[str]:
     """Pick the most plausible game executable inside install_dir.
 
     Considers Windows .exe files and native Linux executables up to
     _WALK_MAX_DEPTH deep, skipping known helper/redist noise. Ranking:
-    name similarity to the game first, then shallower path, then larger file.
+    name similarity to the game first, real game binaries over launcher stubs,
+    then shallower path, then larger file.
     """
-    hints = [_normalize(h) for h in hint_names if h]
-    candidates = []  # (score, -depth, size, basename)
+    hints = _generate_hints(hint_names)
+    candidates = []  # (score, is_not_launcher, -depth, size, basename)
     base_depth = install_dir.rstrip("/").count("/")
     for root, dirs, files in os.walk(install_dir):
         depth = root.rstrip("/").count("/") - base_depth
@@ -133,20 +160,22 @@ def _find_game_exe(install_dir: str, hint_names: List[str]) -> Optional[str]:
             if size < 100 * 1024:  # tiny helpers/scripts
                 continue
             stem = _normalize(fname.rsplit(".", 1)[0] if "." in fname else fname)
+            stem_no_arch = _ARCH_SUFFIX.sub("", stem)
+            is_not_launcher = 0 if "launcher" in fname.lower() else 1
             score = 0
             for h in hints:
-                if stem == h:
+                if stem == h or stem_no_arch == h:
                     score = 3
                     break
-                if h and (stem.startswith(h) or h.startswith(stem)):
+                if h and (stem.startswith(h) or h.startswith(stem) or stem_no_arch.startswith(h)):
                     score = max(score, 2)
                 elif h and (h in stem or stem in h):
                     score = max(score, 1)
-            candidates.append((score, -depth, size, fname))
+            candidates.append((score, is_not_launcher, -depth, size, fname))
     if not candidates:
         return None
     candidates.sort(reverse=True)
-    return candidates[0][3]
+    return candidates[0][4]
 
 
 # ── Steam ──────────────────────────────────────────────────────────────────────
@@ -292,13 +321,160 @@ def _scan_heroic() -> List[Game]:
     return games
 
 
+# ── Faugus Launcher (UMU-based runner / Flatpak & native) ──────────────────────
+
+_FAUGUS_ROOTS = (
+    "~/.var/app/io.github.Faugus.faugus-launcher/data/faugus-launcher",
+    "~/.var/app/io.github.Faugus.faugus-launcher/config/faugus-launcher",
+    "~/.local/share/faugus-launcher",
+    "~/.config/faugus-launcher",
+)
+
+_WINDOWS_SYS_DIRS = {
+    "common files",
+    "internet explorer",
+    "windows media player",
+    "windows nt",
+    "windows mail",
+    "windows defender",
+    "msbuild",
+    "reference assemblies",
+    "windows photo viewer",
+    "uninstall information",
+    "installshield installation information",
+}
+
+
+def _find_proton_shortcut_icon(prefix: str, icon_name: Optional[str]) -> Optional[str]:
+    """Find the highest resolution icon for a Proton/UMU shortcut."""
+    if not icon_name:
+        return None
+    if os.path.isabs(icon_name) and os.path.isfile(icon_name):
+        return icon_name
+    icons_dir = os.path.join(prefix, "drive_c", "proton_shortcuts", "icons")
+    for sz in ("256x256", "128x128", "96x96", "64x64", "48x48", "32x32", "16x16"):
+        p = os.path.join(icons_dir, sz, "apps", f"{icon_name}.png")
+        if os.path.isfile(p):
+            return p
+    return None
+
+
+def _scan_faugus() -> List[Game]:
+    games: List[Game] = []
+    seen_exes = set()
+    seen_prefixes = set()
+
+    for root_path in _FAUGUS_ROOTS:
+        full_root = os.path.realpath(os.path.expanduser(root_path))
+        gj = os.path.join(full_root, "games.json")
+        if not os.path.isfile(gj):
+            continue
+        try:
+            with open(gj, "r", encoding="utf-8", errors="replace") as f:
+                entries = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(entries, list):
+            continue
+
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            title = entry.get("title")
+            path = entry.get("path")
+            prefix = entry.get("prefix")
+            icon = entry.get("icon")
+            if icon and not os.path.isfile(icon):
+                icon = None
+
+            # 1. Games installed inside the Wine prefix (e.g. Battle.net library)
+            if prefix and prefix not in seen_prefixes and os.path.isdir(prefix):
+                seen_prefixes.add(prefix)
+
+                # A. Inspect proton_shortcuts created by UMU/Proton
+                shortcuts_dir = os.path.join(prefix, "drive_c", "proton_shortcuts")
+                sc_installed_paths = set()
+                if os.path.isdir(shortcuts_dir):
+                    try:
+                        sc_files = os.listdir(shortcuts_dir)
+                    except OSError:
+                        sc_files = []
+                    for sc in sc_files:
+                        if not sc.endswith(".desktop"):
+                            continue
+                        sc_path = os.path.join(shortcuts_dir, sc)
+                        try:
+                            with open(
+                                sc_path, "r", encoding="utf-8", errors="replace"
+                            ) as sf:
+                                content = sf.read()
+                        except OSError:
+                            continue
+                        nm = re.search(r"^Name=(.+)$", content, re.MULTILINE)
+                        pm = re.search(r"^Path=(.+)$", content, re.MULTILINE)
+                        im = re.search(r"^Icon=(.+)$", content, re.MULTILINE)
+                        game_name = nm.group(1).strip() if nm else sc[:-8]
+                        install_path = pm.group(1).strip() if pm else None
+                        shortcut_icon = (
+                            _find_proton_shortcut_icon(prefix, im.group(1).strip())
+                            if im
+                            else None
+                        ) or icon
+
+                        if install_path and os.path.isdir(install_path):
+                            sc_installed_paths.add(os.path.realpath(install_path))
+                            exe = _find_game_exe(
+                                install_path,
+                                [game_name, os.path.basename(install_path)],
+                            )
+                            if exe:
+                                exe_lower = exe.lower()
+                                games.append(
+                                    Game(game_name, exe_lower, "Faugus", shortcut_icon)
+                                )
+                                seen_exes.add(exe_lower)
+
+                # B. Inspect Program Files directories in case shortcuts weren't generated
+                for pf_name in ("Program Files (x86)", "Program Files"):
+                    pf_dir = os.path.join(prefix, "drive_c", pf_name)
+                    if not os.path.isdir(pf_dir):
+                        continue
+                    try:
+                        subdirs = os.listdir(pf_dir)
+                    except OSError:
+                        continue
+                    for sd in subdirs:
+                        if sd.lower() in _WINDOWS_SYS_DIRS:
+                            continue
+                        game_dir = os.path.join(pf_dir, sd)
+                        if (
+                            not os.path.isdir(game_dir)
+                            or os.path.realpath(game_dir) in sc_installed_paths
+                        ):
+                            continue
+                        exe = _find_game_exe(game_dir, [sd])
+                        if exe and exe.lower() not in seen_exes:
+                            exe_lower = exe.lower()
+                            games.append(Game(sd, exe_lower, "Faugus", None))
+                            seen_exes.add(exe_lower)
+
+            # 2. Add the configured Faugus entry itself (e.g. standalone game or launcher)
+            if title and path:
+                base_exe = os.path.basename(path).lower()
+                if base_exe and base_exe not in seen_exes:
+                    games.append(Game(title, base_exe, "Faugus", icon))
+                    seen_exes.add(base_exe)
+
+    return games
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 
 def installed_games() -> List[Game]:
     """All detected installed games, deduplicated by exe, sorted by name."""
     games: List[Game] = []
-    for scanner in (_scan_steam, _scan_lutris, _scan_heroic):
+    for scanner in (_scan_steam, _scan_lutris, _scan_heroic, _scan_faugus):
         try:
             games.extend(scanner())
         except Exception as e:
@@ -307,3 +483,4 @@ def installed_games() -> List[Game]:
     for g in games:
         dedup.setdefault(g.exe, g)
     return sorted(dedup.values(), key=lambda g: g.name.lower())
+

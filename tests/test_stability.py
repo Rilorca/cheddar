@@ -115,5 +115,120 @@ class TestAutoPilotWatcherStability(unittest.TestCase):
         self.assertFalse(watcher.is_running())
 
 
+class TestFaugusIntegration(unittest.TestCase):
+    """Unit tests for Faugus launcher game detection and AutoPilot profile switching."""
+
+    def test_faugus_discovery_if_present(self):
+        """If Faugus is installed on the system (e.g. user has Battle.net with WoW & HotS),
+        verify they are properly detected with the right executables."""
+        from cheddar.autopilot_games import installed_games
+
+        games_by_name = {g.name: g for g in installed_games()}
+        # If user has Battle.net / WoW / HotS installed via Faugus on this machine:
+        if "World of Warcraft" in games_by_name:
+            wow = games_by_name["World of Warcraft"]
+            self.assertEqual(wow.source, "Faugus")
+            self.assertEqual(wow.exe, "wow.exe")
+            self.assertTrue(wow.icon and os.path.isfile(wow.icon))
+
+        if "Heroes of the Storm" in games_by_name:
+            hots = games_by_name["Heroes of the Storm"]
+            self.assertEqual(hots.source, "Faugus")
+            self.assertIn("heroes of the storm", hots.exe)
+            self.assertTrue(hots.icon and os.path.isfile(hots.icon))
+
+        if "Battle.net" in games_by_name:
+            bnet = games_by_name["Battle.net"]
+            self.assertEqual(bnet.source, "Faugus")
+            self.assertEqual(bnet.exe, "battle.net.exe")
+
+    def test_faugus_mocked_prefix_scanning(self):
+        """Test _scan_faugus with a mock Faugus configuration and Wine prefix."""
+        import json
+        import tempfile
+        from cheddar.autopilot_games import _scan_faugus
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            faugus_root = os.path.join(tmpdir, "faugus")
+            prefix_dir = os.path.join(tmpdir, "prefix")
+            shortcuts_dir = os.path.join(prefix_dir, "drive_c", "proton_shortcuts")
+            icons_dir = os.path.join(shortcuts_dir, "icons", "256x256", "apps")
+            game_install_dir = os.path.join(prefix_dir, "drive_c", "Program Files (x86)", "Test Game")
+
+            os.makedirs(faugus_root)
+            os.makedirs(icons_dir)
+            os.makedirs(game_install_dir)
+
+            # Create dummy game executable (>100KB so _find_game_exe accepts it)
+            game_exe = os.path.join(game_install_dir, "TestGame.exe")
+            with open(game_exe, "wb") as f:
+                f.write(b"\0" * (120 * 1024))
+
+            # Create dummy icon
+            icon_file = os.path.join(icons_dir, "testgame_icon.png")
+            with open(icon_file, "wb") as f:
+                f.write(b"\0" * 100)
+
+            # Create proton_shortcuts desktop file
+            desktop_content = (
+                f"[Desktop Entry]\n"
+                f"Name=Test Game\n"
+                f"Path={game_install_dir}\n"
+                f"Icon=testgame_icon\n"
+                f"StartupWMClass=testgame.exe\n"
+            )
+            with open(os.path.join(shortcuts_dir, "Test Game.desktop"), "w") as f:
+                f.write(desktop_content)
+
+            # Create games.json
+            games_json_data = [
+                {
+                    "gameid": "test_game",
+                    "title": "Test Game",
+                    "path": game_exe,
+                    "prefix": prefix_dir,
+                    "icon": icon_file,
+                }
+            ]
+            with open(os.path.join(faugus_root, "games.json"), "w") as f:
+                json.dump(games_json_data, f)
+
+            with patch("cheddar.autopilot_games._FAUGUS_ROOTS", (faugus_root,)):
+                scanned = _scan_faugus()
+                self.assertEqual(len(scanned), 1)
+                self.assertEqual(scanned[0].name, "Test Game")
+                self.assertEqual(scanned[0].exe, "testgame.exe")
+                self.assertEqual(scanned[0].source, "Faugus")
+                self.assertEqual(scanned[0].icon, icon_file)
+
+    def test_watcher_hots_matching_with_spaces_and_arch(self):
+        """Test AutoPilotWatcher matching for Heroes of the Storm when process is
+        HeroesOfTheStorm_x64.exe and rule is 'heroes of the storm.exe'."""
+        from cheddar.autopilot_watcher import AutoPilotWatcher, _add_name
+
+        names = set()
+        _add_name(names, "HeroesOfTheStorm_x64.exe")
+
+        self.assertIn("heroesofthestorm_x64.exe", names)
+        self.assertIn("heroesofthestorm_x64", names)
+        self.assertIn("heroesofthestorm.exe", names)
+        self.assertIn("heroesofthestorm", names)
+
+        proc_map = {9999: names}
+        switches = []
+        watcher = AutoPilotWatcher(
+            rules={"heroes of the storm.exe": 2},
+            on_switch=lambda p, l: switches.append((p, l)),
+            default_profile=0,
+        )
+
+        with patch("cheddar.autopilot_watcher._scan_processes", return_value=proc_map), \
+             patch("cheddar.autopilot_watcher._focused_pid", return_value=9999):
+            watcher._tick()
+
+        self.assertEqual(watcher._active_profile, 2)
+
+
 if __name__ == "__main__":
     unittest.main()
+
