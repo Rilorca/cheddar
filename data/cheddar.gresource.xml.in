@@ -5,6 +5,7 @@
         <file>enter-keyboard-shortcut.svg</file>
         <file>led-off.svg</file>
         <file>svgs/svg-lookup.ini</file>
+        <file>adwaita.css</file>
 
         <file preprocess="xml-stripblanks">AboutDialog.ui</file>
         <file preprocess="xml-stripblanks">ui/AdvancedPage.ui</file>

@@ -10,11 +10,13 @@ from .ratbagd import Ratbagd
 from .tray import TrayIcon
 from .window import Window
 
+import os
 import gi
 
+gi.require_version("Gdk", "3.0")
 gi.require_version("Gio", "2.0")
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gio, GLib, Gtk  # noqa
+from gi.repository import Gdk, Gio, GLib, Gtk  # noqa
 
 logger = logging.getLogger("cheddar.application")
 
@@ -47,9 +49,39 @@ class Application(Gtk.Application):
         self._config = cfg.load()
         self._held: bool = False
 
+    def _load_stylesheet(self) -> None:
+        """Load Libadwaita styling for the entire application."""
+        provider = Gtk.CssProvider()
+        loaded = False
+        css_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "data",
+            "adwaita.css",
+        )
+        if os.path.exists(css_path):
+            try:
+                provider.load_from_path(css_path)
+                loaded = True
+            except Exception:
+                pass
+
+        if not loaded:
+            try:
+                provider.load_from_resource("/io/github/rilorca/Cheddar/adwaita.css")
+                loaded = True
+            except Exception:
+                pass
+
+        screen = Gdk.Screen.get_default()
+        if screen is not None:
+            Gtk.StyleContext.add_provider_for_screen(
+                screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
+            )
+
     def do_startup(self) -> None:
         """Called once when application first starts."""
         Gtk.Application.do_startup(self)
+        self._load_stylesheet()
         self._build_app_menu()
 
         # Keep application running in background when window is closed

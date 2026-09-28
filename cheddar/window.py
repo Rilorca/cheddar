@@ -257,13 +257,15 @@ class Window(Gtk.ApplicationWindow):
         perspective.titlebar.child_set_property(button_back, "position", 0)
 
     def _perspective_add_primary_menu(self, perspective) -> None:
-        hamburger = Gtk.Image.new_from_icon_name(
-            "open-menu-symbolic", Gtk.IconSize.BUTTON
+        menu_icon = Gtk.Image.new_from_icon_name(
+            "view-more-symbolic", Gtk.IconSize.BUTTON
         )
-        hamburger.set_visible(True)
+        menu_icon.set_visible(True)
         button_primary_menu = Gtk.MenuButton.new()
-        button_primary_menu.add(hamburger)
+        button_primary_menu.add(menu_icon)
         button_primary_menu.set_visible(True)
+        button_primary_menu.get_style_context().add_class("flat")
+        button_primary_menu.get_style_context().add_class("icon-button")
         button_primary_menu.set_menu_model(self.primary_menu)
         perspective.titlebar.pack_end(button_primary_menu)
         # Place the button last in the titlebar.

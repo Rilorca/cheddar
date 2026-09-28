@@ -1,0 +1,400 @@
+/* Cheddar — Libadwaita Modern Stylesheet */
+
+/* ── Base Window & HeaderBar ─────────────────────────────────────────── */
+window,
+.background {
+    background-color: #242424;
+    color: #ffffff;
+}
+
+headerbar,
+headerbar.titlebar {
+    min-height: 52px;
+    padding: 0 14px;
+    background-color: #2f2f2f;
+    background-image: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+headerbar button:not(.titlebutton):not(.flat):not(.icon-button) {
+    border-radius: 8px;
+    padding: 5px 10px;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+/* ── Primary Menu & Flat Buttons in HeaderBar ───────────────────────── */
+headerbar button.flat,
+headerbar button.icon-button {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    margin: 0 2px;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+headerbar button.flat:hover,
+headerbar button.icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    background-image: none;
+    border: none;
+    color: #ffffff;
+}
+
+/* ── Window Control Buttons (Libadwaita circular window controls) ──── */
+headerbar button.titlebutton,
+headerbar.titlebar button.titlebutton,
+button.titlebutton {
+    border-radius: 9999px;
+    padding: 0;
+    min-width: 24px;
+    min-height: 24px;
+    margin: 0 3px;
+    background-color: transparent;
+    background-image: none;
+    border-color: transparent;
+    border-style: none;
+    border-width: 0;
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+    color: rgba(255, 255, 255, 0.75);
+    opacity: 0.75;
+    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+headerbar button.titlebutton:hover,
+headerbar.titlebar button.titlebutton:hover,
+button.titlebutton:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.12);
+    background-image: none;
+    border-color: transparent;
+    border-style: none;
+    box-shadow: none;
+    color: #ffffff;
+}
+
+headerbar button.titlebutton.close:hover,
+headerbar.titlebar button.titlebutton.close:hover,
+button.titlebutton.close:hover {
+    opacity: 1;
+    background-color: #e01b24;
+    background-image: none;
+    border-color: transparent;
+    border-style: none;
+    box-shadow: none;
+    color: #ffffff;
+}
+
+#button_profile {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: none;
+    color: #ffffff;
+}
+
+#button_profile:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+#button_profile image {
+    margin-right: 4px;
+}
+
+/* ── StackSwitcher (Libadwaita Pill ViewSwitcher) ────────────────────── */
+stackswitcher {
+    border-radius: 9999px;
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+stackswitcher button {
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    padding: 6px 18px;
+    font-weight: 600;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+    transition: all 0.18s ease;
+}
+
+stackswitcher button:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    background-image: none;
+}
+
+stackswitcher button:checked,
+stackswitcher button:active {
+    background: #1c71d8;
+    background-image: none;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+stackswitcher button image {
+    margin-right: 6px;
+}
+
+/* ── Suggested Action (Primary Blue) ─────────────────────────────────── */
+button.suggested-action {
+    background: #3584e4;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    padding: 6px 14px;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+button.suggested-action:hover {
+    background: #1c71d8;
+}
+
+button.suggested-action:active {
+    background: #1a5fb4;
+}
+
+button.suggested-action:disabled {
+    background: alpha(currentColor, 0.08);
+    color: alpha(currentColor, 0.35);
+    box-shadow: none;
+}
+
+/* ── Flat & Circular Buttons ─────────────────────────────────────────── */
+button.flat {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+button.flat:hover {
+    background: alpha(currentColor, 0.08);
+}
+
+button.circular {
+    border-radius: 9999px;
+    padding: 6px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+/* Row Action Delete Button */
+button.delete-row-btn {
+    border-radius: 9999px;
+    padding: 0;
+    min-width: 32px;
+    min-height: 32px;
+    color: #e01b24;
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    opacity: 0.8;
+    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+button.delete-row-btn:hover {
+    opacity: 1;
+    color: #e01b24;
+    background-color: rgba(224, 27, 36, 0.15);
+    background-image: none;
+}
+
+/* ── Cards and Boxed Lists (Faithful to Mockup) ───────────────────────── */
+frame.view,
+frame.card,
+frame.hero-card,
+.card {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: none;
+}
+
+frame.view > border,
+frame.card > border,
+frame.hero-card > border {
+    border: none;
+}
+
+frame.hero-card {
+    border-radius: 14px;
+    background: rgba(53, 132, 228, 0.1);
+    border: 1px solid rgba(53, 132, 228, 0.25);
+}
+
+.hero-icon-box {
+    background: rgba(53, 132, 228, 0.18);
+    color: #3584e4;
+    border-radius: 12px;
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.hero-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.hero-badge.active {
+    background: alpha(#2ec27e, 0.18);
+    color: #2ec27e;
+}
+
+.hero-badge.inactive {
+    background: alpha(currentColor, 0.1);
+    color: alpha(currentColor, 0.6);
+}
+
+/* ── Boxed Lists ─────────────────────────────────────────────────────── */
+list.boxed-list,
+.boxed-list {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+list.boxed-list row,
+.boxed-list row {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+}
+
+list.boxed-list row:hover,
+.boxed-list row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+list.boxed-list row:last-child,
+.boxed-list row:last-child {
+    border-bottom: none;
+}
+
+/* Profile Pill Combo in rule rows */
+combobox.profile-pill-combo button,
+.profile-pill-combo button {
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: currentColor;
+}
+
+combobox.profile-pill-combo button:hover,
+.profile-pill-combo button:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* Source badge chip (e.g. Faugus / Steam) */
+.source-chip {
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 120, 0, 0.15);
+    color: #ff8c37;
+}
+
+.source-chip.steam {
+    background: rgba(53, 132, 228, 0.18);
+    color: #78aeed;
+}
+
+/* ── Switches (Libadwaita rounded) ───────────────────────────────────── */
+switch {
+    border-radius: 14px;
+    font-size: 1px; /* hide default ON/OFF text */
+    min-width: 44px;
+    min-height: 24px;
+}
+
+switch:checked {
+    background: #3584e4;
+    border-color: #3584e4;
+}
+
+switch slider {
+    border-radius: 50%;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* ── Radio Buttons in ButtonBox (e.g. 125, 250, 500, 1000 Hz) ────────── */
+#rate_button_box {
+    border-radius: 8px;
+    padding: 2px;
+    background: alpha(currentColor, 0.06);
+}
+
+#rate_button_box button {
+    border-radius: 6px;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 4px 10px;
+    font-weight: 600;
+}
+
+#rate_button_box button:checked {
+    background: @theme_base_color;
+    box-shadow: 0 1px 2px alpha(currentColor, 0.15);
+}
+
+/* ── Reset Button Styling ────────────────────────────────────────────── */
+button.reset-action,
+#btn_reset_resolutions,
+#btn_reset_advanced {
+    border-radius: 8px;
+    padding: 5px 12px;
+    color: alpha(currentColor, 0.75);
+    background: alpha(currentColor, 0.05);
+    border: 1px solid alpha(currentColor, 0.08);
+    font-size: 12px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+button.reset-action:hover,
+#btn_reset_resolutions:hover,
+#btn_reset_advanced:hover {
+    background: alpha(currentColor, 0.1);
+    color: currentColor;
+}
+
+/* ── Dim labels and subtitles ────────────────────────────────────────── */
+.dim-label {
+    opacity: 0.65;
+}
+
+/* ── Popovers ────────────────────────────────────────────────────────── */
+popover.background {
+    border-radius: 12px;
+    border: 1px solid alpha(currentColor, 0.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+popover list row {
+    padding: 8px 12px;
+    border-radius: 6px;
+}

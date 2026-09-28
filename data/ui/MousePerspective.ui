@@ -149,7 +149,7 @@
     <property name="can-focus">False</property>
     <property name="show-close-button">True</property>
     <child type="title">
-      <object class="GtkStackSwitcher">
+      <object class="GtkStackSwitcher" id="stack_switcher">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="stack">stack</property>
@@ -163,12 +163,35 @@
         <property name="tooltip-text" translatable="yes">Select another profile</property>
         <property name="popover">popover_profiles</property>
         <child>
-          <object class="GtkLabel" id="label_profile">
+          <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="label">Profile 1</property>
-            <property name="justify">center</property>
-            <property name="track-visited-links">False</property>
+            <property name="spacing">6</property>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="icon-name">avatar-default-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label_profile">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label">Profile 1</property>
+                <property name="justify">center</property>
+                <property name="track-visited-links">False</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="icon-name">pan-down-symbolic</property>
+                <property name="icon_size">1</property>
+              </object>
+            </child>
           </object>
         </child>
       </object>
@@ -187,6 +210,9 @@
             <property name="label" translatable="yes">Apply</property>
           </object>
         </child>
+        <style>
+          <class name="suggested-action"/>
+        </style>
       </object>
       <packing>
         <property name="pack-type">end</property>

@@ -67,6 +67,7 @@ class MousePerspective(Gtk.Overlay):
     listbox_profiles: Gtk.ListBox = Gtk.Template.Child()  # type: ignore
     notification_error: Gtk.Revealer = Gtk.Template.Child()  # type: ignore
     stack: Gtk.Stack = Gtk.Template.Child()  # type: ignore
+    stack_switcher: Gtk.StackSwitcher = Gtk.Template.Child()  # type: ignore
 
     def __init__(self, *args, **kwargs) -> None:
         """Instantiates a new MousePerspective."""
@@ -157,12 +158,14 @@ class MousePerspective(Gtk.Overlay):
 
         # Open on the AutoPilot home.
         self.stack.set_visible_child_name("autopilot")
+        self.stack.connect("notify::visible-child-name", self._on_top_level_tab_changed)
+        GLib.idle_add(self._update_stack_switcher_pills)
 
         active_profile = device.active_profile
         assert active_profile is not None
         self._set_profile(active_profile)
 
-        self.button_profile.set_visible(len(device.profiles) > 1)
+        self._update_header_controls_visibility()
 
         self.listbox_profiles.foreach(Gtk.Widget.destroy)
         for profile in device.profiles:
@@ -431,6 +434,42 @@ class MousePerspective(Gtk.Overlay):
             # profiles on the device that are dirty.
             style_context.remove_class("suggested-action")
             self.button_commit.set_sensitive(False)
+        self._update_header_controls_visibility()
+
+    def _on_top_level_tab_changed(
+        self, _stack: Gtk.Stack, _pspec: Optional[GObject.ParamSpec]
+    ) -> None:
+        self._update_header_controls_visibility()
+
+    def _update_header_controls_visibility(self) -> None:
+        if self._device is None:
+            return
+        is_mousesetup = self.stack.get_visible_child_name() == "mousesetup"
+        self.button_profile.set_visible(True)
+        self.button_commit.set_visible(is_mousesetup)
+
+    def _update_stack_switcher_pills(self) -> bool:
+        if not hasattr(self, "stack_switcher") or self.stack_switcher is None:
+            return False
+        tabs = [
+            ("media-flash-symbolic", _("AutoPilot")),
+            ("input-mouse-symbolic", _("Mouse setup")),
+        ]
+        children = self.stack_switcher.get_children()
+        for i, (icon_name, title) in enumerate(tabs):
+            if i < len(children):
+                btn = children[i]
+                old = btn.get_child()
+                if old:
+                    btn.remove(old)
+                box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+                img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+                lbl = Gtk.Label(label=title)
+                box.pack_start(img, False, False, 0)
+                box.pack_start(lbl, False, False, 0)
+                box.show_all()
+                btn.add(box)
+        return False  # GLib.idle_add one-shot
 
     def shutdown(self) -> None:
         """Release resources held by this perspective.

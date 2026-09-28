@@ -66,6 +66,8 @@ class ResolutionsPage(Gtk.Box):
             row = ResolutionRow(resolution, self)
             self.listbox.insert(row, resolution.index)
 
+    btn_reset_resolutions: Gtk.Button = Gtk.Template.Child()  # type: ignore
+
     @Gtk.Template.Callback("on_row_activated")
     def on_row_activated(self, _listbox: Gtk.ListBox, row: ResolutionRow) -> None:
         if row is self._last_activated_row:
@@ -81,3 +83,43 @@ class ResolutionsPage(Gtk.Box):
             else:
                 self._last_activated_row = row
                 row.toggle_revealer()
+
+    @Gtk.Template.Callback("_on_reset_clicked")
+    def _on_reset_clicked(self, _button: Gtk.Button) -> None:
+        resolutions = self._profile.resolutions
+        if not resolutions:
+            return
+
+        n = len(resolutions)
+        if n == 1:
+            dpis = [800]
+        elif n == 2:
+            dpis = [800, 1600]
+        elif n == 3:
+            dpis = [400, 800, 1600]
+        elif n == 4:
+            dpis = [400, 800, 1600, 3200]
+        else:
+            dpis = [400, 800, 1200, 1600, 3200][:n]
+
+        for i, res in enumerate(resolutions):
+            target_dpi = dpis[i] if i < len(dpis) else 800
+            if res.resolutions and target_dpi not in res.resolutions:
+                target_dpi = min(res.resolutions, key=lambda x: abs(x - target_dpi))
+
+            cur = res.resolution
+            if len(cur) == 1:
+                res.resolution = (target_dpi,)
+            else:
+                res.resolution = (target_dpi, target_dpi)
+
+        default_idx = 1 if len(resolutions) > 1 else 0
+        resolutions[default_idx].set_default()
+
+        # Refresh UI rows
+        self._last_activated_row = None
+        self.listbox.foreach(Gtk.Widget.destroy)
+        for resolution in self._profile.resolutions:
+            row = ResolutionRow(resolution, self)
+            self.listbox.insert(row, resolution.index)
+        self.listbox.show_all()

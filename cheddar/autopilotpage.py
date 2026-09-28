@@ -22,16 +22,26 @@ from .autopilot_games import installed_games
 from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import RatbagdDevice, RatbagdProfile
 
+import math
 import cairo
 import gi
 
+gi.require_version("Gdk", "3.0")
 gi.require_version("Gio", "2.0")
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa
 
+try:
+    gi.require_version("Notify", "0.7")
+    from gi.repository import Notify
+    if not Notify.is_initted():
+        Notify.init("Cheddar")
+except Exception:
+    Notify = None
 
-def _load_game_icon(path: Optional[str], size: int = 20) -> Optional[GdkPixbuf.Pixbuf]:
-    """Load a game icon as a rounded square of `size` px; themed fallback."""
+
+def _load_game_icon(path: Optional[str], size: int = 36) -> Optional[GdkPixbuf.Pixbuf]:
+    """Load a game icon as a rounded squircle of `size` px; themed fallback."""
     if path:
         try:
             src = GdkPixbuf.Pixbuf.new_from_file_at_size(path, size, size)
@@ -39,17 +49,19 @@ def _load_game_icon(path: Optional[str], size: int = 20) -> Optional[GdkPixbuf.P
         except GLib.Error:
             pass
     try:
-        return Gtk.IconTheme.get_default().load_icon(
-            "applications-games-symbolic", 16, 0
+        fallback = Gtk.IconTheme.get_default().load_icon(
+            "applications-games-symbolic", max(16, size - 12), 0
         )
+        if fallback:
+            return _rounded(fallback, size)
     except GLib.Error:
-        return None
+        pass
+    return None
 
 
 def _rounded(pixbuf: GdkPixbuf.Pixbuf, size: int) -> GdkPixbuf.Pixbuf:
-    """Clip a pixbuf to a square with rounded corners, so game icons of any
-    shape render uniformly in lists."""
-    radius = max(3, size // 5)
+    """Clip a pixbuf to a squircle with rounded corners (Libadwaita style)."""
+    radius = max(6, size // 4)
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
     cr = cairo.Context(surface)
     cr.new_sub_path()
@@ -58,6 +70,8 @@ def _rounded(pixbuf: GdkPixbuf.Pixbuf, size: int) -> GdkPixbuf.Pixbuf:
     cr.arc(radius, size - radius, radius, 1.5708, 3.1416)
     cr.arc(radius, radius, radius, 3.1416, 4.7124)
     cr.close_path()
+    cr.set_source_rgba(1.0, 1.0, 1.0, 0.06)
+    cr.fill_preserve()
     cr.clip()
     # Center the (possibly non-square) scaled icon inside the square
     Gdk.cairo_set_source_pixbuf(
@@ -275,32 +289,42 @@ class AutoPilotPage(Gtk.Box):
     # ── UI construction ────────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
-        # Single scrolling column (Direction A home): master status card on
-        # top, the games list in the middle, the default-profile row at the
-        # bottom.
         outer = Gtk.ScrolledWindow(
             hscrollbar_policy=Gtk.PolicyType.NEVER,
             vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
         )
         self.pack_start(outer, True, True, 0)
 
+        # Center clamp container (matches GNOME Libadwaita AdwClamp)
+        clamp_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        clamp_box.set_halign(Gtk.Align.CENTER)
+        clamp_box.set_hexpand(True)
+        outer.add(clamp_box)
+
         col = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
-            spacing=16,
+            spacing=18,
             border_width=24,
+            width_request=680,
         )
-        outer.add(col)
+        clamp_box.pack_start(col, True, True, 0)
 
-        # ── Master status + on/off ────────────────────────────────────────────
+        # ── Master status hero card ───────────────────────────────────────────
         status_card = Gtk.Frame()
-        status_card.get_style_context().add_class("view")
+        status_card.get_style_context().add_class("hero-card")
         status_row = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=14, border_width=16
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=16, border_width=18
         )
         status_card.add(status_row)
 
+        self._status_indicator = Gtk.DrawingArea()
+        self._status_indicator.set_size_request(28, 28)
+        self._status_indicator.set_valign(Gtk.Align.CENTER)
+        self._status_indicator.connect("draw", self._on_draw_status_indicator)
+        status_row.pack_start(self._status_indicator, False, False, 2)
+
         status_text = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=3, hexpand=True
+            orientation=Gtk.Orientation.VERTICAL, spacing=4, hexpand=True, valign=Gtk.Align.CENTER
         )
         title = Gtk.Label(xalign=0)
         title.set_markup(
@@ -326,7 +350,7 @@ class AutoPilotPage(Gtk.Box):
         )
         gh_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
         gh_title = Gtk.Label(xalign=0)
-        gh_title.set_markup(f'<span weight="bold">{_("Your games")}</span>')
+        gh_title.set_markup(f'<span size="medium" weight="bold">{_("Your games")}</span>')
         gh_text.pack_start(gh_title, False, False, 0)
         gh_sub = Gtk.Label(xalign=0)
         gh_sub.set_markup(
@@ -339,68 +363,50 @@ class AutoPilotPage(Gtk.Box):
         gh_text.pack_start(gh_sub, False, False, 0)
         games_header.pack_start(gh_text, True, True, 0)
 
-        self._add_btn = Gtk.Button(label=_("+ Add game"))
+        self._add_btn = Gtk.Button(label=_("Add game"))
+        self._add_btn.set_image(
+            Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
+        )
+        self._add_btn.set_always_show_image(True)
         self._add_btn.get_style_context().add_class("suggested-action")
         self._add_btn.set_valign(Gtk.Align.CENTER)
         self._add_btn.connect("clicked", self._on_add_rule)
         games_header.pack_start(self._add_btn, False, False, 0)
         col.pack_start(games_header, False, False, 0)
 
-        # ── Games list ────────────────────────────────────────────────────────
+        # ── Games list (Boxed List) ───────────────────────────────────────────
         rules_card = Gtk.Frame()
-        rules_card.get_style_context().add_class("view")
+        rules_card.get_style_context().add_class("card")
         self._rules_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self._rules_box.get_style_context().add_class("boxed-list")
         self._rules_box.set_header_func(self._rules_header_func)
         rules_card.add(self._rules_box)
         col.pack_start(rules_card, False, False, 0)
         self._refresh_rules()
 
-        # ── Default profile ───────────────────────────────────────────────────
-        default_card = Gtk.Frame()
-        default_card.get_style_context().add_class("view")
-        default_row = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=12, border_width=12
+        # ── System Settings Section (Boxed List matching mockup) ──────────────
+        sys_header = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=8, margin_top=8
         )
-        default_card.add(default_row)
-        d_icon = Gtk.Image.new_from_icon_name(
-            "video-display-symbolic", Gtk.IconSize.LARGE_TOOLBAR
-        )
-        default_row.pack_start(d_icon, False, False, 4)
-        d_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1, hexpand=True)
-        d_title = Gtk.Label(label=_("When no game is running"), xalign=0)
-        d_text.pack_start(d_title, False, False, 0)
-        d_sub = Gtk.Label(xalign=0)
-        d_sub.set_markup(
-            '<span size="small" foreground="grey">'
-            + _("Your everyday profile")
-            + "</span>"
-        )
-        d_text.pack_start(d_sub, False, False, 0)
-        default_row.pack_start(d_text, True, True, 0)
+        sys_title = Gtk.Label(xalign=0)
+        sys_title.set_markup(f'<span size="medium" weight="bold">{_("System Settings")}</span>')
+        sys_header.pack_start(sys_title, True, True, 0)
+        col.pack_start(sys_header, False, False, 0)
 
-        self._default_combo = Gtk.ComboBoxText(valign=Gtk.Align.CENTER)
-        for p in self._device.profiles:
-            self._default_combo.append(str(p.index), _profile_label(p))
-        self._default_combo.set_active_id(str(self._config.get("default_profile", 0)))
-        if self._default_combo.get_active_id() is None:
-            self._default_combo.set_active(0)
-        self._default_combo.connect("changed", self._on_default_changed)
-        default_row.pack_start(self._default_combo, False, False, 0)
-        col.pack_start(default_card, False, False, 0)
+        sys_card = Gtk.Frame()
+        sys_card.get_style_context().add_class("card")
+        self._sys_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self._sys_box.get_style_context().add_class("boxed-list")
+        self._sys_box.set_header_func(self._rules_header_func)
+        sys_card.add(self._sys_box)
+        col.pack_start(sys_card, False, False, 0)
 
-        # ── Launch on startup card ────────────────────────────────────────────
-        startup_card = Gtk.Frame()
-        startup_card.get_style_context().add_class("view")
-        startup_row = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL, spacing=12, border_width=12
-        )
-        startup_card.add(startup_row)
-        s_icon = Gtk.Image.new_from_icon_name(
-            "system-run-symbolic", Gtk.IconSize.LARGE_TOOLBAR
-        )
-        startup_row.pack_start(s_icon, False, False, 4)
-        s_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1, hexpand=True)
-        s_title = Gtk.Label(label=_("Launch on system startup"), xalign=0)
+        # Row 1: Launch on startup
+        row_startup = Gtk.ListBoxRow()
+        row_startup_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14, border_width=14)
+        s_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER)
+        s_title = Gtk.Label(xalign=0)
+        s_title.set_markup(f"<b>{GLib.markup_escape_text(_('Launch on system startup'))}</b>")
         s_text.pack_start(s_title, False, False, 0)
         s_sub = Gtk.Label(xalign=0)
         s_sub.set_markup(
@@ -409,13 +415,37 @@ class AutoPilotPage(Gtk.Box):
             + "</span>"
         )
         s_text.pack_start(s_sub, False, False, 0)
-        startup_row.pack_start(s_text, True, True, 0)
+        row_startup_box.pack_start(s_text, True, True, 0)
 
         self._startup_toggle = Gtk.Switch(valign=Gtk.Align.CENTER)
         self._startup_toggle.set_active(autostart.is_autostart_enabled())
         self._startup_toggle.connect("notify::active", self._on_startup_toggled)
-        startup_row.pack_start(self._startup_toggle, False, False, 0)
-        col.pack_start(startup_card, False, False, 0)
+        row_startup_box.pack_start(self._startup_toggle, False, False, 0)
+        row_startup.add(row_startup_box)
+        self._sys_box.add(row_startup)
+
+        # Row 2: Switch notifications
+        row_notif = Gtk.ListBoxRow()
+        row_notif_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14, border_width=14)
+        n_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER)
+        n_title = Gtk.Label(xalign=0)
+        n_title.set_markup(f"<b>{GLib.markup_escape_text(_('Switch notifications'))}</b>")
+        n_text.pack_start(n_title, False, False, 0)
+        n_sub = Gtk.Label(xalign=0)
+        n_sub.set_markup(
+            '<span size="small" foreground="grey">'
+            + _("Show a system notification when switching profiles")
+            + "</span>"
+        )
+        n_text.pack_start(n_sub, False, False, 0)
+        row_notif_box.pack_start(n_text, True, True, 0)
+
+        self._notifications_toggle = Gtk.Switch(valign=Gtk.Align.CENTER)
+        self._notifications_toggle.set_active(self._config.get("notifications_enabled", True))
+        self._notifications_toggle.connect("notify::active", self._on_notifications_toggled)
+        row_notif_box.pack_start(self._notifications_toggle, False, False, 0)
+        row_notif.add(row_notif_box)
+        self._sys_box.add(row_notif)
 
         # User-created profiles are managed from the profile switcher popover
         # (top-left), where they list alongside the onboard ones — see
@@ -458,66 +488,87 @@ class AutoPilotPage(Gtk.Box):
         row = Gtk.ListBoxRow(activatable=False, selectable=False)
         box = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL,
-            spacing=8,
-            border_width=8,
+            spacing=14,
+            border_width=10,
         )
 
-        # Game icon: the game's own artwork when we can match the rule to an
-        # installed game, rounded to a uniform square; generic icon otherwise.
+        # Game icon: rounded 36px squircle
         game = (
             self._game_by_exe.get(exe)
             or self._game_by_exe.get(exe.lower())
             or self._game_by_exe.get(exe.lower().replace(" ", ""))
         )
-        pixbuf = _load_game_icon(game.icon if game else None)
+        pixbuf = _load_game_icon(game.icon if game else None, size=36)
         if pixbuf is not None:
             icon = Gtk.Image.new_from_pixbuf(pixbuf)
         else:
             icon = Gtk.Image.new_from_icon_name(
-                "applications-games-symbolic", Gtk.IconSize.MENU
+                "applications-games-symbolic", Gtk.IconSize.LARGE_TOOLBAR
             )
         box.pack_start(icon, False, False, 0)
 
-        # Display name: the game's title when known; otherwise the rule's exe
-        # without the Windows-ism ".exe" suffix.
-        display = game.name if game else exe.removesuffix(".exe")
-        exe_lbl = Gtk.Label(label=display, xalign=0, hexpand=True)
-        exe_lbl.set_ellipsize(3)  # PANGO_ELLIPSIZE_END
-        exe_lbl.set_tooltip_text(exe)
-        box.pack_start(exe_lbl, True, True, 0)
-
-        # Arrow
-        arrow = Gtk.Label(label="→")
-        arrow.get_style_context().add_class("dim-label")
-        box.pack_start(arrow, False, False, 0)
-
-        # Target name
-        p_label = self._target_label(profile_idx)
-        profile_lbl = Gtk.Label(label=p_label, xalign=1)
-        profile_lbl.get_style_context().add_class("dim-label")
-        box.pack_start(profile_lbl, False, False, 4)
-
-        # Edit button
-        edit_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
-        edit_btn.add(
-            Gtk.Image.new_from_icon_name("document-edit-symbolic", Gtk.IconSize.MENU)
+        # Game details: Title and Subtitle
+        details = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER
         )
-        edit_btn.set_tooltip_text(_("Edit this rule"))
-        edit_btn.connect("clicked", self._on_edit_rule, exe, profile_idx)
-        box.pack_start(edit_btn, False, False, 0)
+        top_line = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        display = game.name if game else exe.removesuffix(".exe")
+        name_lbl = Gtk.Label(xalign=0)
+        name_lbl.set_markup(f"<b>{GLib.markup_escape_text(display)}</b>")
+        top_line.pack_start(name_lbl, False, False, 0)
 
-        # Delete button
-        del_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
+        if game and game.source:
+            source_lbl = Gtk.Label(label=game.source)
+            source_lbl.get_style_context().add_class("source-chip")
+            if game.source.lower() == "steam":
+                source_lbl.get_style_context().add_class("steam")
+            top_line.pack_start(source_lbl, False, False, 0)
+        details.pack_start(top_line, False, False, 0)
+
+        meta_text = exe
+        if game and game.source and game.source != "Steam":
+            meta_text = f"{exe} • {game.source}"
+        sub_lbl = Gtk.Label(xalign=0)
+        sub_lbl.set_markup(f"<span size='small' foreground='grey'>{GLib.markup_escape_text(meta_text)}</span>")
+        details.pack_start(sub_lbl, False, False, 0)
+        box.pack_start(details, True, True, 0)
+
+        # Interactive Profile Pill Combobox
+        target_combo = Gtk.ComboBoxText(valign=Gtk.Align.CENTER)
+        target_combo.get_style_context().add_class("profile-pill-combo")
+        for p in self._device.profiles:
+            target_combo.append(str(p.index), _profile_label(p))
+        for name in sorted(ap.load_store()):
+            target_combo.append(ap.SW_PREFIX + name, name)
+
+        target_val = str(profile_idx)
+        target_combo.set_active_id(target_val)
+        target_combo.connect("changed", self._on_rule_combo_changed, exe)
+        box.pack_start(target_combo, False, False, 6)
+
+        # Delete button (clean flat circular with subtle hover red, NO huge red block)
+        del_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE, valign=Gtk.Align.CENTER)
         del_btn.add(
-            Gtk.Image.new_from_icon_name("edit-delete-symbolic", Gtk.IconSize.MENU)
+            Gtk.Image.new_from_icon_name("user-trash-symbolic", Gtk.IconSize.BUTTON)
         )
         del_btn.set_tooltip_text(_("Delete this rule"))
-        del_btn.get_style_context().add_class("destructive-action")
+        del_btn.get_style_context().add_class("flat")
+        del_btn.get_style_context().add_class("circular")
+        del_btn.get_style_context().add_class("delete-row-btn")
         del_btn.connect("clicked", self._on_delete_rule, exe)
         box.pack_start(del_btn, False, False, 0)
 
         row.add(box)
         return row
+
+    def _on_rule_combo_changed(self, combo: Gtk.ComboBoxText, exe: str) -> None:
+        val = combo.get_active_id()
+        if val is None:
+            return
+        target = val if val.startswith(ap.SW_PREFIX) else int(val)
+        self._config.setdefault("rules", {})[exe] = target
+        cfg_save(self._config)
+        self._sync_watcher_rules()
 
     # ── Watcher control ────────────────────────────────────────────────────────
 
@@ -665,6 +716,17 @@ class AutoPilotPage(Gtk.Box):
         try:
             ap.activate_target(self._device, target, self._config)
             self._update_status_label(last_switch=(exe_name, target))
+            if self._config.get("notifications_enabled", True) and Notify:
+                try:
+                    p_name = self._target_label(target)
+                    n = Notify.Notification.new(
+                        "Cheddar AutoPilot",
+                        _("Perfil activado: {}").format(p_name),
+                        "input-mouse-symbolic",
+                    )
+                    n.show()
+                except Exception:
+                    pass
         except Exception as exc:
             self._update_status_label(error=str(exc))
         return False  # GLib.idle_add one-shot
@@ -675,38 +737,66 @@ class AutoPilotPage(Gtk.Box):
         error: Optional[str] = None,
     ) -> None:
         running = self._watcher is not None and self._watcher.is_running()
+        is_active = running or (hasattr(self, "_toggle") and self._toggle.get_active())
         if error:
             markup = (
-                '<span foreground="red">⚠ '
-                + GLib.markup_escape_text(_("Error: {}").format(error))
+                '<span foreground="#e01b24" weight="bold">⚠ Error</span> '
+                + '<span size="small" foreground="#e01b24">'
+                + GLib.markup_escape_text(error)
                 + "</span>"
             )
-        elif last_switch:
-            exe, idx = last_switch
-            p_name = self._target_label(idx)
+        elif is_active:
+            if last_switch:
+                _exe, idx = last_switch
+                p_name = self._target_label(idx)
+            else:
+                p_name = self.current_user_profile or _profile_label(self._device.active_profile)
             markup = (
-                '<span foreground="green">● </span>'
-                + '<span size="small">'
-                + GLib.markup_escape_text(
-                    _("Active — last switch: {} → {}").format(exe, p_name)
-                )
-                + "</span>"
-            )
-        elif running:
-            markup = (
-                '<span foreground="green">● </span>'
-                + '<span size="small" foreground="grey">'
-                + _("Watching for games…")
+                '<span background="#2ec27e33" foreground="#2ec27e" weight="bold">  Activo  </span>  '
+                + '<span size="small" foreground="#ffffffaa">'
+                + _("Último cambio:")
+                + " "
+                + f'<strong foreground="#ffffff">{GLib.markup_escape_text(p_name)}</strong>'
                 + "</span>"
             )
         else:
             markup = (
-                '<span foreground="grey">○ </span>'
-                + '<span size="small" foreground="grey">'
-                + _("Inactive")
+                '<span background="#ffffff18" foreground="#ffffff88" weight="bold">  Inactivo  </span>  '
+                + '<span size="small" foreground="#ffffff88">'
+                + _("Automatización desactivada")
                 + "</span>"
             )
         self._status_label.set_markup(markup)
+        if hasattr(self, "_status_indicator"):
+            self._status_indicator.queue_draw()
+
+    def _on_draw_status_indicator(self, _widget, cr: cairo.Context) -> bool:
+        active = self._toggle.get_active() if hasattr(self, "_toggle") else False
+        if active:
+            # Green pulse ring and dot
+            cr.set_source_rgba(46 / 255.0, 194 / 255.0, 126 / 255.0, 0.45)
+            cr.set_line_width(2.0)
+            cr.arc(14, 14, 10.5, 0, 2 * math.pi)
+            cr.stroke()
+
+            cr.set_source_rgba(46 / 255.0, 194 / 255.0, 126 / 255.0, 1.0)
+            cr.arc(14, 14, 5.0, 0, 2 * math.pi)
+            cr.fill()
+        else:
+            # Dim grey ring and dot
+            cr.set_source_rgba(0.5, 0.5, 0.5, 0.25)
+            cr.set_line_width(2.0)
+            cr.arc(14, 14, 10.5, 0, 2 * math.pi)
+            cr.stroke()
+
+            cr.set_source_rgba(0.5, 0.5, 0.5, 0.6)
+            cr.arc(14, 14, 5.0, 0, 2 * math.pi)
+            cr.fill()
+        return False
+
+    def _on_notifications_toggled(self, switch: Gtk.Switch, _pspec) -> None:
+        self._config["notifications_enabled"] = switch.get_active()
+        cfg_save(self._config)
 
     # ── Signal handlers ────────────────────────────────────────────────────────
 

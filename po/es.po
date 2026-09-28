@@ -531,3 +531,51 @@ msgstr "Seleccione un dispositivo"
 #: data/ui/Window.ui:8
 msgid "_About Piper"
 msgstr "_Acerca de Piper"
+
+msgid "AutoPilot"
+msgstr "AutoPilot"
+
+msgid "Mouse setup"
+msgstr "Mouse setup"
+
+msgid "Automatic profile switching"
+msgstr "Cambio Automático de Perfiles"
+
+msgid "Your games"
+msgstr "Tus juegos"
+
+msgid "When a game starts, its profile is loaded onto the mouse automatically."
+msgstr "Cuando un juego se ejecuta o toma foco, su perfil se carga al ratón automáticamente."
+
+msgid "Add game"
+msgstr "Añadir juego"
+
+msgid "System Settings"
+msgstr "Ajustes del sistema"
+
+msgid "Launch on system startup"
+msgstr "Ejecutar al iniciar sesión"
+
+msgid "Start Cheddar in the background tray when you log in"
+msgstr "Inicia el demonio de fondo en segundo plano silenciosamente"
+
+msgid "Switch notifications"
+msgstr "Notificaciones de cambio"
+
+msgid "Show a system notification when switching profiles"
+msgstr "Muestra una burbuja del sistema al conmutar perfil"
+
+msgid "Delete this rule"
+msgstr "Eliminar regla"
+
+msgid "Watching for running games…"
+msgstr "Supervisando juegos en ejecución…"
+
+msgid "Profile automation is disabled"
+msgstr "Automatización desactivada"
+
+msgid "Last change:"
+msgstr "Último cambio:"
+
+msgid "Inactive"
+msgstr "Inactivo"
