@@ -136,7 +136,8 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
     (and flash writes on the mouse) to a minimum. The caller commits.
     """
     rate = data.get("report_rate")
-    if rate and rate != profile.report_rate and rate in profile.report_rates:
+    rates = profile.report_rates or []
+    if rate and rate != profile.report_rate and (rate in rates or not rates):
         profile.report_rate = rate
 
     by_index = {r["index"]: r for r in data.get("resolutions", [])}
@@ -189,13 +190,14 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
         want = by_index.get(led.index)
         if want is None:
             continue
-        if want["mode"] != int(led.mode) and want["mode"] in led.modes:
+        modes = led.modes or []
+        if want.get("mode") is not None and want["mode"] != int(led.mode) and (want["mode"] in modes or not modes):
             led.mode = want["mode"]
-        if tuple(want["color"]) != tuple(led.color):
+        if want.get("color") is not None and tuple(want["color"]) != tuple(led.color or ()):
             led.color = tuple(want["color"])
-        if want["effect_duration"] != led.effect_duration:
+        if want.get("effect_duration") is not None and want["effect_duration"] != led.effect_duration:
             led.effect_duration = want["effect_duration"]
-        if want["brightness"] != led.brightness:
+        if want.get("brightness") is not None and want["brightness"] != led.brightness:
             led.brightness = want["brightness"]
 
 
@@ -215,8 +217,10 @@ def target_label(target: RuleTarget) -> str:
 def scratch_slot_for(device: RatbagdDevice, config: Dict) -> int:
     """The onboard slot software profiles get written into. Defaults to the
     last slot; override with "scratch_slot" in autopilot.json."""
-    slot = config.get("scratch_slot")
     n = len(device.profiles)
+    if n == 0:
+        return 0
+    slot = config.get("scratch_slot")
     if isinstance(slot, int) and 0 <= slot < n:
         return slot
     return n - 1
@@ -226,6 +230,9 @@ def activate_target(device: RatbagdDevice, target: RuleTarget, config: Dict) -> 
     """Switch the device to a rule target: activate an onboard profile, or
     write a software profile into the scratch slot and activate that.
     Raises on unknown software profiles; the caller reports errors."""
+    if not device.profiles:
+        raise IndexError(f"Device {device.name} has no profiles")
+
     if is_software_target(target):
         name = target[len(SW_PREFIX) :]
         data = load_store().get(name)

@@ -149,6 +149,13 @@ test(
   env : env_test,
 )
 
+test(
+  'device-and-feature-tests',
+  py3,
+  args : [join_paths(meson.current_source_dir(), 'tests/test_devices_and_features.py')],
+  env : env_test,
+)
+
 #### code formatting #####
 run_target(
   'python-black',

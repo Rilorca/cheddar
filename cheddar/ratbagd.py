@@ -355,6 +355,7 @@ class RatbagdDevice(_RatbagdDBus):
         result = self._get_dbus_property("Profiles") or []
         self._profiles = [RatbagdProfile(objpath) for objpath in result]
         for profile in self._profiles:
+            profile._device = self
             profile.connect("notify::is-active", self._on_active_profile_changed)
 
         # Use a SHA1 of our object path as our device's ID
@@ -534,6 +535,13 @@ class RatbagdProfile(_RatbagdDBus):
                 self._report_rate = report_rate
                 self.notify("report-rate")
 
+        try:
+            name = changed_props["Name"]
+        except KeyError:
+            pass
+        else:
+            self.notify("name")
+
     @GObject.Property
     def capabilities(self):
         """The capabilities of this profile as an array. Capabilities not
@@ -555,6 +563,7 @@ class RatbagdProfile(_RatbagdDBus):
 
         @param name The new name, as str"""
         self._set_dbus_property("Name", "s", name)
+        self.notify("name")
 
     @GObject.Property
     def index(self):
@@ -577,6 +586,9 @@ class RatbagdProfile(_RatbagdDBus):
 
         @param disabled The new state, as boolean"""
         self._set_dbus_property("Disabled", "b", disabled)
+        if disabled != self._disabled:
+            self._disabled = disabled
+            self.notify("disabled")
 
     @GObject.Property
     def report_rate(self) -> int:
@@ -590,6 +602,9 @@ class RatbagdProfile(_RatbagdDBus):
         @param rate The new report rate, as int
         """
         self._set_dbus_property("ReportRate", "u", rate)
+        if rate != self._report_rate:
+            self._report_rate = rate
+            self.notify("report-rate")
 
     @GObject.Property
     def report_rates(self):
@@ -608,6 +623,9 @@ class RatbagdProfile(_RatbagdDBus):
         @param value The angle snapping option as int
         """
         self._set_dbus_property("AngleSnapping", "i", value)
+        if value != self._angle_snapping:
+            self._angle_snapping = value
+            self.notify("angle-snapping")
 
     @GObject.Property
     def debounce(self):
@@ -621,6 +639,9 @@ class RatbagdProfile(_RatbagdDBus):
         @param value The button debounce time, as int
         """
         self._set_dbus_property("Debounce", "i", value)
+        if value != self._debounce:
+            self._debounce = value
+            self.notify("debounce")
 
     @GObject.Property
     def debounces(self):
@@ -672,6 +693,15 @@ class RatbagdProfile(_RatbagdDBus):
         """Set this profile to be the active profile."""
         ret = self._dbus_call("SetActive", "")
         self._set_dbus_property("IsActive", "b", True, readwrite=False)
+        device = getattr(self, "_device", None)
+        if device is not None:
+            for p in device.profiles:
+                if p is not self and p._active:
+                    p._active = False
+                    p.notify("is-active")
+        if not self._active:
+            self._active = True
+            self.notify("is-active")
         return ret
 
 
@@ -686,8 +716,11 @@ class RatbagdResolution(_RatbagdDBus):
         self._active = self._get_dbus_property("IsActive")
         self._default = self._get_dbus_property("IsDefault")
         self._disabled = self._get_dbus_property("IsDisabled")
-        self._resolution = self._convert_resolution_from_dbus(
-            self._get_dbus_property_nonnull("Resolution")
+        res = self._get_dbus_property("Resolution")
+        self._resolution = (
+            self._convert_resolution_from_dbus(res)
+            if res is not None
+            else (1000,)
         )
 
     def _on_properties_changed(self, proxy, changed_props, invalidated_props):
@@ -748,14 +781,16 @@ class RatbagdResolution(_RatbagdDBus):
 
     @staticmethod
     def _convert_resolution_from_dbus(
-        res: Union[int, Tuple[int, int]],
+        res: Union[int, Tuple[int, int], GLib.Variant],
     ) -> Union[Tuple[int], Tuple[int, int]]:
         """
         Convert resolution from what D-Bus API returns - either an int or a tuple of two ints, to a tuple of either one or two ints.
         """
+        if isinstance(res, GLib.Variant):
+            res = res.unpack()
         if isinstance(res, int):
             return (res,)
-        return res
+        return tuple(res)
 
     @GObject.Property
     def resolution(self):
@@ -823,11 +858,24 @@ class RatbagdResolution(_RatbagdDBus):
         """Set this resolution to be the default."""
         ret = self._dbus_call("SetDefault", "")
         self._set_dbus_property("IsDefault", "b", True, readwrite=False)
+        profile = getattr(self, "_profile", None)
+        if profile is not None:
+            for res in profile.resolutions:
+                if res is not self and res._default:
+                    res._default = False
+                    res.notify("is-default")
+        if not self._default:
+            self._default = True
+            self.notify("is-default")
         return ret
 
     def set_disabled(self, disable):
         """Set this resolution to be disabled."""
-        return self._set_dbus_property("IsDisabled", "b", disable)
+        ret = self._set_dbus_property("IsDisabled", "b", disable)
+        if disable != self._disabled:
+            self._disabled = disable
+            self.notify("is-disabled")
+        return ret
 
 
 class RatbagdButton(_RatbagdDBus):
@@ -936,6 +984,7 @@ class RatbagdButton(_RatbagdDBus):
         self._set_dbus_property(
             "Mapping", "(uv)", (RatbagdButton.ActionType.BUTTON, button)
         )
+        self.notify("action-type")
 
     @GObject.Property
     def macro(self):
@@ -958,6 +1007,7 @@ class RatbagdButton(_RatbagdDBus):
         self._set_dbus_property(
             "Mapping", "(uv)", (RatbagdButton.ActionType.MACRO, macro)
         )
+        self.notify("action-type")
 
     @GObject.Property
     def special(self):
@@ -978,6 +1028,7 @@ class RatbagdButton(_RatbagdDBus):
         self._set_dbus_property(
             "Mapping", "(uv)", (RatbagdButton.ActionType.SPECIAL, special)
         )
+        self.notify("action-type")
 
     @GObject.Property
     def key(self):
@@ -990,6 +1041,7 @@ class RatbagdButton(_RatbagdDBus):
     def key(self, key):
         key = GLib.Variant("u", key)
         self._set_dbus_property("Mapping", "(uv)", (RatbagdButton.ActionType.KEY, key))
+        self.notify("action-type")
 
     @GObject.Property
     def action_type(self):
@@ -1017,6 +1069,7 @@ class RatbagdButton(_RatbagdDBus):
         self._set_dbus_property(
             "Mapping", "(uv)", (RatbagdButton.ActionType.NONE, zero)
         )
+        self.notify("action-type")
 
 
 class RatbagdMacro(GObject.Object):
@@ -1137,7 +1190,10 @@ class RatbagdLed(_RatbagdDBus):
         self._brightness = self._get_dbus_property("Brightness")
         self._color = self._get_dbus_property("Color")
         self._effect_duration = self._get_dbus_property("EffectDuration")
-        self._mode: RatbagdLed.Mode = self._get_dbus_property_nonnull("Mode")
+        mode = self._get_dbus_property("Mode")
+        self._mode: RatbagdLed.Mode = (
+            RatbagdLed.Mode(mode) if mode is not None else RatbagdLed.Mode.OFF
+        )
 
     @GObject.Property
     def index(self):
@@ -1158,6 +1214,9 @@ class RatbagdLed(_RatbagdDBus):
                     Mode.BREATHING.
         """
         self._set_dbus_property("Mode", "u", mode)
+        if mode != self._mode:
+            self._mode = mode
+            self.notify("mode")
 
     @GObject.Property
     def modes(self):
@@ -1176,6 +1235,9 @@ class RatbagdLed(_RatbagdDBus):
         @param color An RGB color, as an integer triplet with values 0-255.
         """
         self._set_dbus_property("Color", "(uuu)", color)
+        if color != self._color:
+            self._color = color
+            self.notify("color")
 
     @GObject.Property
     def colordepth(self):
@@ -1195,6 +1257,9 @@ class RatbagdLed(_RatbagdDBus):
         @param effect_duration The new effect duration, as int
         """
         self._set_dbus_property("EffectDuration", "u", effect_duration)
+        if effect_duration != self._effect_duration:
+            self._effect_duration = effect_duration
+            self.notify("effect-duration")
 
     @GObject.Property
     def brightness(self):
@@ -1208,6 +1273,9 @@ class RatbagdLed(_RatbagdDBus):
         @param brightness The new brightness, as int
         """
         self._set_dbus_property("Brightness", "u", brightness)
+        if brightness != self._brightness:
+            self._brightness = brightness
+            self.notify("brightness")
 
     def _on_properties_changed(self, proxy, changed_props, invalidated_props):
         try:
