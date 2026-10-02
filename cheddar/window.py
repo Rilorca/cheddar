@@ -37,8 +37,15 @@ class Window(Gtk.ApplicationWindow):
         @param ratbag The ratbag instance to connect to, as ratbagd.Ratbag
         """
         Gtk.ApplicationWindow.__init__(self, *args, **kwargs)
-
+        Gtk.Window.set_default_icon_name("io.github.rilorca.Cheddar")
         self.set_icon_name("io.github.rilorca.Cheddar")
+        try:
+            theme = Gtk.IconTheme.get_default()
+            pb = theme.load_icon("io.github.rilorca.Cheddar", 256, 0)
+            if pb:
+                self.set_icon(pb)
+        except Exception:
+            pass
 
         self._add_perspective(ErrorPerspective(), None)
         try:

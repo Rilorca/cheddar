@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="data/io.github.rilorca.Cheddar.svg" width="128" height="128" alt="Cheddar Logo">
+  <img src="data/io.github.rilorca.Cheddar.png" width="128" height="128" alt="Cheddar Logo">
 </p>
 
 <h1 align="center">Cheddar</h1>
@@ -61,13 +61,36 @@ On Windows, Logitech G HUB automatically detects when you launch a game and reco
 
 ## Installation
 
-> [!IMPORTANT]
-> **Why native installation?**  
-> Cheddar's core engine (**AutoPilot**) monitors active game processes via `/proc` and tracks focused game windows. Sandboxed container formats like **Flatpak strictly isolate `/proc`** by design, which breaks automatic per-game switching.  
-> Installing natively takes less than 30 seconds and ensures **100% of features work out of the box**.
+### Method 1: Flatpak (Universal / Recommended) 📦
 
-### Requirements
+Cheddar can be installed as a Flatpak on any Linux distribution (Ubuntu, Fedora, Arch Linux, Steam Deck / SteamOS, Bazzite, Debian, etc.).
 
+> [!NOTE]
+> Cheddar communicates seamlessly with the host's `ratbagd` daemon via D-Bus, and monitors running games using the Flatpak host portal. Ensure `ratbagd` is running on your host system:
+> ```sh
+> sudo systemctl enable --now ratbagd
+> ```
+
+#### Download Pre-built Bundle
+Download `io.github.rilorca.Cheddar.flatpak` from the latest [GitHub Releases](https://github.com/Rilorca/cheddar/releases), then install it:
+```sh
+flatpak install io.github.rilorca.Cheddar.flatpak
+```
+*(Or double-click the `.flatpak` file in your file manager to open it in GNOME Software / KDE Discover).*
+
+#### Build Locally with Flatpak Builder
+```sh
+sudo pacman -S flatpak-builder   # or apt install / dnf install flatpak-builder
+flatpak-builder --user --install --force-clean build-dir io.github.rilorca.Cheddar.json
+```
+
+---
+
+### Method 2: Native Package Installation ⚡
+
+If you prefer building and installing natively on your host system:
+
+#### Requirements
 - `ratbagd` / `libratbag` (0.18 or newer)
 - GTK 3 & PyGObject
 - Python 3 with modules `lxml`, `evdev`, `cairo`, `gi`

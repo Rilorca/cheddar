@@ -26,6 +26,11 @@ about_dialog = configure_file(input: 'ui/AboutDialog.ui.in',
                               configuration: conf)
 
 install_data('io.github.rilorca.Cheddar.svg', install_dir: icondir)
+foreach size : ['16x16', '24x24', '32x32', '48x48', '64x64', '128x128', '256x256', '512x512']
+    install_data(join_paths('icons', size, 'io.github.rilorca.Cheddar.png'),
+                 install_dir: join_paths(datadir, 'icons', 'hicolor', size, 'apps'))
+endforeach
+
 
 # AutoPilot fork: systemd user unit for the headless daemon
 install_data('cheddar-autopilot.service',

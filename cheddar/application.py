@@ -32,6 +32,7 @@ class Application(Gtk.Application):
             application_id="io.github.rilorca.Cheddar",
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
         )
+        GLib.set_prgname("io.github.rilorca.Cheddar")
         GLib.set_application_name("Cheddar")
         self.add_main_option(
             "background",

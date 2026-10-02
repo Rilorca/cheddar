@@ -55,6 +55,10 @@ def _basename_any_os(path: str) -> str:
     return path.replace("\\", "/").rsplit("/", 1)[-1]
 
 
+def is_flatpak() -> bool:
+    return os.path.exists("/.flatpak-info")
+
+
 def _scan_processes() -> Dict[int, Set[str]]:
     """Map every PID in /proc to the lowercase names it can be known by.
 
@@ -70,6 +74,45 @@ def _scan_processes() -> Dict[int, Set[str]]:
     every argument would false-positive on e.g. 'grep game.exe'.
     """
     procs: Dict[int, Set[str]] = {}
+    if is_flatpak():
+        # Inside Flatpak sandbox, host /proc is accessed via flatpak-spawn --host
+        cmd = [
+            "flatpak-spawn", "--host", "python3", "-c",
+            "import os, sys\n"
+            "for entry in os.scandir('/proc'):\n"
+            "    if not entry.name.isdigit(): continue\n"
+            "    try:\n"
+            "        exe = os.readlink(f'/proc/{entry.name}/exe')\n"
+            "    except OSError:\n"
+            "        exe = ''\n"
+            "    try:\n"
+            "        with open(f'/proc/{entry.name}/cmdline', 'rb') as f:\n"
+            "            argv0 = f.read(4096).split(b'\\0', 1)[0].decode('utf-8', 'replace')\n"
+            "    except OSError:\n"
+            "        argv0 = ''\n"
+            "    if exe or argv0:\n"
+            "        sys.stdout.write(f'{entry.name}\\t{os.path.basename(exe)}\\t{argv0}\\n')\n"
+        ]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
+            for line in res.stdout.splitlines():
+                parts = line.split("\t", 2)
+                if len(parts) >= 2 and parts[0].isdigit():
+                    pid = int(parts[0])
+                    exe_name = parts[1]
+                    argv0 = parts[2] if len(parts) > 2 else ""
+                    names: Set[str] = set()
+                    if exe_name:
+                        _add_name(names, exe_name)
+                    if argv0:
+                        _add_name(names, _basename_any_os(argv0))
+                    if names:
+                        procs[pid] = names
+            return procs
+        except Exception as e:
+            logger.debug("Error scanning host /proc via flatpak-spawn: %s", e)
+            return procs
+
     try:
         for entry in os.scandir("/proc"):
             if not entry.name.isdigit():
@@ -125,9 +168,10 @@ def _focused_pid() -> Optional[int]:
     """
     env = dict(os.environ)
     env.setdefault("DISPLAY", ":0")
+    xprop_cmd = ["flatpak-spawn", "--host", "xprop"] if is_flatpak() else ["xprop"]
     try:
         out = subprocess.run(
-            ["xprop", "-root", "_NET_ACTIVE_WINDOW"],
+            xprop_cmd + ["-root", "_NET_ACTIVE_WINDOW"],
             capture_output=True,
             text=True,
             timeout=2,
@@ -139,7 +183,7 @@ def _focused_pid() -> Optional[int]:
         if int(m.group(0), 16) == 0:  # no active X window at all
             return NO_PID
         out = subprocess.run(
-            ["xprop", "-id", m.group(0), "_NET_WM_PID"],
+            xprop_cmd + ["-id", m.group(0), "_NET_WM_PID"],
             capture_output=True,
             text=True,
             timeout=2,

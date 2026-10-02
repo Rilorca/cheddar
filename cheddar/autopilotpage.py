@@ -35,7 +35,7 @@ try:
     gi.require_version("Notify", "0.7")
     from gi.repository import Notify
     if not Notify.is_initted():
-        Notify.init("Cheddar")
+        Notify.init("io.github.rilorca.Cheddar")
 except Exception:
     Notify = None
 
@@ -722,8 +722,15 @@ class AutoPilotPage(Gtk.Box):
                     n = Notify.Notification.new(
                         "Cheddar AutoPilot",
                         _("Perfil activado: {}").format(p_name),
-                        "input-mouse-symbolic",
+                        "io.github.rilorca.Cheddar",
                     )
+                    try:
+                        theme = Gtk.IconTheme.get_default()
+                        pb = theme.load_icon("io.github.rilorca.Cheddar", 48, 0)
+                        if pb:
+                            n.set_image_from_pixbuf(pb)
+                    except Exception:
+                        pass
                     n.show()
                 except Exception:
                     pass

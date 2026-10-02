@@ -109,8 +109,10 @@ class TrayIcon:
         """Locate the directory containing the cheddar-tray.png icon."""
         import os
         candidates = [
-            os.path.join(d, "cheddar", "icons")
-            for d in ("/usr/share", "/usr/local/share", "/app/share")
+            os.path.expanduser("~/.local/share/cheddar/icons"),
+            "/usr/share/cheddar/icons",
+            "/usr/local/share/cheddar/icons",
+            "/app/share/cheddar/icons",
         ]
         for path in candidates:
             if os.path.isfile(os.path.join(path, "cheddar-tray.png")):

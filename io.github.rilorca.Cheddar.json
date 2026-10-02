@@ -9,8 +9,9 @@
         "--socket=fallback-x11",
         "--socket=wayland",
         "--system-talk-name=org.freedesktop.ratbag1",
+        "--talk-name=org.freedesktop.Flatpak",
         "--device=dri",
-        "--filesystem=/proc:ro",
+        "--filesystem=xdg-config/cheddar:create",
         "--filesystem=xdg-data/applications:ro",
         "--filesystem=~/.local/share/applications:ro"
     ],
