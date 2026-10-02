@@ -452,6 +452,8 @@ class RatbagdProfile(_RatbagdDBus):
         # lists, things will break!
         result = self._get_dbus_property("Resolutions") or []
         self._resolutions = [RatbagdResolution(objpath) for objpath in result]
+        for res in self._resolutions:
+            res._profile = self
         self._subscribe_dirty(self._resolutions)
 
         result = self._get_dbus_property("Buttons") or []
@@ -776,6 +778,9 @@ class RatbagdResolution(_RatbagdDBus):
         else:
             variant = GLib.Variant("(uu)", resolution)
         self._set_dbus_property("Resolution", "v", variant)
+        if resolution != self._resolution:
+            self._resolution = resolution
+            self.notify("resolution")
 
     @GObject.Property
     def resolutions(self):
@@ -803,6 +808,15 @@ class RatbagdResolution(_RatbagdDBus):
         """Set this resolution to be the active one."""
         ret = self._dbus_call("SetActive", "")
         self._set_dbus_property("IsActive", "b", True, readwrite=False)
+        profile = getattr(self, "_profile", None)
+        if profile is not None:
+            for res in profile.resolutions:
+                if res is not self and res._active:
+                    res._active = False
+                    res.notify("is-active")
+        if not self._active:
+            self._active = True
+            self.notify("is-active")
         return ret
 
     def set_default(self):

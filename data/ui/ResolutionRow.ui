@@ -40,11 +40,16 @@
             </child>
             <child>
               <object class="GtkLabel" id="active_label">
-                <property name="visible">True</property>
+                <property name="name">active_label</property>
+                <property name="visible">False</property>
+                <property name="no-show-all">True</property>
                 <property name="can-focus">False</property>
                 <property name="halign">end</property>
                 <property name="label" translatable="yes" comments="Translators: this is used to indicate the active resolution.">active</property>
                 <property name="justify">right</property>
+                <style>
+                  <class name="active-badge"/>
+                </style>
               </object>
               <packing>
                 <property name="expand">False</property>

@@ -771,8 +771,50 @@ listbox {
 
 list row,
 listbox row {
+    padding: 8px 12px;
+    border-radius: 6px;
     background-color: transparent;
     color: #ffffff;
+    transition: background-color 0.12s ease;
+}
+
+list row:hover,
+listbox row:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+list row:selected,
+listbox row:selected,
+list row:selected:focus,
+listbox row:selected:focus,
+dialog listbox row:selected,
+dialog listbox row:selected:focus,
+.content-list row:selected {
+    background-color: #1c71d8;
+    color: #ffffff;
+}
+
+list row:selected label,
+listbox row:selected label,
+list row:selected:focus label,
+listbox row:selected:focus label,
+dialog listbox row:selected label {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+list row:selected:hover,
+listbox row:selected:hover,
+dialog listbox row:selected:hover {
+    background-color: #185fb4;
+    color: #ffffff;
+}
+
+separator {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: none;
+    min-height: 1px;
 }
 
 /* Resolutions Page ListBox */
@@ -815,11 +857,14 @@ DPIEntry:focus {
     background-color: rgba(255, 255, 255, 0.14);
 }
 
-#active_label {
+#active_label,
+.active-badge {
+    font-size: 11px;
     font-weight: 700;
-    color: #2ec27e;
-    font-size: 12px;
-    padding: 2px 6px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background-color: #3584e4;
+    color: #ffffff;
 }
 
 /* ── Reset Button Styling ────────────────────────────────────────────── */

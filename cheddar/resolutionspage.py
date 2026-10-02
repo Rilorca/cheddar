@@ -115,6 +115,7 @@ class ResolutionsPage(Gtk.Box):
 
         default_idx = 1 if len(resolutions) > 1 else 0
         resolutions[default_idx].set_default()
+        resolutions[default_idx].set_active()
 
         # Refresh UI rows
         self._last_activated_row = None

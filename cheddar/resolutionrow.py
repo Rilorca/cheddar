@@ -88,6 +88,11 @@ class ResolutionRow(Gtk.ListBoxRow):
         if RatbagdResolution.CAP_DISABLE in resolution.capabilities:
             self.CAP_DISABLE = True
 
+        self.active_label.set_no_show_all(True)
+        if not self.CAP_DISABLE:
+            self.disable_button.set_no_show_all(True)
+            self.disable_button.set_visible(False)
+
         # Set initial values for the UI.
         res = resolution.resolution[0]
         minres = resolution.resolutions[0]
@@ -101,7 +106,7 @@ class ResolutionRow(Gtk.ListBoxRow):
         with self.scale.handler_block(self._scale_handler):
             self.scale.props.adjustment.configure(res, minres, maxres, 50, 50, 0)
             self.scale.set_value(res)
-        if resolution.is_disabled:
+        if resolution.is_disabled and self.CAP_DISABLE:
             with self.disable_button.handler_block(self._disabled_button_handler):
                 self.disable_button.set_active(True)
         self._on_status_changed(resolution, _pspec=None)
