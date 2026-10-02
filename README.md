@@ -28,8 +28,9 @@ On Windows, Logitech G HUB automatically detects when you launch a game and reco
 
 - 🎮 **Zero-Effort AutoPilot:** Launch Steam, Proton, Lutris, Heroic, or Faugus Launcher games, and your mouse profile switches instantly in the background. Alt-tab between games or back to the desktop, and your settings follow seamlessly.
 - ♾️ **Unlimited Game Profiles:** Don't let your mouse's 3 onboard memory slots limit your gaming library. Cheddar stores unlimited custom profiles on your PC and dynamically writes them onto your mouse hardware on the fly.
-- ⚡ **Blazing Fast & Lightweight:** Zero Electron bloat. Native GTK styling with an ultra-lightweight `/proc` watcher that consumes near-zero CPU and RAM.
+- ⚡ **Insanely Lightweight (~35 MB RAM):** Say goodbye to Logitech G HUB's 500+ MB Electron bloat on Windows. Cheddar's background daemon idles at just **~35 MB of RAM** and **0.0% CPU**, keeping your machine's full power dedicated to your games.
 - 🎯 **Full Hardware Customization:** Fine-tune DPI stages, polling report rates, macro recordings, button remaps, and RGB lighting with interactive device schematics.
+- 🖱️ **Universal Device Support:** Fully supports over **70+ Logitech gaming mice** (G502 Hero/Lightspeed/X, G Pro / Superlight, G305, G203, G600, G703, G903, G403, etc.) as well as mice from SteelSeries, Roccat, and ASUS supported by `libratbag`.
 
 ---
 
