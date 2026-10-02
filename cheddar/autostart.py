@@ -66,7 +66,9 @@ def set_autostart_enabled(enabled: bool) -> bool:
         logger.error("Failed to create autostart directory %s: %s", autostart_dir, e)
         return False
 
-    exec_cmd = "flatpak run io.github.rilorca.Cheddar --background" if is_flatpak() else "cheddar --background"
+    import shutil
+    cheddar_bin = shutil.which("cheddar") or os.path.expanduser("~/.local/bin/cheddar")
+    exec_cmd = "flatpak run io.github.rilorca.Cheddar --background" if is_flatpak() else f"{cheddar_bin} --background"
 
     desktop_entry = (
         "[Desktop Entry]\n"

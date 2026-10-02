@@ -16,6 +16,8 @@
 	 in advance because we need to know the device. -->
     <property name="width-request">1012</property>
     <property name="height-request">596</property>
+    <property name="default-width">1012</property>
+    <property name="default-height">680</property>
     <property name="can-focus">False</property>
     <child>
       <object class="GtkStack" id="stack_perspectives">

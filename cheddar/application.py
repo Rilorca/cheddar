@@ -51,6 +51,10 @@ class Application(Gtk.Application):
 
     def _load_stylesheet(self) -> None:
         """Load Libadwaita styling for the entire application."""
+        settings = Gtk.Settings.get_default()
+        if settings is not None:
+            settings.set_property("gtk-application-prefer-dark-theme", True)
+
         provider = Gtk.CssProvider()
         loaded = False
         css_path = os.path.join(

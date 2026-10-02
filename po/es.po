@@ -536,7 +536,7 @@ msgid "AutoPilot"
 msgstr "AutoPilot"
 
 msgid "Mouse setup"
-msgstr "Mouse setup"
+msgstr "Ajustes del ratón"
 
 msgid "Automatic profile switching"
 msgstr "Cambio Automático de Perfiles"

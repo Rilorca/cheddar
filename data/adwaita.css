@@ -1,5 +1,13 @@
 /* Cheddar — Libadwaita Modern Stylesheet */
 
+/* Color tokens */
+@define-color theme_base_color #242424;
+@define-color theme_bg_color #242424;
+@define-color theme_fg_color #ffffff;
+@define-color theme_selected_bg_color #1c71d8;
+@define-color theme_selected_fg_color #ffffff;
+@define-color borders rgba(255, 255, 255, 0.08);
+
 /* ── Base Window & HeaderBar ─────────────────────────────────────────── */
 window,
 .background {
@@ -16,10 +24,49 @@ headerbar.titlebar {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* ── Base Buttons (Flat, clean, modern Libadwaita styling) ────────────── */
+button {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 6px 14px;
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+    color: #ffffff;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: none;
+    color: #ffffff;
+}
+
+button:active,
+button:checked {
+    background-color: rgba(255, 255, 255, 0.2);
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: none;
+    color: #ffffff;
+}
+
+button:disabled {
+    background-color: rgba(255, 255, 255, 0.04);
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: none;
+    color: rgba(255, 255, 255, 0.35);
+}
+
 headerbar button:not(.titlebutton):not(.flat):not(.icon-button) {
     border-radius: 8px;
-    padding: 5px 10px;
-    transition: background 0.15s ease, opacity 0.15s ease;
+    padding: 5px 12px;
 }
 
 /* ── Primary Menu & Flat Buttons in HeaderBar ───────────────────────── */
@@ -91,100 +138,302 @@ button.titlebutton.close:hover {
     color: #ffffff;
 }
 
-#button_profile {
-    border-radius: 6px;
-    padding: 6px 12px;
+/* ── Profile Selector Button in HeaderBar ───────────────────────────── */
+.adw-profile-button,
+button.adw-profile-button,
+menubutton.adw-profile-button,
+menubutton.adw-profile-button > button,
+#button_profile,
+headerbar button#button_profile,
+headerbar.titlebar button#button_profile,
+headerbar #button_profile,
+headerbar menubutton#button_profile,
+headerbar menubutton#button_profile > button,
+headerbar.titlebar menubutton#button_profile > button {
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+    color: #ffffff;
+    padding: 6px 14px;
     font-size: 13px;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+}
+
+.adw-profile-button:hover,
+button.adw-profile-button:hover,
+menubutton.adw-profile-button:hover,
+menubutton.adw-profile-button > button:hover,
+#button_profile:hover,
+headerbar button#button_profile:hover,
+headerbar.titlebar button#button_profile:hover,
+headerbar #button_profile:hover,
+headerbar menubutton#button_profile:hover,
+headerbar menubutton#button_profile > button:hover,
+headerbar.titlebar menubutton#button_profile > button:hover {
+    background-color: rgba(255, 255, 255, 0.14);
     background-image: none;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.18);
     box-shadow: none;
     color: #ffffff;
 }
 
-#button_profile:hover {
-    background: rgba(255, 255, 255, 0.14);
+.adw-profile-button label,
+menubutton.adw-profile-button label,
+menubutton.adw-profile-button > button label,
+#button_profile label,
+#label_profile,
+headerbar button#button_profile label,
+headerbar #button_profile label,
+headerbar menubutton#button_profile label,
+headerbar menubutton#button_profile > button label {
+    color: #ffffff;
+    font-weight: 600;
 }
 
-#button_profile image {
+.adw-profile-button image,
+menubutton.adw-profile-button image,
+menubutton.adw-profile-button > button image,
+#button_profile image,
+headerbar button#button_profile image,
+headerbar #button_profile image,
+headerbar menubutton#button_profile image,
+headerbar menubutton#button_profile > button image {
+    color: rgba(255, 255, 255, 0.85);
+    -gtk-icon-shadow: none;
     margin-right: 4px;
 }
 
-/* ── StackSwitcher (Libadwaita Pill ViewSwitcher) ────────────────────── */
-stackswitcher {
+/* ── StackSwitcher (Libadwaita Capsule ViewSwitcher) ─────────────────── */
+headerbar stackswitcher,
+headerbar.titlebar stackswitcher,
+stackswitcher,
+.adw-view-switcher {
     border-radius: 9999px;
     padding: 3px;
-    background: rgba(0, 0, 0, 0.22);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 0, 0, 0.28);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-stackswitcher button {
+headerbar stackswitcher button,
+headerbar stackswitcher button:first-child,
+headerbar stackswitcher button:last-child,
+headerbar stackswitcher button:not(:first-child):not(:last-child),
+headerbar stackswitcher.linked > button,
+headerbar stackswitcher.linked > button:first-child,
+headerbar stackswitcher.linked > button:last-child,
+headerbar stackswitcher.linked > button:not(:first-child):not(:last-child),
+headerbar.titlebar stackswitcher button,
+headerbar.titlebar stackswitcher button:first-child,
+headerbar.titlebar stackswitcher button:last-child,
+headerbar.titlebar stackswitcher.linked > button,
+headerbar.titlebar stackswitcher.linked > button:first-child,
+headerbar.titlebar stackswitcher.linked > button:last-child,
+stackswitcher button,
+stackswitcher button:first-child,
+stackswitcher button:last-child,
+stackswitcher.linked > button,
+stackswitcher.linked > button:first-child,
+stackswitcher.linked > button:last-child,
+stackswitcher.linked > button:not(:first-child):not(:last-child),
+.adw-view-tab {
     border-radius: 9999px;
+    border-top-left-radius: 9999px;
+    border-top-right-radius: 9999px;
+    border-bottom-left-radius: 9999px;
+    border-bottom-right-radius: 9999px;
     border: none;
-    background: transparent;
+    background-color: transparent;
     background-image: none;
     box-shadow: none;
+    text-shadow: none;
     padding: 6px 18px;
+    margin: 1px 2px;
     font-weight: 600;
     font-size: 13px;
     color: rgba(255, 255, 255, 0.65);
-    transition: all 0.18s ease;
+    outline: none;
+    transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-stackswitcher button:hover {
+/* Hover on tabs: strictly preserve 9999px pill on all corners */
+headerbar stackswitcher button:hover,
+headerbar stackswitcher button:hover:first-child,
+headerbar stackswitcher button:hover:last-child,
+headerbar stackswitcher button:hover:not(:first-child):not(:last-child),
+headerbar stackswitcher.linked > button:hover,
+headerbar stackswitcher.linked > button:hover:first-child,
+headerbar stackswitcher.linked > button:hover:last-child,
+headerbar stackswitcher.linked > button:hover:not(:first-child):not(:last-child),
+headerbar.titlebar stackswitcher button:hover,
+headerbar.titlebar stackswitcher button:hover:first-child,
+headerbar.titlebar stackswitcher button:hover:last-child,
+headerbar.titlebar stackswitcher.linked > button:hover,
+headerbar.titlebar stackswitcher.linked > button:hover:first-child,
+headerbar.titlebar stackswitcher.linked > button:hover:last-child,
+stackswitcher button:hover,
+stackswitcher button:hover:first-child,
+stackswitcher button:hover:last-child,
+stackswitcher.linked > button:hover,
+stackswitcher.linked > button:hover:first-child,
+stackswitcher.linked > button:hover:last-child,
+stackswitcher.linked > button:hover:not(:first-child):not(:last-child),
+.adw-view-tab:hover {
+    border-radius: 9999px;
+    border-top-left-radius: 9999px;
+    border-top-right-radius: 9999px;
+    border-bottom-left-radius: 9999px;
+    border-bottom-right-radius: 9999px;
+    border: none;
+    box-shadow: none;
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.1);
     background-image: none;
 }
 
+/* Checked/Active tab: solid blue 9999px pill */
+headerbar stackswitcher button:checked,
+headerbar stackswitcher button:active,
+headerbar stackswitcher button:checked:first-child,
+headerbar stackswitcher button:checked:last-child,
+headerbar stackswitcher button:checked:not(:first-child):not(:last-child),
+headerbar stackswitcher.linked > button:checked,
+headerbar stackswitcher.linked > button:active,
+headerbar stackswitcher.linked > button:checked:first-child,
+headerbar stackswitcher.linked > button:checked:last-child,
+headerbar.titlebar stackswitcher button:checked,
+headerbar.titlebar stackswitcher button:active,
+headerbar.titlebar stackswitcher button:checked:first-child,
+headerbar.titlebar stackswitcher button:checked:last-child,
+headerbar.titlebar stackswitcher.linked > button:checked,
+headerbar.titlebar stackswitcher.linked > button:active,
+headerbar.titlebar stackswitcher.linked > button:checked:first-child,
+headerbar.titlebar stackswitcher.linked > button:checked:last-child,
 stackswitcher button:checked,
-stackswitcher button:active {
-    background: #1c71d8;
+stackswitcher button:active,
+stackswitcher button:checked:first-child,
+stackswitcher button:checked:last-child,
+stackswitcher.linked > button:checked,
+stackswitcher.linked > button:active,
+stackswitcher.linked > button:checked:first-child,
+stackswitcher.linked > button:checked:last-child,
+.adw-view-tab:checked,
+.adw-view-tab.active {
+    background-color: #1c71d8;
     background-image: none;
     color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 9999px;
+    border-top-left-radius: 9999px;
+    border-top-right-radius: 9999px;
+    border-bottom-left-radius: 9999px;
+    border-bottom-right-radius: 9999px;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-stackswitcher button image {
+headerbar stackswitcher button:checked:hover,
+headerbar stackswitcher button:active:hover,
+headerbar stackswitcher.linked > button:checked:hover,
+headerbar.titlebar stackswitcher button:checked:hover,
+headerbar.titlebar stackswitcher.linked > button:checked:hover,
+stackswitcher button:checked:hover,
+stackswitcher.linked > button:checked:hover,
+.adw-view-tab:checked:hover,
+.adw-view-tab.active:hover {
+    background-color: #185fb4;
+    background-image: none;
+    color: #ffffff;
+    border-radius: 9999px;
+    border-top-left-radius: 9999px;
+    border-top-right-radius: 9999px;
+    border-bottom-left-radius: 9999px;
+    border-bottom-right-radius: 9999px;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+headerbar stackswitcher button:focus,
+stackswitcher button:focus,
+.adw-view-tab:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+stackswitcher button image,
+.adw-view-tab image {
     margin-right: 6px;
 }
 
-/* ── Suggested Action (Primary Blue) ─────────────────────────────────── */
-button.suggested-action {
-    background: #3584e4;
+/* ── Suggested Action (Primary Blue Action Button) ───────────────────── */
+button.suggested-action,
+#add_profile_button {
+    background-color: #3584e4;
+    background-image: none;
     color: #ffffff;
     font-weight: 600;
     border-radius: 8px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     padding: 6px 14px;
-    transition: background 0.15s ease, opacity 0.15s ease;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-button.suggested-action:hover {
-    background: #1c71d8;
+button.suggested-action:hover,
+#add_profile_button:hover {
+    background-color: #1c71d8;
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    color: #ffffff;
 }
 
-button.suggested-action:active {
-    background: #1a5fb4;
+button.suggested-action:active,
+#add_profile_button:active {
+    background-color: #1a5fb4;
+    background-image: none;
+    box-shadow: none;
+    color: #ffffff;
 }
 
-button.suggested-action:disabled {
-    background: alpha(currentColor, 0.08);
-    color: alpha(currentColor, 0.35);
+button.suggested-action:disabled,
+#add_profile_button:disabled {
+    background-color: rgba(53, 132, 228, 0.3);
+    background-image: none;
+    border-color: transparent;
+    color: rgba(255, 255, 255, 0.4);
     box-shadow: none;
 }
 
 /* ── Flat & Circular Buttons ─────────────────────────────────────────── */
 button.flat {
-    background: transparent;
-    border: none;
+    background-color: transparent;
+    background-image: none;
+    border-color: transparent;
+    border-style: none;
+    border-width: 0;
     box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
 }
 
 button.flat:hover {
-    background: alpha(currentColor, 0.08);
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+button.flat:active {
+    background-color: rgba(255, 255, 255, 0.14);
+    background-image: none;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 button.circular {
@@ -205,8 +454,10 @@ button.delete-row-btn {
     background-image: none;
     border: none;
     box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
     opacity: 0.8;
-    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 button.delete-row-btn:hover {
@@ -214,6 +465,7 @@ button.delete-row-btn:hover {
     color: #e01b24;
     background-color: rgba(224, 27, 36, 0.15);
     background-image: none;
+    border: none;
 }
 
 /* ── Cards and Boxed Lists (Faithful to Mockup) ───────────────────────── */
@@ -290,21 +542,146 @@ list.boxed-list row:last-child,
     border-bottom: none;
 }
 
-/* Profile Pill Combo in rule rows */
-combobox.profile-pill-combo button,
-.profile-pill-combo button {
-    border-radius: 8px;
-    padding: 5px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    color: currentColor;
+/* ── ComboBox and Profile Pill Dropdowns ──────────────────────────────── */
+combobox,
+combobox.combo,
+combobox.profile-pill-combo,
+.profile-pill-combo {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
 }
 
+combobox button,
+combobox button.combo,
+combobox.profile-pill-combo button,
+combobox.profile-pill-combo button.combo,
+.profile-pill-combo button,
+.profile-pill-combo button.combo {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+    color: #ffffff;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+combobox button:hover,
+combobox button.combo:hover,
 combobox.profile-pill-combo button:hover,
+combobox.profile-pill-combo button.combo:hover,
 .profile-pill-combo button:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.14);
+    background-image: none;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: none;
+    color: #ffffff;
+}
+
+combobox button cellview,
+combobox button label,
+combobox cellview,
+combobox label,
+.profile-pill-combo cellview,
+.profile-pill-combo label {
+    color: #ffffff;
+    background-color: transparent;
+    text-shadow: none;
+}
+
+combobox arrow,
+combobox button arrow {
+    color: rgba(255, 255, 255, 0.75);
+    -gtk-icon-shadow: none;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+combobox button:hover arrow {
+    color: #ffffff;
+}
+
+/* ── Menus and Popups (ComboBox dropdowns & context menus) ───────────── */
+window.popup,
+window.popup.background,
+window.popup > menu,
+window.popup menu,
+menu,
+.menu,
+menu.background,
+menu.popup,
+combobox window.popup menu,
+combobox menu {
+    background-color: #2f2f2f;
+    background-image: none;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+menuitem,
+.menuitem,
+menu menuitem,
+menu > menuitem,
+window.popup menuitem,
+window.popup menu menuitem,
+combobox menu menuitem {
+    background-color: transparent;
+    background-image: none;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    min-height: 28px;
+}
+
+menuitem:hover,
+menuitem:selected,
+menu menuitem:hover,
+menu menuitem:selected,
+window.popup menuitem:hover,
+window.popup menuitem:selected,
+combobox menu menuitem:hover,
+combobox menu menuitem:selected {
+    background-color: #1c71d8;
+    background-image: none;
+    color: #ffffff;
+}
+
+menuitem label,
+.menuitem label,
+menu menuitem label,
+window.popup menuitem label,
+combobox menu menuitem label,
+menuitem cellview,
+.menuitem cellview,
+menu menuitem cellview,
+window.popup menuitem cellview,
+combobox menu menuitem cellview {
+    color: #ffffff;
+    background-color: transparent;
+    text-shadow: none;
+}
+
+menuitem:hover label,
+menuitem:selected label,
+menu menuitem:hover label,
+menu menuitem:selected label,
+menuitem:hover cellview,
+menuitem:selected cellview,
+menu menuitem:hover cellview,
+menu menuitem:selected cellview {
+    color: #ffffff;
 }
 
 /* Source badge chip (e.g. Faugus / Steam) */
@@ -328,24 +705,34 @@ switch {
     font-size: 1px; /* hide default ON/OFF text */
     min-width: 44px;
     min-height: 24px;
+    background-color: rgba(255, 255, 255, 0.16);
+    background-image: none;
+    border: none;
+    transition: background-color 0.18s ease;
 }
 
 switch:checked {
-    background: #3584e4;
-    border-color: #3584e4;
+    background-color: #3584e4;
+    background-image: none;
+    border: none;
 }
 
 switch slider {
-    border-radius: 50%;
+    background-color: #ffffff;
+    background-image: none;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 9999px;
     min-width: 20px;
     min-height: 20px;
+    margin: 2px;
 }
 
 /* ── Radio Buttons in ButtonBox (e.g. 125, 250, 500, 1000 Hz) ────────── */
 #rate_button_box {
     border-radius: 8px;
     padding: 2px;
-    background: alpha(currentColor, 0.06);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 #rate_button_box button {
@@ -353,13 +740,86 @@ switch slider {
     border: none;
     box-shadow: none;
     background: transparent;
-    padding: 4px 10px;
+    padding: 4px 12px;
     font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 #rate_button_box button:checked {
-    background: @theme_base_color;
-    box-shadow: 0 1px 2px alpha(currentColor, 0.15);
+    background: #3584e4;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Viewport, ScrolledWindow and List Styling ───────────────────────── */
+viewport,
+viewport.frame,
+scrolledwindow,
+scrolledwindow viewport {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+}
+
+list,
+listbox {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+list row,
+listbox row {
+    background-color: transparent;
+    color: #ffffff;
+}
+
+/* Resolutions Page ListBox */
+#listbox {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#listbox row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 8px 12px;
+}
+
+#listbox row:last-child {
+    border-bottom: none;
+}
+
+#listbox row:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* DPI Entry */
+entry,
+.entry,
+DPIEntry {
+    background-color: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #ffffff;
+    padding: 4px 8px;
+    box-shadow: none;
+}
+
+entry:focus,
+.entry:focus,
+DPIEntry:focus {
+    border-color: #3584e4;
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+#active_label {
+    font-weight: 700;
+    color: #2ec27e;
+    font-size: 12px;
+    padding: 2px 6px;
 }
 
 /* ── Reset Button Styling ────────────────────────────────────────────── */
@@ -367,19 +827,32 @@ button.reset-action,
 #btn_reset_resolutions,
 #btn_reset_advanced {
     border-radius: 8px;
-    padding: 5px 12px;
-    color: alpha(currentColor, 0.75);
-    background: alpha(currentColor, 0.05);
-    border: 1px solid alpha(currentColor, 0.08);
+    padding: 6px 14px;
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.08);
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     font-size: 12px;
+    font-weight: 500;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 button.reset-action:hover,
 #btn_reset_resolutions:hover,
 #btn_reset_advanced:hover {
-    background: alpha(currentColor, 0.1);
-    color: currentColor;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+/* ── Disabled / Insensitive elements (Dimmed and clearly grey) ──────── */
+:disabled,
+button:disabled,
+combobox:disabled,
+entry:disabled,
+label:disabled,
+switch:disabled {
+    opacity: 0.38;
+    color: rgba(255, 255, 255, 0.35);
 }
 
 /* ── Dim labels and subtitles ────────────────────────────────────────── */
@@ -387,14 +860,221 @@ button.reset-action:hover,
     opacity: 0.65;
 }
 
-/* ── Popovers ────────────────────────────────────────────────────────── */
+/* ── Popovers (Profile switcher popover & general popovers) ──────────── */
+popover,
 popover.background {
     border-radius: 12px;
-    border: 1px solid alpha(currentColor, 0.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    background-color: #2f2f2f;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+    color: #ffffff;
+    padding: 6px;
 }
 
-popover list row {
+popover list,
+popover listbox {
+    background-color: transparent;
+    border: none;
+}
+
+popover list row,
+popover listbox row {
     padding: 8px 12px;
     border-radius: 6px;
+    color: #ffffff;
+    background-color: transparent;
+}
+
+popover list row:hover,
+popover listbox row:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+popover list row:selected,
+popover listbox row:selected {
+    background-color: #1c71d8;
+    color: #ffffff;
+}
+
+popover list row button,
+popover listbox row button {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 4px;
+}
+
+popover list row button:hover,
+popover listbox row button:hover {
+    background-color: rgba(224, 27, 36, 0.2);
+    color: #e01b24;
+}
+
+popover list row:selected button,
+popover listbox row:selected button {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+popover list row:selected button:hover,
+popover listbox row:selected button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+/* ── Primary 3-Dots App Menu Popover & ModelButtons ──────────────────── */
+popover.menu,
+popover.menu.background {
+    border-radius: 10px;
+    background-color: #2f2f2f;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+    color: #ffffff;
+    padding: 4px;
+}
+
+modelbutton,
+button.model,
+popover modelbutton,
+popover.menu modelbutton,
+popover.menu button {
+    min-height: 32px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: normal;
+    transition: background-color 0.12s ease;
+}
+
+modelbutton:hover,
+button.model:hover,
+popover modelbutton:hover,
+popover.menu modelbutton:hover,
+popover.menu button:hover {
+    background-color: #1c71d8;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    color: #ffffff;
+}
+
+modelbutton:active,
+button.model:active,
+popover modelbutton:active,
+popover.menu modelbutton:active,
+popover.menu button:active {
+    background-color: rgba(255, 255, 255, 0.16);
+    background-image: none;
+    border: none;
+    box-shadow: none;
+    color: #ffffff;
+}
+
+modelbutton label,
+button.model label,
+popover modelbutton label,
+popover.menu modelbutton label,
+popover.menu button label {
+    color: #ffffff;
+    background-color: transparent;
+    text-shadow: none;
+}
+
+modelbutton:hover label,
+button.model:hover label,
+popover modelbutton:hover label,
+popover.menu modelbutton:hover label,
+popover.menu button:hover label {
+    color: #ffffff;
+}
+
+/* ── Tooltips ────────────────────────────────────────────────────────── */
+tooltip,
+tooltip.background {
+    background-color: #2f2f2f;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #ffffff;
+    padding: 4px 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+tooltip label {
+    color: #ffffff;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────── */
+scrollbar {
+    background-color: transparent;
+    border: none;
+}
+
+scrollbar slider {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-radius: 9999px;
+    min-width: 6px;
+    min-height: 6px;
+    margin: 2px;
+    border: none;
+}
+
+scrollbar slider:hover {
+    background-color: rgba(255, 255, 255, 0.32);
+}
+
+/* ── Dialogs and Modals in Adwaita ───────────────────────────────────── */
+dialog,
+messagedialog,
+aboutdialog {
+    background-color: #242424;
+    color: #ffffff;
+}
+
+dialog .dialog-vbox,
+messagedialog .dialog-vbox,
+aboutdialog .dialog-vbox {
+    background-color: #242424;
+}
+
+dialog .dialog-action-area,
+messagedialog .dialog-action-area,
+aboutdialog .dialog-action-area {
+    background-color: #2a2a2a;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px 14px;
+}
+
+/* ── OptionButton Pills in Mouse Buttons & LEDs Mapping ─────────────── */
+button.OptionButton,
+OptionButton {
+    background-color: #2e2e2e;
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 5px 12px;
+    box-shadow: none;
+    text-shadow: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+button.OptionButton:hover,
+OptionButton:hover {
+    background-color: #383838;
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+}
+
+button.OptionButton label,
+OptionButton label {
+    color: #ffffff;
+    font-weight: 500;
 }

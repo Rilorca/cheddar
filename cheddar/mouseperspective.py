@@ -151,6 +151,8 @@ class MousePerspective(Gtk.Overlay):
             margin_top=8,
             margin_bottom=8,
         )
+        sub_switcher.get_style_context().remove_class("linked")
+        sub_switcher.get_style_context().add_class("adw-view-switcher")
         mousesetup.pack_start(sub_switcher, False, False, 0)
         mousesetup.pack_start(self._config_stack, True, True, 0)
         mousesetup.show_all()
@@ -159,6 +161,8 @@ class MousePerspective(Gtk.Overlay):
         # Open on the AutoPilot home.
         self.stack.set_visible_child_name("autopilot")
         self.stack.connect("notify::visible-child-name", self._on_top_level_tab_changed)
+        self.stack_switcher.get_style_context().remove_class("linked")
+        self.stack_switcher.get_style_context().add_class("adw-view-switcher")
         GLib.idle_add(self._update_stack_switcher_pills)
 
         active_profile = device.active_profile
@@ -445,12 +449,15 @@ class MousePerspective(Gtk.Overlay):
         if self._device is None:
             return
         is_mousesetup = self.stack.get_visible_child_name() == "mousesetup"
+        device_dirty = any(p.dirty for p in self._device.profiles)
         self.button_profile.set_visible(True)
-        self.button_commit.set_visible(is_mousesetup)
+        self.button_commit.set_visible(is_mousesetup and device_dirty)
 
     def _update_stack_switcher_pills(self) -> bool:
         if not hasattr(self, "stack_switcher") or self.stack_switcher is None:
             return False
+        self.stack_switcher.get_style_context().remove_class("linked")
+        self.stack_switcher.get_style_context().add_class("adw-view-switcher")
         tabs = [
             ("media-flash-symbolic", _("AutoPilot")),
             ("input-mouse-symbolic", _("Mouse setup")),
@@ -459,6 +466,8 @@ class MousePerspective(Gtk.Overlay):
         for i, (icon_name, title) in enumerate(tabs):
             if i < len(children):
                 btn = children[i]
+                btn.get_style_context().remove_class("linked")
+                btn.get_style_context().add_class("adw-view-tab")
                 old = btn.get_child()
                 if old:
                     btn.remove(old)

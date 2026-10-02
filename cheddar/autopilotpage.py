@@ -756,7 +756,7 @@ class AutoPilotPage(Gtk.Box):
                 + '<span size="small" foreground="#ffffffaa">'
                 + _("Último cambio:")
                 + " "
-                + f'<strong foreground="#ffffff">{GLib.markup_escape_text(p_name)}</strong>'
+                + f'<span weight="bold" foreground="#ffffff">{GLib.markup_escape_text(p_name)}</span>'
                 + "</span>"
             )
         else:

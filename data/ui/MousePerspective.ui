@@ -128,12 +128,16 @@
         </child>
         <child>
           <object class="GtkButton" id="add_profile_button">
+            <property name="name">add_profile_button</property>
             <property name="label" translatable="yes">Add profile</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
             <property name="tooltip-text" translatable="yes">Add a new profile to the device</property>
             <signal name="clicked" handler="_on_add_profile_button_clicked" swapped="no"/>
+            <style>
+              <class name="suggested-action"/>
+            </style>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -157,11 +161,15 @@
     </child>
     <child>
       <object class="GtkMenuButton" id="button_profile">
+        <property name="name">button_profile</property>
         <property name="visible">True</property>
         <property name="can-focus">True</property>
         <property name="receives-default">True</property>
         <property name="tooltip-text" translatable="yes">Select another profile</property>
         <property name="popover">popover_profiles</property>
+        <style>
+          <class name="adw-profile-button"/>
+        </style>
         <child>
           <object class="GtkBox">
             <property name="visible">True</property>
@@ -198,7 +206,8 @@
     </child>
     <child>
       <object class="GtkButton" id="button_commit">
-        <property name="visible">True</property>
+        <property name="visible">False</property>
+        <property name="no-show-all">True</property>
         <property name="can-focus">True</property>
         <property name="receives-default">True</property>
         <property name="tooltip-text" translatable="yes">Commit the changes to the device</property>
