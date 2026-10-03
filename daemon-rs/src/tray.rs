@@ -1,7 +1,5 @@
 use ksni::{menu::*, Category, Handle, ToolTip, Tray, TrayMethods};
-use log::{debug, error, info};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use log::{error, info};
 
 #[derive(Debug, Clone)]
 pub struct TrayState {
@@ -25,14 +23,12 @@ impl Default for TrayState {
 }
 
 pub struct CheddarTray {
-    pub state: Arc<Mutex<TrayState>>,
     pub cached: TrayState,
 }
 
 impl CheddarTray {
-    pub fn new(initial_state: Arc<Mutex<TrayState>>, initial_cached: TrayState) -> Self {
+    pub fn new(initial_cached: TrayState) -> Self {
         Self {
-            state: initial_state,
             cached: initial_cached,
         }
     }
@@ -42,35 +38,27 @@ impl CheddarTray {
     }
 
     pub fn format_tooltip_description(state: &TrayState) -> String {
-        if !state.enabled {
-            return "AutoPilot desactivado".to_string();
-        }
+        let profile_str = state
+            .active_target_name
+            .as_deref()
+            .unwrap_or("Por defecto");
 
-        let mut parts = Vec::new();
-        if let Some(target) = &state.active_target_name {
-            parts.push(format!("Perfil: {}", target));
-        }
+        let dpi_str = match state.current_dpi {
+            Some(dpi) => format!("{} DPI", dpi),
+            None => "DPI: --".to_string(),
+        };
+
         if let Some(exe) = &state.active_exe {
-            parts.push(format!("Juego: {}", exe));
-        }
-        if let Some(dpi) = state.current_dpi {
-            parts.push(format!("{} DPI", dpi));
-        }
-        if let Some(battery) = state.battery_percentage {
-            parts.push(format!("Batería: {}%", battery));
-        }
-
-        if parts.is_empty() {
-            "AutoPilot activo".to_string()
+            format!("Perfil: {} ({})\nDPI: {}", profile_str, exe, dpi_str)
         } else {
-            parts.join(" • ")
+            format!("Perfil: {}\nDPI: {}", profile_str, dpi_str)
         }
     }
 }
 
 impl Tray for CheddarTray {
     fn id(&self) -> String {
-        "cheddar-autopilot".to_string()
+        "io.github.rilorca.Cheddar".to_string()
     }
 
     fn category(&self) -> Category {
@@ -78,18 +66,24 @@ impl Tray for CheddarTray {
     }
 
     fn title(&self) -> String {
-        "Cheddar AutoPilot".to_string()
+        "Cheddar".to_string()
     }
 
     fn icon_name(&self) -> String {
-        "input-mouse".to_string()
+        "io.github.rilorca.Cheddar".to_string()
+    }
+
+    fn icon_theme_path(&self) -> String {
+        dirs::data_local_dir()
+            .map(|p| p.join("icons").to_string_lossy().to_string())
+            .unwrap_or_else(|| "/home/rodrigo/.local/share/icons".to_string())
     }
 
     fn tool_tip(&self) -> ToolTip {
         ToolTip {
             title: Self::format_tooltip_title(),
             description: Self::format_tooltip_description(&self.cached),
-            icon_name: "input-mouse".to_string(),
+            icon_name: "io.github.rilorca.Cheddar".to_string(),
             icon_pixmap: Vec::new(),
         }
     }
@@ -107,11 +101,11 @@ impl Tray for CheddarTray {
     fn menu(&self) -> Vec<MenuItem<Self>> {
         let mut items = Vec::new();
 
-        // 1. Open Cheddar GUI
+        // 1. Abrir Cheddar
         items.push(
             StandardItem {
                 label: "Abrir Cheddar".to_string(),
-                icon_name: "preferences-desktop-peripherals".to_string(),
+                icon_name: "io.github.rilorca.Cheddar".to_string(),
                 activate: Box::new(|_| {
                     info!("Menu clicked: Abrir Cheddar");
                     tokio::spawn(async {
@@ -123,29 +117,28 @@ impl Tray for CheddarTray {
             .into(),
         );
 
-        items.push(MenuItem::Separator);
-
-        // 2. Checkmark: AutoPilot Enabled / Disabled
-        let is_enabled = self.cached.enabled;
-        let shared_state = Arc::clone(&self.state);
+        // 2. Cerrar Cheddar (cierra GUI y detiene el proceso completo)
         items.push(
-            CheckmarkItem {
-                label: "AutoPilot Activado".to_string(),
-                checked: is_enabled,
-                activate: Box::new(move |this: &mut Self| {
-                    let new_state = !this.cached.enabled;
-                    this.cached.enabled = new_state;
-                    info!("Tray toggled AutoPilot: enabled = {}", new_state);
-                    let shared = Arc::clone(&shared_state);
-                    tokio::spawn(async move {
-                        // Update config file
-                        let mut cfg = crate::config::load_config();
-                        cfg.enabled = new_state;
-                        if let Err(e) = crate::config::save_config(&cfg) {
-                            error!("Failed to save config from tray toggle: {}", e);
-                        }
-                        let mut st = shared.lock().await;
-                        st.enabled = new_state;
+            StandardItem {
+                label: "Cerrar Cheddar".to_string(),
+                icon_name: "application-exit".to_string(),
+                activate: Box::new(|_| {
+                    info!("Menu clicked: Cerrar Cheddar (terminando GUI y servicio)");
+                    tokio::spawn(async {
+                        // 1. Matar cualquier ventana o proceso GUI de Cheddar abierto
+                        let _ = tokio::process::Command::new("pkill")
+                            .args(["-f", "python3 .*cheddar"])
+                            .status()
+                            .await;
+
+                        // 2. Detener el servicio systemd del daemon
+                        let _ = tokio::process::Command::new("systemctl")
+                            .args(["--user", "stop", "cheddar-autopilot.service"])
+                            .status()
+                            .await;
+
+                        // 3. Fallback de salida limpia del proceso actual
+                        std::process::exit(0);
                     });
                 }),
                 ..Default::default()
@@ -153,14 +146,22 @@ impl Tray for CheddarTray {
             .into(),
         );
 
-        // 3. Current Profile Info
-        let profile_label = match &self.cached.active_target_name {
-            Some(name) => format!("Perfil: {}", name),
+        items.push(MenuItem::Separator);
+
+        // Fila 1: El perfil actual
+        let profile_display = match &self.cached.active_target_name {
+            Some(name) => {
+                if let Some(exe) = &self.cached.active_exe {
+                    format!("Perfil: {} ({})", name, exe)
+                } else {
+                    format!("Perfil: {}", name)
+                }
+            }
             None => "Perfil: Por defecto".to_string(),
         };
         items.push(
             StandardItem {
-                label: profile_label,
+                label: profile_display,
                 enabled: false,
                 icon_name: "view-paged-symbolic".to_string(),
                 ..Default::default()
@@ -168,57 +169,16 @@ impl Tray for CheddarTray {
             .into(),
         );
 
-        // 4. Current DPI Info
-        if let Some(dpi) = self.cached.current_dpi {
-            items.push(
-                StandardItem {
-                    label: format!("DPI: {}", dpi),
-                    enabled: false,
-                    icon_name: "input-mouse".to_string(),
-                    ..Default::default()
-                }
-                .into(),
-            );
-        }
-
-        // 5. Active Game / Process Info (if running)
-        if let Some(exe) = &self.cached.active_exe {
-            items.push(
-                StandardItem {
-                    label: format!("Juego: {}", exe),
-                    enabled: false,
-                    icon_name: "applications-games".to_string(),
-                    ..Default::default()
-                }
-                .into(),
-            );
-        }
-
-        // 6. Battery (if known)
-        if let Some(battery) = self.cached.battery_percentage {
-            items.push(
-                StandardItem {
-                    label: format!("Batería: {}%", battery),
-                    enabled: false,
-                    icon_name: "battery-good-symbolic".to_string(),
-                    ..Default::default()
-                }
-                .into(),
-            );
-        }
-
-        items.push(MenuItem::Separator);
-
-        // 7. Restart Daemon / Reload
+        // Fila 2: El DPI activo
+        let dpi_display = match self.cached.current_dpi {
+            Some(dpi) => format!("DPI: {} DPI", dpi),
+            None => "DPI: --".to_string(),
+        };
         items.push(
             StandardItem {
-                label: "Recargar Reglas".to_string(),
-                icon_name: "view-refresh".to_string(),
-                activate: Box::new(|_| {
-                    info!("Tray menu: Recargar Reglas clicked");
-                    let cfg = crate::config::load_config();
-                    debug!("Config reloaded manually: {:?}", cfg);
-                }),
+                label: dpi_display,
+                enabled: false,
+                icon_name: "input-mouse".to_string(),
                 ..Default::default()
             }
             .into(),
@@ -229,12 +189,11 @@ impl Tray for CheddarTray {
 }
 
 pub async fn spawn_tray(
-    state: Arc<Mutex<TrayState>>,
     initial_cached: TrayState,
 ) -> Result<Handle<CheddarTray>, Box<dyn std::error::Error + Send + Sync>> {
-    let tray = CheddarTray::new(state, initial_cached);
+    let tray = CheddarTray::new(initial_cached);
     let handle = tray.spawn().await?;
-    info!("StatusNotifierItem System Tray spawned successfully");
+    info!("StatusNotifierItem System Tray spawned successfully with cheese icon");
     Ok(handle)
 }
 
@@ -243,73 +202,49 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_format_tooltip_disabled() {
-        let state = TrayState {
-            enabled: false,
-            active_target_name: Some("Gaming".to_string()),
-            current_dpi: Some(1200),
-            active_exe: None,
-            battery_percentage: None,
-        };
-        assert_eq!(
-            CheddarTray::format_tooltip_description(&state),
-            "AutoPilot desactivado"
-        );
-    }
-
-    #[test]
-    fn test_format_tooltip_enabled_full() {
+    fn test_format_tooltip_description() {
         let state = TrayState {
             enabled: true,
             active_target_name: Some("Dota 2".to_string()),
             current_dpi: Some(1600),
             active_exe: Some("dota2".to_string()),
-            battery_percentage: Some(85),
+            battery_percentage: None,
         };
         let desc = CheddarTray::format_tooltip_description(&state);
-        assert!(desc.contains("Perfil: Dota 2"));
-        assert!(desc.contains("Juego: dota2"));
-        assert!(desc.contains("1600 DPI"));
-        assert!(desc.contains("Batería: 85%"));
+        assert!(desc.contains("Perfil: Dota 2 (dota2)"));
+        assert!(desc.contains("DPI: 1600 DPI"));
     }
 
     #[test]
-    fn test_format_tooltip_enabled_minimal() {
+    fn test_format_tooltip_default() {
         let state = TrayState {
             enabled: true,
             active_target_name: None,
-            current_dpi: None,
+            current_dpi: Some(800),
             active_exe: None,
             battery_percentage: None,
         };
-        assert_eq!(
-            CheddarTray::format_tooltip_description(&state),
-            "AutoPilot activo"
-        );
+        let desc = CheddarTray::format_tooltip_description(&state);
+        assert!(desc.contains("Perfil: Por defecto"));
+        assert!(desc.contains("DPI: 800 DPI"));
     }
 
     #[test]
-    fn test_menu_generation() {
-        let state = Arc::new(Mutex::new(TrayState {
-            enabled: true,
-            active_target_name: Some("Work".to_string()),
-            current_dpi: Some(800),
-            active_exe: None,
-            battery_percentage: None,
-        }));
+    fn test_menu_structure() {
         let cached = TrayState {
             enabled: true,
-            active_target_name: Some("Work".to_string()),
-            current_dpi: Some(800),
+            active_target_name: Some("Gaming".to_string()),
+            current_dpi: Some(1200),
             active_exe: None,
             battery_percentage: None,
         };
-        let tray = CheddarTray::new(state, cached);
+        let tray = CheddarTray::new(cached);
 
         let menu = tray.menu();
-        assert!(!menu.is_empty());
-        assert_eq!(tray.id(), "cheddar-autopilot");
-        assert_eq!(tray.title(), "Cheddar AutoPilot");
-        assert_eq!(tray.icon_name(), "input-mouse");
+        // 1. Abrir Cheddar, 2. Cerrar Cheddar, 3. Separator, 4. Perfil, 5. DPI = 5 items
+        assert_eq!(menu.len(), 5);
+        assert_eq!(tray.id(), "io.github.rilorca.Cheddar");
+        assert_eq!(tray.title(), "Cheddar");
+        assert_eq!(tray.icon_name(), "io.github.rilorca.Cheddar");
     }
 }

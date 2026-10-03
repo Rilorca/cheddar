@@ -51,13 +51,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let initial_config = load_config();
     let initial_tray_state = TrayState {
         enabled: initial_config.enabled,
-        active_target_name: None,
+        active_target_name: Some(format!("Perfil {}", initial_config.default_profile + 1)),
         current_dpi: None,
         active_exe: None,
         battery_percentage: None,
     };
-    let shared_tray_state = Arc::new(Mutex::new(initial_tray_state.clone()));
-    let tray_handle = match spawn_tray(Arc::clone(&shared_tray_state), initial_tray_state).await {
+    let tray_handle = match spawn_tray(initial_tray_state).await {
         Ok(handle) => {
             info!("System Tray icon initialized (StatusNotifierItem)");
             Some(handle)

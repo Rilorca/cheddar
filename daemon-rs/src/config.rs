@@ -108,6 +108,7 @@ pub fn update_active_user_profile(profile_name: Option<&str>) {
     }
 }
 
+#[allow(dead_code)]
 pub fn save_config(cfg: &AutoPilotConfig) -> Result<(), std::io::Error> {
     let path = config_path();
     if let Some(parent) = path.parent() {
