@@ -161,6 +161,45 @@ impl RatbagClient {
         Ok(())
     }
 
+    pub async fn get_resolutions(&self, profile_path: &OwnedObjectPath) -> Result<Vec<OwnedObjectPath>> {
+        let proxy = zbus::Proxy::new(
+            &self.conn,
+            RATBAG_DEST,
+            profile_path,
+            RATBAG_PROFILE_IFACE,
+        )
+        .await?;
+
+        let res: Vec<OwnedObjectPath> = proxy.get_property("Resolutions").await?;
+        Ok(res)
+    }
+
+    pub async fn get_buttons(&self, profile_path: &OwnedObjectPath) -> Result<Vec<OwnedObjectPath>> {
+        let proxy = zbus::Proxy::new(
+            &self.conn,
+            RATBAG_DEST,
+            profile_path,
+            RATBAG_PROFILE_IFACE,
+        )
+        .await?;
+
+        let btns: Vec<OwnedObjectPath> = proxy.get_property("Buttons").await?;
+        Ok(btns)
+    }
+
+    pub async fn get_leds(&self, profile_path: &OwnedObjectPath) -> Result<Vec<OwnedObjectPath>> {
+        let proxy = zbus::Proxy::new(
+            &self.conn,
+            RATBAG_DEST,
+            profile_path,
+            RATBAG_PROFILE_IFACE,
+        )
+        .await?;
+
+        let leds: Vec<OwnedObjectPath> = proxy.get_property("Leds").await?;
+        Ok(leds)
+    }
+
     async fn apply_software_profile(
         &self,
         profile_path: &OwnedObjectPath,
@@ -196,6 +235,169 @@ impl RatbagClient {
                     &(RATBAG_PROFILE_IFACE, "Name", Value::new(name)),
                 )
                 .await;
+        }
+
+        // 3. Resolutions
+        if let Some(res_list) = data.get("resolutions").and_then(|v| v.as_array()) {
+            if let Ok(res_paths) = self.get_resolutions(profile_path).await {
+                for (i, res_path) in res_paths.iter().enumerate() {
+                    if let Some(res_obj) = res_list.get(i) {
+                        let res_proxy = zbus::Proxy::new(
+                            &self.conn,
+                            RATBAG_DEST,
+                            res_path,
+                            DBUS_PROPERTIES_IFACE,
+                        )
+                        .await?;
+
+                        if let Some(dpi) = res_obj.get("dpi").and_then(|v| v.as_u64()) {
+                            let _: Result<()> = res_proxy
+                                .call(
+                                    "Set",
+                                    &(
+                                        "org.freedesktop.ratbag1.Resolution",
+                                        "Resolution",
+                                        Value::new(Value::new(dpi as u32)),
+                                    ),
+                                )
+                                .await;
+                        }
+
+                        if res_obj.get("active").and_then(|v| v.as_bool()).unwrap_or(false) {
+                            let r_proxy = zbus::Proxy::new(
+                                &self.conn,
+                                RATBAG_DEST,
+                                res_path,
+                                "org.freedesktop.ratbag1.Resolution",
+                            )
+                            .await?;
+                            let _: Result<()> = r_proxy.call("SetActive", &()).await;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Buttons
+        if let Some(btn_list) = data.get("buttons").and_then(|v| v.as_array()) {
+            if let Ok(btn_paths) = self.get_buttons(profile_path).await {
+                for (i, btn_path) in btn_paths.iter().enumerate() {
+                    if let Some(btn_obj) = btn_list.get(i) {
+                        let btn_proxy = zbus::Proxy::new(
+                            &self.conn,
+                            RATBAG_DEST,
+                            btn_path,
+                            DBUS_PROPERTIES_IFACE,
+                        )
+                        .await?;
+
+                        let action_type = btn_obj.get("type").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+                        if action_type == 0 {
+                            // ActionType.NONE (disable)
+                            let _: Result<()> = btn_proxy
+                                .call(
+                                    "Set",
+                                    &(
+                                        "org.freedesktop.ratbag1.Button",
+                                        "Mapping",
+                                        Value::new((0u32, Value::new(0u32))),
+                                    ),
+                                )
+                                .await;
+                        } else if action_type == 1 {
+                            // ActionType.BUTTON
+                            if let Some(val) = btn_obj.get("value").and_then(|v| v.as_u64()) {
+                                let _: Result<()> = btn_proxy
+                                    .call(
+                                        "Set",
+                                        &(
+                                            "org.freedesktop.ratbag1.Button",
+                                            "Mapping",
+                                            Value::new((1u32, Value::new(val as u32))),
+                                        ),
+                                    )
+                                    .await;
+                            }
+                        } else if action_type == 2 {
+                            // ActionType.SPECIAL
+                            if let Some(val) = btn_obj.get("value").and_then(|v| v.as_u64()) {
+                                let _: Result<()> = btn_proxy
+                                    .call(
+                                        "Set",
+                                        &(
+                                            "org.freedesktop.ratbag1.Button",
+                                            "Mapping",
+                                            Value::new((2u32, Value::new(val as u32))),
+                                        ),
+                                    )
+                                    .await;
+                            }
+                        } else if action_type == 3 {
+                            // ActionType.KEY
+                            if let Some(val) = btn_obj.get("value").and_then(|v| v.as_u64()) {
+                                let _: Result<()> = btn_proxy
+                                    .call(
+                                        "Set",
+                                        &(
+                                            "org.freedesktop.ratbag1.Button",
+                                            "Mapping",
+                                            Value::new((3u32, Value::new(val as u32))),
+                                        ),
+                                    )
+                                    .await;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. LEDs
+        if let Some(led_list) = data.get("leds").and_then(|v| v.as_array()) {
+            if let Ok(led_paths) = self.get_leds(profile_path).await {
+                for (i, led_path) in led_paths.iter().enumerate() {
+                    if let Some(led_obj) = led_list.get(i) {
+                        let led_proxy = zbus::Proxy::new(
+                            &self.conn,
+                            RATBAG_DEST,
+                            led_path,
+                            DBUS_PROPERTIES_IFACE,
+                        )
+                        .await?;
+
+                        if let Some(mode) = led_obj.get("mode").and_then(|v| v.as_u64()) {
+                            let _: Result<()> = led_proxy
+                                .call(
+                                    "Set",
+                                    &(
+                                        "org.freedesktop.ratbag1.Led",
+                                        "Mode",
+                                        Value::new(mode as u32),
+                                    ),
+                                )
+                                .await;
+                        }
+
+                        if let Some(color_arr) = led_obj.get("color").and_then(|v| v.as_array()) {
+                            if color_arr.len() == 3 {
+                                let r = color_arr[0].as_u64().unwrap_or(0) as u32;
+                                let g = color_arr[1].as_u64().unwrap_or(0) as u32;
+                                let b = color_arr[2].as_u64().unwrap_or(0) as u32;
+                                let _: Result<()> = led_proxy
+                                    .call(
+                                        "Set",
+                                        &(
+                                            "org.freedesktop.ratbag1.Led",
+                                            "Color",
+                                            Value::new((r, g, b)),
+                                        ),
+                                    )
+                                    .await;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         Ok(())

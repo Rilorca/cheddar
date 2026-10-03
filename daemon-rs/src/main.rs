@@ -26,15 +26,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Starting Cheddar AutoPilot daemon (Rust native v0.8.0)");
 
-    let ratbag_client = match RatbagClient::connect().await {
+    let mut ratbag_client: Option<RatbagClient> = match RatbagClient::connect().await {
         Ok(client) => {
             info!("Connected to system D-Bus / ratbagd");
-            Arc::new(client)
+            Some(client)
         }
         Err(e) => {
-            warn!("Could not connect to ratbagd immediately: {}. Will retry during ticks.", e);
-            // We can still run and try to connect lazily
-            return Err(e.into());
+            warn!("Could not connect to ratbagd immediately: {}. Will connect when available.", e);
+            None
         }
     };
 
@@ -166,27 +165,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if need_switch {
             info!("AutoPilot switch: '{}' -> target {}", exe_label, final_target);
 
-            match ratbag_client.list_device_paths().await {
-                Ok(devices) => {
-                    for dev_path in devices {
-                        let dev_name = ratbag_client
-                            .get_device_name(&dev_path)
-                            .await
-                            .unwrap_or_else(|_| "Unknown Device".to_string());
+            if ratbag_client.is_none() {
+                ratbag_client = RatbagClient::connect().await.ok();
+            }
 
-                        if let Err(e) = ratbag_client
-                            .activate_target(&dev_path, &final_target, &config_clone)
-                            .await
-                        {
-                            error!("Failed to switch profile on {}: {}", dev_name, e);
-                        } else {
-                            info!("Successfully switched {} to {}", dev_name, final_target);
+            if let Some(client) = &ratbag_client {
+                match client.list_device_paths().await {
+                    Ok(devices) => {
+                        for dev_path in devices {
+                            let dev_name = client
+                                .get_device_name(&dev_path)
+                                .await
+                                .unwrap_or_else(|_| "Unknown Device".to_string());
+
+                            if let Err(e) = client
+                                .activate_target(&dev_path, &final_target, &config_clone)
+                                .await
+                            {
+                                error!("Failed to switch profile on {}: {}", dev_name, e);
+                            } else {
+                                info!("Successfully switched {} to {}", dev_name, final_target);
+                            }
                         }
                     }
+                    Err(e) => {
+                        error!("Error listing ratbag devices: {}. Resetting connection.", e);
+                        ratbag_client = None;
+                    }
                 }
-                Err(e) => {
-                    error!("Error listing ratbag devices: {}", e);
-                }
+            } else {
+                warn!("ratbagd is unavailable; switch deferred to next tick.");
+                let mut st = state.lock().await;
+                st.active_target = None; // Retry on next tick
             }
         }
     }

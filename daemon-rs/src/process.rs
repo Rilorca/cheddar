@@ -55,8 +55,57 @@ pub fn basename_any_os(path: &str) -> String {
         .to_string()
 }
 
+pub fn is_flatpak() -> bool {
+    Path::new("/.flatpak-info").exists()
+}
+
 pub fn scan_processes() -> HashMap<u32, HashSet<String>> {
     let mut procs: HashMap<u32, HashSet<String>> = HashMap::new();
+
+    if is_flatpak() {
+        let script = "import os, sys\n\
+for entry in os.scandir('/proc'):\n\
+    if not entry.name.isdigit(): continue\n\
+    try:\n\
+        exe = os.readlink(f'/proc/{entry.name}/exe')\n\
+    except OSError:\n\
+        exe = ''\n\
+    try:\n\
+        with open(f'/proc/{entry.name}/cmdline', 'rb') as f:\n\
+            argv0 = f.read(4096).split(b'\\0', 1)[0].decode('utf-8', 'replace')\n\
+    except OSError:\n\
+        argv0 = ''\n\
+    if exe or argv0:\n\
+        sys.stdout.write(f'{entry.name}\\t{os.path.basename(exe)}\\t{argv0}\\n')";
+
+        if let Ok(output) = Command::new("flatpak-spawn")
+            .args(["--host", "python3", "-c", script])
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                let parts: Vec<&str> = line.split('\t').collect();
+                if parts.len() >= 2 {
+                    if let Ok(pid) = parts[0].parse::<u32>() {
+                        let mut names = HashSet::new();
+                        let exe_name = parts[1];
+                        let argv0 = if parts.len() > 2 { parts[2] } else { "" };
+                        if !exe_name.is_empty() {
+                            add_name(&mut names, exe_name);
+                        }
+                        if !argv0.is_empty() {
+                            add_name(&mut names, &basename_any_os(argv0));
+                        }
+                        if !names.is_empty() {
+                            procs.insert(pid, names);
+                        }
+                    }
+                }
+            }
+            return procs;
+        }
+    }
+
     let proc_dir = match fs::read_dir("/proc") {
         Ok(dir) => dir,
         Err(_) => return procs,
@@ -104,7 +153,15 @@ pub fn scan_processes() -> HashMap<u32, HashSet<String>> {
 }
 
 pub fn focused_pid() -> Option<u32> {
-    let output = Command::new("xprop")
+    let mut cmd = if is_flatpak() {
+        let mut c = Command::new("flatpak-spawn");
+        c.args(["--host", "xprop"]);
+        c
+    } else {
+        Command::new("xprop")
+    };
+
+    let output = cmd
         .args(["-root", "_NET_ACTIVE_WINDOW"])
         .output()
         .ok()?;
@@ -122,7 +179,15 @@ pub fn focused_pid() -> Option<u32> {
         return Some(0); // Focused window with no X ID
     }
 
-    let pid_output = Command::new("xprop")
+    let mut pid_cmd = if is_flatpak() {
+        let mut c = Command::new("flatpak-spawn");
+        c.args(["--host", "xprop"]);
+        c
+    } else {
+        Command::new("xprop")
+    };
+
+    let pid_output = pid_cmd
         .args(["-id", win_id_str, "_NET_WM_PID"])
         .output()
         .ok()?;

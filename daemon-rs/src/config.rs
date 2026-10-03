@@ -131,5 +131,27 @@ mod tests {
         let t2 = RuleTarget::Software("sw:Mobas".to_string());
         assert_eq!(t2.to_string(), "sw:Mobas");
     }
+
+    #[test]
+    fn test_config_with_scratch_slot() {
+        let json_data = r#"{
+            "enabled": true,
+            "default_profile": 0,
+            "scratch_slot": 4,
+            "rules": {}
+        }"#;
+
+        let cfg: AutoPilotConfig = serde_json::from_str(json_data).expect("valid json");
+        assert_eq!(cfg.scratch_slot, Some(4));
+    }
+
+    #[test]
+    fn test_config_empty_json() {
+        let cfg: AutoPilotConfig = serde_json::from_str("{}").expect("valid empty json");
+        assert!(!cfg.enabled);
+        assert_eq!(cfg.default_profile, 0);
+        assert!(cfg.rules.is_empty());
+        assert_eq!(cfg.scratch_slot, None);
+    }
 }
 
