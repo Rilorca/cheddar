@@ -496,6 +496,17 @@ impl RatbagClient {
                     let r_active: bool = if let Some((_, hw_res)) = hw_slot {
                         if hw_res == r_index && !ratbag_r_active {
                             let _: zbus::Result<u32> = r_proxy.call("SetActive", &()).await;
+                            // Clean up IsDirty on ratbagd device so the GUI doesn't show "Aplicar"
+                            if let Ok(d_proxy) = zbus::Proxy::new(
+                                &self.conn,
+                                RATBAG_DEST,
+                                device_path,
+                                RATBAG_DEVICE_IFACE,
+                            )
+                            .await
+                            {
+                                let _: zbus::Result<u32> = d_proxy.call("Commit", &()).await;
+                            }
                         }
                         hw_res == r_index
                     } else {

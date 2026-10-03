@@ -470,6 +470,8 @@ class RatbagdProfile(_RatbagdDBus):
             obj.connect("notify", self._on_obj_notify)
 
     def _on_obj_notify(self, obj: GObject.GObject, pspec: Optional[GObject.ParamSpec]):
+        if pspec and pspec.name in ("is-active", "is_active", "active"):
+            return
         if not self._dirty:
             self._dirty = True
             self.notify("dirty")

@@ -6,6 +6,7 @@ use log::{info, warn};
 
 pub struct Notifier {
     session_conn: Option<Arc<Connection>>,
+    last_notify_id: tokio::sync::Mutex<u32>,
 }
 
 impl Notifier {
@@ -17,7 +18,28 @@ impl Notifier {
                 None
             }
         };
-        Self { session_conn }
+        Self {
+            session_conn,
+            last_notify_id: tokio::sync::Mutex::new(0),
+        }
+    }
+
+    /// Check if the desktop notifications server is currently inhibited (e.g. fullscreen game or DND)
+    pub async fn is_inhibited(&self) -> bool {
+        if let Some(conn) = &self.session_conn {
+            let proxy_res = zbus::Proxy::new(
+                conn,
+                "org.freedesktop.Notifications",
+                "/org/freedesktop/Notifications",
+                "org.freedesktop.Notifications",
+            )
+            .await;
+
+            if let Ok(proxy) = proxy_res {
+                return proxy.get_property("Inhibited").await.unwrap_or(false);
+            }
+        }
+        false
     }
 
     /// Check if the screensaver/screen lock is currently active
@@ -46,12 +68,20 @@ impl Notifier {
         if let Some(conn) = &self.session_conn {
             let actions: Vec<String> = Vec::new();
             let mut hints: HashMap<&str, Value> = HashMap::new();
-            // Urgency 2 (critical) ensures notifications appear over fullscreen games
-            // and bypass KDE Plasma's Do Not Disturb / Inhibited mode for hardware events
-            hints.insert("urgency", Value::U8(2));
+
+            // When desktop is Inhibited (fullscreen game / DND), use urgency 2 to break through.
+            // Otherwise use urgency 1 so it appears as a smooth standard toast that auto-dismisses.
+            let is_inhibited = self.is_inhibited().await;
+            let urgency_val: u8 = if is_inhibited { 2 } else { 1 };
+            hints.insert("urgency", Value::U8(urgency_val));
             hints.insert("transient", Value::Bool(true));
             hints.insert("desktop-entry", Value::from("io.github.rilorca.Cheddar"));
             hints.insert("category", Value::from("device"));
+
+            let replaces_id = {
+                let id_guard = self.last_notify_id.lock().await;
+                *id_guard
+            };
 
             let proxy_res = zbus::Proxy::new(
                 conn,
@@ -68,7 +98,7 @@ impl Notifier {
                             "Notify",
                             &(
                                 "Cheddar AutoPilot",
-                                0u32,
+                                replaces_id,
                                 icon,
                                 summary,
                                 body,
@@ -80,7 +110,11 @@ impl Notifier {
                         .await;
 
                     match res {
-                        Ok(id) => info!("Sent notification id {}: '{} - {}'", id, summary, body),
+                        Ok(id) => {
+                            let mut id_guard = self.last_notify_id.lock().await;
+                            *id_guard = id;
+                            info!("Sent notification id {}: '{} - {}'", id, summary, body);
+                        }
                         Err(e) => warn!("notifier: D-Bus notify call failed: {}", e),
                     }
                 }
