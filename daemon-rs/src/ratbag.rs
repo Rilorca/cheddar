@@ -470,10 +470,14 @@ impl RatbagClient {
             .await?;
 
             let p_index: u32 = p_proxy.get_property("Index").await.unwrap_or(0);
+            let ratbag_p_active: bool = p_proxy.get_property("IsActive").await.unwrap_or(false);
             let p_is_active: bool = if let Some((hw_prof, _)) = hw_slot {
+                if hw_prof == p_index && !ratbag_p_active {
+                    let _: zbus::Result<u32> = p_proxy.call("SetActive", &()).await;
+                }
                 hw_prof == p_index
             } else {
-                p_proxy.get_property("IsActive").await.unwrap_or(false)
+                ratbag_p_active
             };
 
             if p_is_active {
@@ -488,10 +492,14 @@ impl RatbagClient {
                     .await?;
 
                     let r_index: u32 = r_proxy.get_property("Index").await.unwrap_or(0);
+                    let ratbag_r_active: bool = r_proxy.get_property("IsActive").await.unwrap_or(false);
                     let r_active: bool = if let Some((_, hw_res)) = hw_slot {
+                        if hw_res == r_index && !ratbag_r_active {
+                            let _: zbus::Result<u32> = r_proxy.call("SetActive", &()).await;
+                        }
                         hw_res == r_index
                     } else {
-                        r_proxy.get_property("IsActive").await.unwrap_or(false)
+                        ratbag_r_active
                     };
 
                     if r_active {
