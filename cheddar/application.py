@@ -5,7 +5,7 @@ from typing import Optional
 
 from . import autopilot_config as cfg
 from . import autopilot_profiles as ap
-from .autopilot_service import is_daemon_service_active
+from .autopilot_service import is_daemon_service_active, ensure_daemon_service_running
 from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import Ratbagd
 from .tray import TrayIcon
@@ -91,26 +91,13 @@ class Application(Gtk.Application):
         self._load_stylesheet()
         self._build_app_menu()
 
-        # Check if native Rust daemon is handling background AutoPilot & Tray
+        # Always ensure the native Rust daemon is running for background AutoPilot & Tray
+        ensure_daemon_service_running()
         self._daemon_active = is_daemon_service_active()
-        if not self._daemon_active:
-            # Fallback mode: Keep application running in background when window is closed
-            self.hold()
-            self._held = True
-
-            # Initialize background AutoPilot watcher
-            self._sync_watcher()
-
-            # Initialize system tray icon
-            self._tray = TrayIcon(
-                on_activate_window=self._show_window,
-                on_toggle_autopilot=self._toggle_autopilot,
-                on_quit=self._full_quit,
-                is_autopilot_enabled=self._is_autopilot_enabled,
-                get_status_text=self._get_status_text,
-            )
+        if self._daemon_active:
+            logger.info("Native Rust AutoPilot daemon is active; running GUI in client mode")
         else:
-            logger.info("Native Rust AutoPilot daemon is active; running GUI in client mode without background hold")
+            logger.warning("Could not activate cheddar-autopilot.service; running GUI without daemon")
 
     def init_ratbagd(self) -> Ratbagd:
         if self._ratbagd is None:
@@ -137,6 +124,7 @@ class Application(Gtk.Application):
         self._show_window()
 
     def _show_window(self) -> None:
+        ensure_daemon_service_running()
         if self._window is not None:
             self._window.present()
             return

@@ -56,6 +56,19 @@ impl CheddarTray {
     }
 }
 
+fn launch_cheddar_gui() {
+    let binary = dirs::home_dir()
+        .map(|h| h.join(".local/bin/cheddar"))
+        .filter(|p| p.exists())
+        .unwrap_or_else(|| std::path::PathBuf::from("cheddar"));
+
+    info!("Launching Cheddar GUI: {:?}", binary);
+    let res = tokio::process::Command::new(binary).spawn();
+    if let Err(e) = res {
+        error!("Failed to launch Cheddar GUI: {}", e);
+    }
+}
+
 impl Tray for CheddarTray {
     fn id(&self) -> String {
         "io.github.rilorca.Cheddar".to_string()
@@ -91,10 +104,7 @@ impl Tray for CheddarTray {
     fn activate(&mut self, _x: i32, _y: i32) {
         info!("Tray activated (left-click): launching Cheddar GUI");
         tokio::spawn(async {
-            let res = tokio::process::Command::new("cheddar").spawn();
-            if let Err(e) = res {
-                error!("Failed to launch cheddar GUI: {}", e);
-            }
+            launch_cheddar_gui();
         });
     }
 
@@ -109,7 +119,7 @@ impl Tray for CheddarTray {
                 activate: Box::new(|_| {
                     info!("Menu clicked: Abrir Cheddar");
                     tokio::spawn(async {
-                        let _ = tokio::process::Command::new("cheddar").spawn();
+                        launch_cheddar_gui();
                     });
                 }),
                 ..Default::default()

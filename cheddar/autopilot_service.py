@@ -34,6 +34,15 @@ def is_daemon_service_active() -> bool:
         return False
 
 
+def ensure_daemon_service_running() -> bool:
+    """Ensure the native Rust daemon service is started and active."""
+    if is_daemon_service_active():
+        return True
+    if start_daemon_service():
+        return is_daemon_service_active()
+    return False
+
+
 def is_daemon_service_enabled() -> bool:
     """Check if the native Rust daemon is enabled to start on login."""
     if not shutil.which("systemctl"):

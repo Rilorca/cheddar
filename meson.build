@@ -89,6 +89,7 @@ config_piper.set('localedir', localedir)
 config_piper.set('gtk_major_version', gtk_major_version)
 config_piper.set('gtk_minor_version', gtk_minor_version)
 config_piper.set('RATBAGD_API_VERSION', ratbagd_api_version)
+config_piper.set('pythondir', python_dir)
 config_piper.set('devel', '')
 
 config_piper_devel = config_piper
