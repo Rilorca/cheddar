@@ -402,9 +402,63 @@ impl RatbagClient {
 
         Ok(())
     }
+}
 
+fn extract_u32(val: &Value) -> Option<u32> {
+    let mut current = val;
+    while let Value::Value(inner) = current {
+        current = inner.as_ref();
+    }
+    match current {
+        Value::U32(v) => Some(*v),
+        Value::I32(v) if *v > 0 => Some(*v as u32),
+        Value::U64(v) => Some(*v as u32),
+        Value::I64(v) if *v > 0 => Some(*v as u32),
+        Value::U16(v) => Some(*v as u32),
+        Value::I16(v) if *v > 0 => Some(*v as u32),
+        _ => None,
+    }
+}
+
+/// Reads the live hardware active profile & resolution slot directly from the Logitech G600 HID feature report (0xF0)
+fn read_g600_hw_slot() -> Option<(u32, u32)> {
+    use std::fs::OpenOptions;
+    use std::os::unix::io::AsRawFd;
+
+    // Search for Logitech G600 hidraw interface (if01 / configuration interface)
+    let candidates = [
+        "/dev/input/by-id/usb-Logitech_Gaming_Mouse_G600_485A504665A70017-if01-hidraw",
+        "/dev/hidraw1",
+        "/dev/hidraw0",
+    ];
+
+    for path in &candidates {
+        if let Ok(file) = OpenOptions::new().read(true).write(true).open(path) {
+            let mut buf: [u8; 4] = [0xF0, 0, 0, 0];
+            // Linux HIDIOCGFEATURE(4): _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x07, 4) = 0xC0044807
+            const HIDIOCGFEATURE_4: u64 = 0xC0044807;
+            unsafe {
+                extern "C" {
+                    fn ioctl(fd: i32, request: u64, ...) -> i32;
+                }
+                let res = ioctl(file.as_raw_fd(), HIDIOCGFEATURE_4, buf.as_mut_ptr());
+                if res >= 0 && buf[0] == 0xF0 {
+                    let b1 = buf[1];
+                    let res_idx = ((b1 >> 1) & 0x03) as u32;
+                    let prof_idx = ((b1 >> 4) & 0x0F) as u32;
+                    return Some((prof_idx, res_idx));
+                }
+            }
+        }
+    }
+    None
+}
+
+impl RatbagClient {
     /// Read the currently active DPI for the active profile
     pub async fn get_active_dpi(&self, device_path: &OwnedObjectPath) -> Result<Option<u32>> {
+        let hw_slot = read_g600_hw_slot();
+
         let profiles = self.get_profile_paths(device_path).await?;
         for p_path in profiles {
             let p_proxy = zbus::Proxy::new(
@@ -415,8 +469,14 @@ impl RatbagClient {
             )
             .await?;
 
-            let is_active: bool = p_proxy.get_property("IsActive").await.unwrap_or(false);
-            if is_active {
+            let p_index: u32 = p_proxy.get_property("Index").await.unwrap_or(0);
+            let p_is_active: bool = if let Some((hw_prof, _)) = hw_slot {
+                hw_prof == p_index
+            } else {
+                p_proxy.get_property("IsActive").await.unwrap_or(false)
+            };
+
+            if p_is_active {
                 let res_paths = self.get_resolutions(&p_path).await?;
                 for r_path in res_paths {
                     let r_proxy = zbus::Proxy::new(
@@ -427,15 +487,17 @@ impl RatbagClient {
                     )
                     .await?;
 
-                    let r_active: bool = r_proxy.get_property("IsActive").await.unwrap_or(false);
+                    let r_index: u32 = r_proxy.get_property("Index").await.unwrap_or(0);
+                    let r_active: bool = if let Some((_, hw_res)) = hw_slot {
+                        hw_res == r_index
+                    } else {
+                        r_proxy.get_property("IsActive").await.unwrap_or(false)
+                    };
+
                     if r_active {
                         let res_val: Value = r_proxy.get_property("Resolution").await?;
-                        if let Ok(dpi) = u32::try_from(&res_val) {
+                        if let Some(dpi) = extract_u32(&res_val) {
                             return Ok(Some(dpi));
-                        } else if let Ok(dpi) = i32::try_from(&res_val) {
-                            if dpi > 0 {
-                                return Ok(Some(dpi as u32));
-                            }
                         }
                     }
                 }
@@ -456,12 +518,8 @@ impl RatbagClient {
 
         // Try ratbagd Battery property (available on wireless devices)
         if let Ok(val) = proxy.get_property::<Value>("Battery").await {
-            if let Ok(pct) = u32::try_from(&val) {
+            if let Some(pct) = extract_u32(&val) {
                 return Ok(Some(pct));
-            } else if let Ok(pct) = i32::try_from(&val) {
-                if pct >= 0 {
-                    return Ok(Some(pct as u32));
-                }
             }
         }
         Ok(None)

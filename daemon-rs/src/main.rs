@@ -14,7 +14,8 @@ use notify::Notifier;
 use process::{focused_pid, scan_processes};
 use ratbag::RatbagClient;
 
-const POLL_INTERVAL: Duration = Duration::from_millis(2000);
+const TICK_INTERVAL: Duration = Duration::from_millis(250);
+const PROCESS_SCAN_TICKS: u32 = 6; // 6 * 250ms = 1500ms for process scanning
 
 struct WatcherState {
     config: AutoPilotConfig,
@@ -84,10 +85,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Main polling loop
-    let mut interval = tokio::time::interval(POLL_INTERVAL);
+    let mut interval = tokio::time::interval(TICK_INTERVAL);
+    let mut tick_count: u32 = 0;
 
     loop {
         interval.tick().await;
+        tick_count = tick_count.wrapping_add(1);
 
         let (enabled, rules, default_profile, notifications_enabled, config_clone) = {
             let st = state.lock().await;
@@ -101,6 +104,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
 
         if !enabled {
+            continue;
+        }
+
+        if ratbag_client.is_none() {
+            ratbag_client = RatbagClient::connect().await.ok();
+        }
+
+        // Feature 5: Fast DPI switch / OSD notification check (every 250ms)
+        if let Some(client) = &ratbag_client {
+            if let Ok(devices) = client.list_device_paths().await {
+                for dev_path in &devices {
+                    let dev_name = client
+                        .get_device_name(dev_path)
+                        .await
+                        .unwrap_or_else(|_| "Mouse".to_string());
+
+                    if let Ok(Some(current_dpi)) = client.get_active_dpi(dev_path).await {
+                        let mut st = state.lock().await;
+                        let last_dpi = st.last_reported_dpi.get(&dev_name).copied();
+                        if let Some(prev) = last_dpi {
+                            if prev != current_dpi {
+                                st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
+                                if notifications_enabled {
+                                    let summary = format!("🎯 DPI: {}", current_dpi);
+                                    let body = format!("{}: Sensibilidad ajustada", dev_name);
+                                    notifier.notify(&summary, &body, "input-mouse", 1500).await;
+                                }
+                            }
+                        } else {
+                            st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Heavy checks: Run screen lock check, battery check, and process scanning every 1500ms
+        if tick_count % PROCESS_SCAN_TICKS != 0 {
             continue;
         }
 
@@ -119,11 +160,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        if ratbag_client.is_none() {
-            ratbag_client = RatbagClient::connect().await.ok();
-        }
-
-        // Feature 3 & 5: Check Battery & DPI changes for connected devices
+        // Feature 3: Battery check
         if let Some(client) = &ratbag_client {
             if let Ok(devices) = client.list_device_paths().await {
                 for dev_path in &devices {
@@ -132,7 +169,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .await
                         .unwrap_or_else(|_| "Mouse".to_string());
 
-                    // 1. Battery check
                     if let Ok(Some(battery_pct)) = client.get_battery(dev_path).await {
                         let mut st = state.lock().await;
                         if battery_pct <= 15 && !st.low_battery_notified.contains(&dev_name) {
@@ -144,24 +180,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                         } else if battery_pct > 25 {
                             st.low_battery_notified.remove(&dev_name);
-                        }
-                    }
-
-                    // 2. DPI switch / OSD notification
-                    if let Ok(Some(current_dpi)) = client.get_active_dpi(dev_path).await {
-                        let mut st = state.lock().await;
-                        let last_dpi = st.last_reported_dpi.get(&dev_name).copied();
-                        if let Some(prev) = last_dpi {
-                            if prev != current_dpi {
-                                st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
-                                if notifications_enabled {
-                                    let summary = format!("🎯 DPI: {}", current_dpi);
-                                    let body = format!("{}: Sensibilidad ajustada", dev_name);
-                                    notifier.notify(&summary, &body, "input-mouse", 1500).await;
-                                }
-                            }
-                        } else {
-                            st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
                         }
                     }
                 }

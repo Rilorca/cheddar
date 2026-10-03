@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use zbus::Connection;
 use zbus::zvariant::Value;
-use log::{debug, warn};
+use log::{info, warn};
 
 pub struct Notifier {
     session_conn: Option<Arc<Connection>>,
@@ -45,7 +45,13 @@ impl Notifier {
     pub async fn notify(&self, summary: &str, body: &str, icon: &str, timeout_ms: i32) {
         if let Some(conn) = &self.session_conn {
             let actions: Vec<String> = Vec::new();
-            let hints: HashMap<String, Value> = HashMap::new();
+            let mut hints: HashMap<&str, Value> = HashMap::new();
+            // Urgency 2 (critical) ensures notifications appear over fullscreen games
+            // and bypass KDE Plasma's Do Not Disturb / Inhibited mode for hardware events
+            hints.insert("urgency", Value::U8(2));
+            hints.insert("transient", Value::Bool(true));
+            hints.insert("desktop-entry", Value::from("io.github.rilorca.Cheddar"));
+            hints.insert("category", Value::from("device"));
 
             let proxy_res = zbus::Proxy::new(
                 conn,
@@ -73,14 +79,17 @@ impl Notifier {
                         )
                         .await;
 
-                    if let Err(e) = res {
-                        debug!("notifier: D-Bus notify call failed: {}", e);
+                    match res {
+                        Ok(id) => info!("Sent notification id {}: '{} - {}'", id, summary, body),
+                        Err(e) => warn!("notifier: D-Bus notify call failed: {}", e),
                     }
                 }
                 Err(e) => {
-                    debug!("notifier: could not create notification proxy: {}", e);
+                    warn!("notifier: could not create notification proxy: {}", e);
                 }
             }
+        } else {
+            warn!("notifier: no session D-Bus connection available");
         }
     }
 }
