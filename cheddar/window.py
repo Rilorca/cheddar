@@ -47,9 +47,14 @@ class Window(Gtk.ApplicationWindow):
         except Exception:
             pass
 
+        self._init_ratbagd_cb = init_ratbagd_cb
+        self._reconnect_timer_id: int = 0
+        self._ratbag: Optional[Ratbagd] = None
+        self._ratbag_handlers: List[int] = []
+
         self._add_perspective(ErrorPerspective(), None)
         try:
-            ratbag = init_ratbagd_cb()
+            ratbag = self._init_ratbagd_cb()
         except RatbagdUnavailableError:
             self._present_error_perspective(
                 _("Cannot connect to ratbagd"),
@@ -57,6 +62,7 @@ class Window(Gtk.ApplicationWindow):
                     "Please make sure ratbagd is running and your user is in the required group"
                 ),
             )
+            self._start_reconnect_timer()
             return
         except RatbagdIncompatibleError as e:
             self._present_error_perspective(
@@ -67,18 +73,22 @@ class Window(Gtk.ApplicationWindow):
             )
             return
 
-        for perspective in [MousePerspective(), WelcomePerspective()]:
-            self._add_perspective(perspective, ratbag)
+        self._setup_ratbag(ratbag)
 
-        welcome_perspective: WelcomePerspective = self._get_child("welcome_perspective")  # type: ignore
-        welcome_perspective.connect("device-selected", self._on_device_selected)
-
-        self._ratbag: Optional[Ratbagd] = ratbag
+    def _setup_ratbag(self, ratbag: Ratbagd) -> None:
+        self._ratbag = ratbag
         self._ratbag_handlers = [
             ratbag.connect("device-added", self._on_device_added),
             ratbag.connect("device-removed", self._on_device_removed),
             ratbag.connect("daemon-disappeared", self._on_daemon_disappeared),
         ]
+
+        # Check if mouse and welcome perspectives are already added
+        if self.stack_perspectives.get_child_by_name("mouse_perspective") is None:
+            for perspective in [MousePerspective(), WelcomePerspective()]:
+                self._add_perspective(perspective, ratbag)
+            welcome_perspective: WelcomePerspective = self._get_child("welcome_perspective")  # type: ignore
+            welcome_perspective.connect("device-selected", self._on_device_selected)
 
         if len(ratbag.devices) == 0:
             self._present_error_perspective(
@@ -111,15 +121,12 @@ class Window(Gtk.ApplicationWindow):
         return Gdk.EVENT_STOP
 
     def do_destroy(self) -> None:
+        if self._reconnect_timer_id:
+            GLib.source_remove(self._reconnect_timer_id)
+            self._reconnect_timer_id = 0
+
         # Disconnect ratbagd listeners to prevent stale callbacks
-        if hasattr(self, "_ratbag") and self._ratbag is not None:
-            for handler_id in getattr(self, "_ratbag_handlers", []):
-                try:
-                    self._ratbag.disconnect(handler_id)
-                except Exception:
-                    pass
-            self._ratbag_handlers = []
-            self._ratbag = None
+        self._disconnect_ratbag()
 
         if self.props.application is not None and hasattr(self.props.application, "_window"):
             if self.props.application._window is self:
@@ -132,13 +139,39 @@ class Window(Gtk.ApplicationWindow):
                     shutdown()
         Gtk.ApplicationWindow.do_destroy(self)
 
+    def _disconnect_ratbag(self) -> None:
+        if hasattr(self, "_ratbag") and self._ratbag is not None:
+            for handler_id in getattr(self, "_ratbag_handlers", []):
+                try:
+                    self._ratbag.disconnect(handler_id)
+                except Exception:
+                    pass
+            self._ratbag_handlers = []
+            self._ratbag = None
+
+    def _start_reconnect_timer(self) -> None:
+        if self._reconnect_timer_id == 0:
+            self._reconnect_timer_id = GLib.timeout_add_seconds(2, self._try_reconnect)
+
+    def _try_reconnect(self) -> bool:
+        try:
+            ratbag = self._init_ratbagd_cb()
+            self._reconnect_timer_id = 0
+            self._setup_ratbag(ratbag)
+            return GLib.SOURCE_REMOVE
+        except (RatbagdUnavailableError, Exception):
+            return GLib.SOURCE_CONTINUE
+
     def _on_daemon_disappeared(self, ratbag: Ratbagd) -> None:
+        self._disconnect_ratbag()
         try:
             self._present_error_perspective(
-                _("Ooops. ratbagd has disappeared"), _("Please restart Cheddar")
+                _("ratbagd has gone idle or disconnected"),
+                _("Attempting to reconnect automatically..."),
             )
         except Exception:
             pass
+        self._start_reconnect_timer()
 
     def _on_device_added(self, ratbag: Ratbagd, device: RatbagdDevice) -> None:
         if len(ratbag.devices) == 1:

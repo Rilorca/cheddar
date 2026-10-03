@@ -14,6 +14,21 @@ from gi.repository import Gio, GLib, GObject, Gtk  # noqa
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# Register GResource bundle if available
+gresource_paths = [
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "builddir-local", "data", "cheddar.gresource")),
+    "/usr/share/cheddar/cheddar.gresource",
+    "/usr/local/share/cheddar/cheddar.gresource",
+]
+for gres in gresource_paths:
+    if os.path.exists(gres):
+        try:
+            res = Gio.resource_load(gres)
+            Gio.Resource._register(res)
+            break
+        except Exception:
+            pass
+
 from cheddar import autostart
 from cheddar.autopilot_watcher import AutoPilotWatcher
 from cheddar.ratbagd import RatbagdDevice, RatbagdProfile
@@ -227,6 +242,70 @@ class TestFaugusIntegration(unittest.TestCase):
             watcher._tick()
 
         self.assertEqual(watcher._active_profile, 2)
+
+    def test_window_daemon_disappeared_and_reconnect(self):
+        """Test that Window auto-reconnects when ratbagd disconnects."""
+        from cheddar.window import Window
+        from cheddar.ratbagd import Ratbagd, RatbagdDevice
+
+        mock_device = MagicMock(spec=RatbagdDevice)
+        mock_ratbag = MagicMock(spec=Ratbagd)
+        mock_ratbag.devices = [mock_device]
+        mock_ratbag.connect = MagicMock(return_value=123)
+        mock_ratbag.disconnect = MagicMock()
+
+        mock_init = MagicMock(return_value=mock_ratbag)
+
+        win = MagicMock(spec=Window)
+        win._init_ratbagd_cb = mock_init
+        win._reconnect_timer_id = 0
+        win._ratbag = None
+        win._ratbag_handlers = []
+        win.stack_perspectives = MagicMock()
+        win.stack_titlebar = MagicMock()
+        win.primary_menu = MagicMock()
+        win.props = MagicMock()
+        win.props.application = None
+
+        # Bind methods from Window class to our test instance
+        win._setup_ratbag = Window._setup_ratbag.__get__(win, Window)
+        win._disconnect_ratbag = Window._disconnect_ratbag.__get__(win, Window)
+        win._start_reconnect_timer = Window._start_reconnect_timer.__get__(win, Window)
+        win._try_reconnect = Window._try_reconnect.__get__(win, Window)
+        win._on_daemon_disappeared = Window._on_daemon_disappeared.__get__(win, Window)
+        win._present_error_perspective = MagicMock()
+        win._present_mouse_perspective = MagicMock()
+        win._present_welcome_perspective = MagicMock()
+
+        # Initial setup
+        win._setup_ratbag(mock_ratbag)
+        self.assertIs(win._ratbag, mock_ratbag)
+        self.assertEqual(len(win._ratbag_handlers), 3)
+
+        # Simulate daemon disappearing (idle timeout or crash)
+        win._on_daemon_disappeared(mock_ratbag)
+
+        # ratbag should be disconnected and cleared, and timer should be started
+        self.assertIsNone(win._ratbag)
+        mock_ratbag.disconnect.assert_called_with(123)
+        self.assertNotEqual(win._reconnect_timer_id, 0)
+        win._present_error_perspective.assert_called()
+
+        # Simulate daemon becoming available again on timer tick
+        mock_ratbag2 = MagicMock(spec=Ratbagd)
+        mock_ratbag2.devices = [mock_device]
+        mock_ratbag2.connect = MagicMock(return_value=456)
+        mock_init.return_value = mock_ratbag2
+
+        res = win._try_reconnect()
+        self.assertEqual(res, GLib.SOURCE_REMOVE)
+        self.assertIs(win._ratbag, mock_ratbag2)
+        self.assertEqual(win._reconnect_timer_id, 0)
+
+        # Verify disconnect cleanup
+        win._disconnect_ratbag()
+        self.assertIsNone(win._ratbag)
+        self.assertEqual(len(win._ratbag_handlers), 0)
 
 
 if __name__ == "__main__":
