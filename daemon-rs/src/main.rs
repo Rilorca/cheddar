@@ -1,14 +1,16 @@
 mod config;
+mod notify;
 mod process;
 mod ratbag;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 
 use config::{config_path, load_config, AutoPilotConfig, RuleTarget};
+use notify::Notifier;
 use process::{focused_pid, scan_processes};
 use ratbag::RatbagClient;
 
@@ -18,6 +20,10 @@ struct WatcherState {
     config: AutoPilotConfig,
     active_target: Option<RuleTarget>,
     last_matched_exe: Option<String>,
+    is_asleep: bool,
+    pre_sleep_target: Option<RuleTarget>,
+    last_reported_dpi: HashMap<String, u32>,
+    low_battery_notified: HashSet<String>,
 }
 
 #[tokio::main]
@@ -25,6 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     info!("Starting Cheddar AutoPilot daemon (Rust native v0.8.0)");
+
+    let notifier = Arc::new(Notifier::new().await);
 
     let mut ratbag_client: Option<RatbagClient> = match RatbagClient::connect().await {
         Ok(client) => {
@@ -41,6 +49,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config: load_config(),
         active_target: None,
         last_matched_exe: None,
+        is_asleep: false,
+        pre_sleep_target: None,
+        last_reported_dpi: HashMap::new(),
+        low_battery_notified: HashSet::new(),
     }));
 
     // Setup config file watcher using tokio task
@@ -77,17 +89,86 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         interval.tick().await;
 
-        let (enabled, rules, default_profile, config_clone) = {
+        let (enabled, rules, default_profile, notifications_enabled, config_clone) = {
             let st = state.lock().await;
             (
                 st.config.enabled,
                 st.config.rules.clone(),
                 st.config.default_profile,
+                st.config.notifications_enabled,
                 st.config.clone(),
             )
         };
 
-        if !enabled || rules.is_empty() {
+        if !enabled {
+            continue;
+        }
+
+        // Feature 4: Sleep / ScreenSaver detection
+        let is_screen_locked = notifier.is_screen_saver_active().await;
+        {
+            let mut st = state.lock().await;
+            if is_screen_locked && !st.is_asleep {
+                st.is_asleep = true;
+                st.pre_sleep_target = st.active_target.clone();
+                debug!("Screen locked / idle detected: entering AutoPilot sleep state");
+            } else if !is_screen_locked && st.is_asleep {
+                st.is_asleep = false;
+                st.active_target = None; // Force re-evaluation & restore active profile
+                info!("Screen unlocked: waking up and restoring active profile");
+            }
+        }
+
+        if ratbag_client.is_none() {
+            ratbag_client = RatbagClient::connect().await.ok();
+        }
+
+        // Feature 3 & 5: Check Battery & DPI changes for connected devices
+        if let Some(client) = &ratbag_client {
+            if let Ok(devices) = client.list_device_paths().await {
+                for dev_path in &devices {
+                    let dev_name = client
+                        .get_device_name(dev_path)
+                        .await
+                        .unwrap_or_else(|_| "Mouse".to_string());
+
+                    // 1. Battery check
+                    if let Ok(Some(battery_pct)) = client.get_battery(dev_path).await {
+                        let mut st = state.lock().await;
+                        if battery_pct <= 15 && !st.low_battery_notified.contains(&dev_name) {
+                            st.low_battery_notified.insert(dev_name.clone());
+                            if notifications_enabled {
+                                let summary = format!("⚠️ Batería Baja: {}", dev_name);
+                                let body = format!("El nivel de batería es {}%. Conecta el cable o base de carga.", battery_pct);
+                                notifier.notify(&summary, &body, "battery-caution", 6000).await;
+                            }
+                        } else if battery_pct > 25 {
+                            st.low_battery_notified.remove(&dev_name);
+                        }
+                    }
+
+                    // 2. DPI switch / OSD notification
+                    if let Ok(Some(current_dpi)) = client.get_active_dpi(dev_path).await {
+                        let mut st = state.lock().await;
+                        let last_dpi = st.last_reported_dpi.get(&dev_name).copied();
+                        if let Some(prev) = last_dpi {
+                            if prev != current_dpi {
+                                st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
+                                if notifications_enabled {
+                                    let summary = format!("🎯 DPI: {}", current_dpi);
+                                    let body = format!("{}: Sensibilidad ajustada", dev_name);
+                                    notifier.notify(&summary, &body, "input-mouse", 1500).await;
+                                }
+                            }
+                        } else {
+                            st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
+                        }
+                    }
+                }
+            }
+        }
+
+        if rules.is_empty() {
             continue;
         }
 
@@ -113,7 +194,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         } else {
-            // Fallback when focus cannot be determined: any running process
+            // Fallback when focus cannot be determined (e.g. native Wayland): match running process
             let mut all_running = HashSet::new();
             for names in procs.values() {
                 all_running.extend(names.clone());
@@ -165,10 +246,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if need_switch {
             info!("AutoPilot switch: '{}' -> target {}", exe_label, final_target);
 
-            if ratbag_client.is_none() {
-                ratbag_client = RatbagClient::connect().await.ok();
-            }
-
             if let Some(client) = &ratbag_client {
                 match client.list_device_paths().await {
                     Ok(devices) => {
@@ -185,6 +262,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 error!("Failed to switch profile on {}: {}", dev_name, e);
                             } else {
                                 info!("Successfully switched {} to {}", dev_name, final_target);
+
+                                // Feature 1: Native Desktop Notification on profile switch
+                                if notifications_enabled {
+                                    let target_str = match &final_target {
+                                        RuleTarget::Index(idx) => format!("Perfil Onboard {}", idx + 1),
+                                        RuleTarget::Software(name) => {
+                                            name.strip_prefix("sw:").unwrap_or(name).to_string()
+                                        }
+                                    };
+
+                                    let summary = if exe_label == "__default__" {
+                                        "Perfil Predeterminado".to_string()
+                                    } else {
+                                        format!("🎮 {}", exe_label)
+                                    };
+
+                                    let body = format!("{}: {}", dev_name, target_str);
+                                    notifier.notify(&summary, &body, "input-mouse", 2500).await;
+                                }
                             }
                         }
                     }

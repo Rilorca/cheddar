@@ -20,6 +20,10 @@ impl std::fmt::Display for RuleTarget {
     }
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoPilotConfig {
     #[serde(default)]
@@ -30,6 +34,8 @@ pub struct AutoPilotConfig {
     pub rules: HashMap<String, RuleTarget>,
     #[serde(default)]
     pub scratch_slot: Option<u32>,
+    #[serde(default = "default_true")]
+    pub notifications_enabled: bool,
 }
 
 impl Default for AutoPilotConfig {
@@ -39,6 +45,7 @@ impl Default for AutoPilotConfig {
             default_profile: 0,
             rules: HashMap::new(),
             scratch_slot: None,
+            notifications_enabled: true,
         }
     }
 }
@@ -152,6 +159,14 @@ mod tests {
         assert_eq!(cfg.default_profile, 0);
         assert!(cfg.rules.is_empty());
         assert_eq!(cfg.scratch_slot, None);
+        assert!(cfg.notifications_enabled);
+    }
+
+    #[test]
+    fn test_config_notifications_disabled() {
+        let json_data = r#"{"notifications_enabled": false}"#;
+        let cfg: AutoPilotConfig = serde_json::from_str(json_data).expect("valid json");
+        assert!(!cfg.notifications_enabled);
     }
 }
 

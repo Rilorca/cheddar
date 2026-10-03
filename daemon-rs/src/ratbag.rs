@@ -84,7 +84,7 @@ impl RatbagClient {
         )
         .await?;
 
-        let () = proxy.call("SetActive", &()).await?;
+        let _res: u32 = proxy.call("SetActive", &()).await?;
         Ok(())
     }
 
@@ -97,7 +97,7 @@ impl RatbagClient {
         )
         .await?;
 
-        let () = proxy.call("Commit", &()).await?;
+        let _res: u32 = proxy.call("Commit", &()).await?;
         Ok(())
     }
 
@@ -271,7 +271,7 @@ impl RatbagClient {
                                 "org.freedesktop.ratbag1.Resolution",
                             )
                             .await?;
-                            let _: Result<()> = r_proxy.call("SetActive", &()).await;
+                            let _res: u32 = r_proxy.call("SetActive", &()).await?;
                         }
                     }
                 }
@@ -402,4 +402,69 @@ impl RatbagClient {
 
         Ok(())
     }
+
+    /// Read the currently active DPI for the active profile
+    pub async fn get_active_dpi(&self, device_path: &OwnedObjectPath) -> Result<Option<u32>> {
+        let profiles = self.get_profile_paths(device_path).await?;
+        for p_path in profiles {
+            let p_proxy = zbus::Proxy::new(
+                &self.conn,
+                RATBAG_DEST,
+                &p_path,
+                RATBAG_PROFILE_IFACE,
+            )
+            .await?;
+
+            let is_active: bool = p_proxy.get_property("IsActive").await.unwrap_or(false);
+            if is_active {
+                let res_paths = self.get_resolutions(&p_path).await?;
+                for r_path in res_paths {
+                    let r_proxy = zbus::Proxy::new(
+                        &self.conn,
+                        RATBAG_DEST,
+                        &r_path,
+                        "org.freedesktop.ratbag1.Resolution",
+                    )
+                    .await?;
+
+                    let r_active: bool = r_proxy.get_property("IsActive").await.unwrap_or(false);
+                    if r_active {
+                        let res_val: Value = r_proxy.get_property("Resolution").await?;
+                        if let Ok(dpi) = u32::try_from(&res_val) {
+                            return Ok(Some(dpi));
+                        } else if let Ok(dpi) = i32::try_from(&res_val) {
+                            if dpi > 0 {
+                                return Ok(Some(dpi as u32));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    /// Read battery percentage if supported by the ratbag device (or UPower)
+    pub async fn get_battery(&self, device_path: &OwnedObjectPath) -> Result<Option<u32>> {
+        let proxy = zbus::Proxy::new(
+            &self.conn,
+            RATBAG_DEST,
+            device_path,
+            RATBAG_DEVICE_IFACE,
+        )
+        .await?;
+
+        // Try ratbagd Battery property (available on wireless devices)
+        if let Ok(val) = proxy.get_property::<Value>("Battery").await {
+            if let Ok(pct) = u32::try_from(&val) {
+                return Ok(Some(pct));
+            } else if let Ok(pct) = i32::try_from(&val) {
+                if pct >= 0 {
+                    return Ok(Some(pct as u32));
+                }
+            }
+        }
+        Ok(None)
+    }
 }
+

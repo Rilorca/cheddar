@@ -166,42 +166,37 @@ pub fn focused_pid() -> Option<u32> {
         .output()
         .ok()?;
 
-    if !output.status.success() {
-        return None;
+    if output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        if let Some(win_match) = WINDOW_ID_RE.find(&stdout) {
+            let win_id_str = win_match.as_str();
+            let win_id = u64::from_str_radix(win_id_str.trim_start_matches("0x"), 16).unwrap_or(0);
+            if win_id > 0 {
+                let mut pid_cmd = if is_flatpak() {
+                    let mut c = Command::new("flatpak-spawn");
+                    c.args(["--host", "xprop"]);
+                    c
+                } else {
+                    Command::new("xprop")
+                };
+
+                if let Ok(pid_output) = pid_cmd.args(["-id", win_id_str, "_NET_WM_PID"]).output() {
+                    if pid_output.status.success() {
+                        let pid_str = String::from_utf8_lossy(&pid_output.stdout);
+                        if let Some(caps) = PID_RE.captures(pid_str.trim()) {
+                            if let Some(pid) = caps.get(1).and_then(|m| m.as_str().parse::<u32>().ok()) {
+                                if pid > 0 {
+                                    return Some(pid);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let win_match = WINDOW_ID_RE.find(&stdout)?;
-    let win_id_str = win_match.as_str();
-
-    let win_id = u64::from_str_radix(win_id_str.trim_start_matches("0x"), 16).ok()?;
-    if win_id == 0 {
-        return Some(0); // Focused window with no X ID
-    }
-
-    let mut pid_cmd = if is_flatpak() {
-        let mut c = Command::new("flatpak-spawn");
-        c.args(["--host", "xprop"]);
-        c
-    } else {
-        Command::new("xprop")
-    };
-
-    let pid_output = pid_cmd
-        .args(["-id", win_id_str, "_NET_WM_PID"])
-        .output()
-        .ok()?;
-
-    if !pid_output.status.success() {
-        return Some(0);
-    }
-
-    let pid_str = String::from_utf8_lossy(&pid_output.stdout);
-    if let Some(caps) = PID_RE.captures(pid_str.trim()) {
-        caps.get(1).and_then(|m| m.as_str().parse::<u32>().ok())
-    } else {
-        Some(0)
-    }
+    None
 }
 
 #[cfg(test)]
