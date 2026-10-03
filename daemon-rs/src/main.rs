@@ -2,6 +2,7 @@ mod config;
 mod notify;
 mod process;
 mod ratbag;
+mod tray;
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -13,6 +14,7 @@ use config::{config_path, load_config, AutoPilotConfig, RuleTarget};
 use notify::Notifier;
 use process::{focused_pid, scan_processes};
 use ratbag::RatbagClient;
+use tray::{spawn_tray, TrayState};
 
 const TICK_INTERVAL: Duration = Duration::from_millis(250);
 const PROCESS_SCAN_TICKS: u32 = 6; // 6 * 250ms = 1500ms for process scanning
@@ -46,8 +48,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
+    let initial_config = load_config();
+    let initial_tray_state = TrayState {
+        enabled: initial_config.enabled,
+        active_target_name: None,
+        current_dpi: None,
+        active_exe: None,
+        battery_percentage: None,
+    };
+    let shared_tray_state = Arc::new(Mutex::new(initial_tray_state.clone()));
+    let tray_handle = match spawn_tray(Arc::clone(&shared_tray_state), initial_tray_state).await {
+        Ok(handle) => {
+            info!("System Tray icon initialized (StatusNotifierItem)");
+            Some(handle)
+        }
+        Err(e) => {
+            warn!("Could not initialize System Tray icon: {}", e);
+            None
+        }
+    };
+
     let state = Arc::new(Mutex::new(WatcherState {
-        config: load_config(),
+        config: initial_config,
         active_target: None,
         last_matched_exe: None,
         is_asleep: false,
@@ -58,6 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup config file watcher using tokio task
     let state_for_file_watcher = Arc::clone(&state);
+    let tray_handle_for_file_watcher = tray_handle.clone();
     tokio::spawn(async move {
         let mut last_modified = None;
         let path = config_path();
@@ -69,6 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if last_modified != Some(modified) {
                         last_modified = Some(modified);
                         let new_cfg = load_config();
+                        let is_enabled = new_cfg.enabled;
                         let mut st = state_for_file_watcher.lock().await;
                         st.config = new_cfg;
                         st.active_target = None; // Trigger re-evaluation
@@ -78,6 +102,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             st.config.default_profile,
                             st.config.enabled
                         );
+                        if let Some(th) = &tray_handle_for_file_watcher {
+                            let _ = th.update(|t| {
+                                t.cached.enabled = is_enabled;
+                            }).await;
+                        }
                     }
                 }
             }
@@ -123,17 +152,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if let Ok(Some(current_dpi)) = client.get_active_dpi(dev_path).await {
                         let mut st = state.lock().await;
                         let last_dpi = st.last_reported_dpi.get(&dev_name).copied();
-                        if let Some(prev) = last_dpi {
-                            if prev != current_dpi {
-                                st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
-                                if notifications_enabled {
-                                    let summary = format!("🎯 DPI: {}", current_dpi);
-                                    let body = format!("{}: Sensibilidad ajustada", dev_name);
-                                    notifier.notify(&summary, &body, "input-mouse", 1500).await;
-                                }
-                            }
-                        } else {
+                        let changed = match last_dpi {
+                            Some(prev) => prev != current_dpi,
+                            None => true,
+                        };
+                        if changed {
                             st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
+                            if last_dpi.is_some() && notifications_enabled {
+                                let summary = format!("🎯 DPI: {}", current_dpi);
+                                let body = format!("{}: Sensibilidad ajustada", dev_name);
+                                notifier.notify(&summary, &body, "input-mouse", 1500).await;
+                            }
+                            if let Some(th) = &tray_handle {
+                                let _ = th.update(|t| {
+                                    t.cached.current_dpi = Some(current_dpi);
+                                }).await;
+                            }
                         }
                     }
                 }
@@ -170,6 +204,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .unwrap_or_else(|_| "Mouse".to_string());
 
                     if let Ok(Some(battery_pct)) = client.get_battery(dev_path).await {
+                        if let Some(th) = &tray_handle {
+                            let _ = th.update(|t| {
+                                t.cached.battery_percentage = Some(battery_pct);
+                            }).await;
+                        }
                         let mut st = state.lock().await;
                         if battery_pct <= 15 && !st.low_battery_notified.contains(&dev_name) {
                             st.low_battery_notified.insert(dev_name.clone());
@@ -263,6 +302,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if need_switch {
             info!("AutoPilot switch: '{}' -> target {}", exe_label, final_target);
+
+            if let Some(th) = &tray_handle {
+                let target_str = match &final_target {
+                    RuleTarget::Index(idx) => format!("Perfil {}", idx + 1),
+                    RuleTarget::Software(name) => name.strip_prefix("sw:").unwrap_or(name).to_string(),
+                };
+                let exe_str = if exe_label != "__default__" {
+                    Some(exe_label.clone())
+                } else {
+                    None
+                };
+                let _ = th.update(|t| {
+                    t.cached.active_target_name = Some(target_str);
+                    t.cached.active_exe = exe_str;
+                }).await;
+            }
 
             if let Some(client) = &ratbag_client {
                 match client.list_device_paths().await {

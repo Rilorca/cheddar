@@ -108,6 +108,16 @@ pub fn update_active_user_profile(profile_name: Option<&str>) {
     }
 }
 
+pub fn save_config(cfg: &AutoPilotConfig) -> Result<(), std::io::Error> {
+    let path = config_path();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let json_str = serde_json::to_string_pretty(cfg)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    fs::write(path, json_str)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
