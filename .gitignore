@@ -1,3 +1,6 @@
 __pycache__
 builddir*/
 .claude/
+target/
+daemon-rs/target/
+

@@ -1,0 +1,16 @@
+[package]
+name = "cheddar-autopilot"
+version = "0.8.0"
+edition = "2021"
+description = "Headless AutoPilot background daemon for Cheddar written in Rust"
+
+[dependencies]
+zbus = { version = "4", default-features = false, features = ["tokio"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+regex = "1"
+log = "0.4"
+env_logger = "0.11"
+dirs = "5"
+notify = "6"
