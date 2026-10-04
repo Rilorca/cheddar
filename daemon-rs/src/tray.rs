@@ -56,6 +56,27 @@ impl CheddarTray {
     }
 }
 
+use std::sync::LazyLock;
+use image::GenericImageView;
+
+static TRAY_ICON_PIXMAP: LazyLock<ksni::Icon> = LazyLock::new(|| {
+    let img = image::load_from_memory_with_format(
+        include_bytes!("../../data/icons/tray/cheddar-tray.png"),
+        image::ImageFormat::Png,
+    )
+    .expect("valid cheddar-tray.png");
+    let (width, height) = img.dimensions();
+    let mut data = img.into_rgba8().into_vec();
+    for pixel in data.chunks_exact_mut(4) {
+        pixel.rotate_right(1); // RGBA to ARGB
+    }
+    ksni::Icon {
+        width: width as i32,
+        height: height as i32,
+        data,
+    }
+});
+
 fn launch_cheddar_gui() {
     let binary = dirs::home_dir()
         .map(|h| h.join(".local/bin/cheddar"))
@@ -83,21 +104,25 @@ impl Tray for CheddarTray {
     }
 
     fn icon_name(&self) -> String {
-        "io.github.rilorca.Cheddar".to_string()
+        "cheddar-tray".to_string()
     }
 
     fn icon_theme_path(&self) -> String {
         dirs::data_local_dir()
-            .map(|p| p.join("icons").to_string_lossy().to_string())
-            .unwrap_or_else(|| "/home/rodrigo/.local/share/icons".to_string())
+            .map(|p| p.join("cheddar/icons").to_string_lossy().to_string())
+            .unwrap_or_else(|| "/home/rodrigo/.local/share/cheddar/icons".to_string())
+    }
+
+    fn icon_pixmap(&self) -> Vec<ksni::Icon> {
+        vec![TRAY_ICON_PIXMAP.clone()]
     }
 
     fn tool_tip(&self) -> ToolTip {
         ToolTip {
             title: Self::format_tooltip_title(),
             description: Self::format_tooltip_description(&self.cached),
-            icon_name: "io.github.rilorca.Cheddar".to_string(),
-            icon_pixmap: Vec::new(),
+            icon_name: "cheddar-tray".to_string(),
+            icon_pixmap: vec![TRAY_ICON_PIXMAP.clone()],
         }
     }
 
@@ -255,6 +280,6 @@ mod tests {
         assert_eq!(menu.len(), 5);
         assert_eq!(tray.id(), "io.github.rilorca.Cheddar");
         assert_eq!(tray.title(), "Cheddar");
-        assert_eq!(tray.icon_name(), "io.github.rilorca.Cheddar");
+        assert_eq!(tray.icon_name(), "cheddar-tray");
     }
 }
