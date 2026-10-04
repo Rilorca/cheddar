@@ -6,7 +6,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/cheddar-autopilot
+ExecStart=@bindir@/cheddar-autopilot
 Restart=on-failure
 RestartSec=5
 

@@ -2,3 +2,8 @@ option('runtime-dependency-checks',
 	type: 'boolean',
 	value: true,
 	description: 'Check for runtime dependencies during installation (default=yes)')
+
+option('rust-daemon',
+	type: 'feature',
+	value: 'auto',
+	description: 'Build and install native Rust autopilot daemon (cheddar-autopilot)')
