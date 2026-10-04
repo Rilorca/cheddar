@@ -202,7 +202,7 @@ If you want the background profile switcher and system tray running with minimal
 
 ## Releasing
 
-To create a new release and automatically build the Flatpak bundle and Rust daemon binaries:
+To create a new release and automatically build the Rust daemon binary:
 
 1. Ensure all changes are committed on `main`.
 2. Create and push a version tag:
@@ -211,9 +211,12 @@ To create a new release and automatically build the Flatpak bundle and Rust daem
    git push origin v0.8.1
    ```
 3. GitHub Actions (`.github/workflows/flatpak-release.yml`) will automatically:
-   - Build `io.github.rilorca.Cheddar.flatpak`
    - Compile `cheddar-autopilot` (Rust daemon release binary)
-   - Create a GitHub Release with release notes and attach both assets.
+   - Create a GitHub Release with release notes and attach the tarball.
+4. For the Flatpak bundle, build locally (see Installation, Option B):
+   ```sh
+   flatpak-builder --user --install --force-clean build-dir io.github.rilorca.Cheddar.json
+   ```
 
 ---
 
