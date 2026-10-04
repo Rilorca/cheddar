@@ -363,7 +363,51 @@ class RatbagdDevice(_RatbagdDBus):
 
     def _on_signal_received(self, proxy, sender_name, signal_name, parameters):
         if signal_name == "Resync":
+            # Commit() is async inside ratbagd: on failure ratbagd reverts
+            # the device and emits Resync. Our Python-side caches (_active,
+            # resolution IsActive/...) may still describe the state we
+            # *requested*, so re-read the live state first — otherwise the
+            # GUI keeps showing a profile as active while the hardware is
+            # actually on another one (e.g. a DPI-cycle button that only
+            # exists on the requested profile appears dead until restart).
+            try:
+                self.refresh_state_from_dbus()
+            except Exception as e:
+                print(f"Resync refresh failed: {e}", file=sys.stderr)
             self.emit("resync")
+
+    def refresh_state_from_dbus(self):
+        """Re-read the live active-profile/resolution state from ratbagd
+        into the local caches, emitting notifications for anything that
+        changed. Returns the truly active profile, or None."""
+        active = None
+        for profile in self._profiles:
+            try:
+                is_active = profile._get_dbus_property("IsActive")
+            except Exception:
+                continue
+            if is_active is not None and bool(is_active) != profile._active:
+                profile._active = bool(is_active)
+                profile.notify("is-active")
+            for res in profile._resolutions:
+                try:
+                    r_active = res._get_dbus_property("IsActive")
+                    r_default = res._get_dbus_property("IsDefault")
+                    r_disabled = res._get_dbus_property("IsDisabled")
+                except Exception:
+                    continue
+                if r_active is not None and bool(r_active) != res._active:
+                    res._active = bool(r_active)
+                    res.notify("is-active")
+                if r_default is not None and bool(r_default) != res._default:
+                    res._default = bool(r_default)
+                    res.notify("is-default")
+                if r_disabled is not None and bool(r_disabled) != res._disabled:
+                    res._disabled = bool(r_disabled)
+                    res.notify("is-disabled")
+            if profile._active and active is None:
+                active = profile
+        return active
 
     def _on_active_profile_changed(self, profile, pspec):
         if profile.is_active:

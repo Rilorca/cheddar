@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import sys
 from gettext import gettext as _
 from typing import Optional
 
@@ -116,7 +117,7 @@ class MousePerspective(Gtk.Overlay):
     def set_device(self, device: RatbagdDevice) -> None:
         self._device = device
         connect_signal_with_weak_ref(
-            self, device, "resync", lambda _: self._show_notification_error()
+            self, device, "resync", self._on_device_resync
         )
         connect_signal_with_weak_ref(
             self,
@@ -203,6 +204,26 @@ class MousePerspective(Gtk.Overlay):
             Gio.FileMonitorFlags.NONE, None
         )
         self._state_monitor.connect("changed", self._on_autopilot_state_changed)
+
+    def _on_device_resync(self, _device) -> None:
+        # ratbagd reverted the device (an async Commit failed): our caches
+        # were already refreshed from D-Bus before this signal, so just
+        # show the banner and re-select whatever is truly active instead
+        # of keeping a stale profile displayed until restart.
+        self._show_notification_error()
+        self._refresh_active_label()
+
+    def _verify_active_profile(self, expected_index: int) -> bool:
+        # Safety net for profile switches: if the async Commit failed and
+        # ratbagd reverted (Resync), the UI must fall back to the hardware
+        # truth instead of displaying the requested profile as active.
+        if self._device is None:
+            return False
+        actual = self._device.active_profile
+        if actual is None or actual.index != expected_index:
+            if actual is not None:
+                self._set_profile(actual)
+        return False  # one-shot
 
     def _on_autopilot_state_changed(self, _monitor, _file, _other, event) -> None:
         if event not in (
@@ -395,10 +416,34 @@ class MousePerspective(Gtk.Overlay):
                 self.label_profile.set_label(row.sw_name)
                 self.listbox_profiles.select_row(row)
         else:
-            ap._set_active_user_profile(None)
-            row.set_active()
-            if self._device is not None:
-                self._device.commit()
+            # NOTE: Device.Commit() after SetActive is mandatory, not
+            # optional (verified with live dumps on a G600): SetActive
+            # alone only flips ratbagd's in-memory IsActive, the mouse
+            # hardware stays on the previous profile, and a DPI button
+            # that only exists on the requested profile appears dead.
+            # Healing runs first so a single commit flushes everything.
+            expected = row.profile.index
+            try:
+                row.set_active()
+                try:
+                    ap.ensure_valid_active_resolution(row.profile)
+                except Exception as e:
+                    print(
+                        f"Could not heal active resolution: {e}",
+                        file=sys.stderr,
+                    )
+                if self._device is not None:
+                    self._device.commit()
+                    # Settled re-commit (see schedule_settled_recommit):
+                    # replicates the manual "Apply" that unwedges the
+                    # on-mouse DPI-cycle button on G600-class hardware.
+                    ap.schedule_settled_recommit(self._device, expected)
+                ap._set_active_user_profile(None)
+            except Exception as e:
+                print(f"Failed to activate profile {expected}: {e}", file=sys.stderr)
+                self._show_notification_error()
+            finally:
+                GLib.timeout_add(600, self._verify_active_profile, expected)
 
     @Gtk.Template.Callback("_on_add_profile_button_clicked")
     def _on_add_profile_button_clicked(self, button: Gtk.Button) -> None:

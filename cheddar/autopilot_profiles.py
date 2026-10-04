@@ -13,6 +13,8 @@
 import json
 import logging
 import os
+import threading
+import time
 from typing import Any, Dict, List, Optional, Union
 
 from .ratbagd import RatbagdButton, RatbagdDevice, RatbagdMacro, RatbagdProfile
@@ -201,7 +203,91 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
             led.brightness = want["brightness"]
 
 
+# ── Active-resolution healing ────────────────────────────────────────────────
+
+
+def ensure_valid_active_resolution(profile) -> bool:
+    """Make sure the profile has exactly one usable active DPI stage.
+
+    After a profile switch the newly active profile may have no active
+    resolution at all (or point at a disabled one); on the hardware the
+    DPI-cycle button then appears dead until something re-asserts a
+    valid stage. Picks the current active one if usable, else the
+    default one if enabled, else the first enabled one.
+
+    Returns True if it changed anything (the caller should commit).
+    Works duck-typed on both RatbagdProfile and test doubles.
+    """
+    resolutions = list(profile.resolutions or [])
+    if not resolutions:
+        return False
+    try:
+        active = profile.active_resolution
+    except Exception:
+        active = None
+    if (
+        active is not None
+        and active in resolutions
+        and not active.is_disabled
+        and active.is_active
+        and all(not r.is_active for r in resolutions if r is not active)
+    ):
+        return False
+    target = None
+    if active is not None and active in resolutions and not active.is_disabled:
+        target = active
+    else:
+        for res in resolutions:
+            if res.is_default and not res.is_disabled:
+                target = res
+                break
+        if target is None:
+            for res in resolutions:
+                if not res.is_disabled:
+                    target = res
+                    break
+    if target is None:
+        return False
+    if target.is_active and all(
+        not r.is_active for r in resolutions if r is not target
+    ):
+        return False
+    target.set_active()
+    return True
+
+
 # ── Rule-target activation (shared by the GUI page and the daemon) ────────────
+
+
+def schedule_settled_recommit(
+    device, expected_index: int, delay: float = 2.0
+) -> None:
+    """Re-commit a profile switch once the mouse has settled.
+
+    Proven by live G600 debugging: the Commit issued immediately after
+    Profile.SetActive is lost by the firmware (the on-mouse DPI-cycle
+    button stays dead even though ratbagd reports everything correct),
+    while a second Commit issued a couple of seconds later — e.g. the
+    manual "Apply" for a pending IsDirty at GUI startup — unwedges it.
+    Fires once; skips if the device moved to another profile meanwhile.
+    Daemon thread so it never blocks interpreters/tests on exit.
+    Works duck-typed on RatbagdDevice and test doubles.
+    """
+
+    def _cb() -> None:
+        try:
+            active = device.active_profile
+            if active is not None and active.index == expected_index:
+                device.commit()
+                logger.info(
+                    "settled re-commit for profile %s done", expected_index
+                )
+        except Exception as e:
+            logger.error("settled re-commit failed: %s", e)
+
+    t = threading.Timer(delay, _cb)
+    t.daemon = True
+    t.start()
 
 
 def is_software_target(target: RuleTarget) -> bool:
@@ -242,8 +328,13 @@ def activate_target(device: RatbagdDevice, target: RuleTarget, config: Dict) -> 
         for profile in device.profiles:
             if profile.index == slot:
                 apply_profile(data, profile)
+                try:
+                    ensure_valid_active_resolution(profile)
+                except Exception as e:
+                    logger.error("could not heal active resolution: %s", e)
                 profile.set_active()
                 device.commit()
+                schedule_settled_recommit(device, slot)
                 _set_active_user_profile(name)
                 logger.info("software profile '%s' -> slot %d", name, slot)
                 return
@@ -252,8 +343,18 @@ def activate_target(device: RatbagdDevice, target: RuleTarget, config: Dict) -> 
     index = int(target)
     for profile in device.profiles:
         if profile.index == index:
+            # NOTE: the Commit IS required here (verified with live dumps
+            # on a G600): Profile.SetActive alone only flips ratbagd's
+            # in-memory IsActive flag, but the mouse hardware stays on the
+            # previous profile — so a DPI button that only exists on the
+            # requested profile appears dead. Commit flushes to hardware.
             profile.set_active()
+            try:
+                ensure_valid_active_resolution(profile)
+            except Exception as e:
+                logger.error("could not heal active resolution: %s", e)
             device.commit()
+            schedule_settled_recommit(device, index)
             _set_active_user_profile(None)
             return
     raise IndexError(f"profile {index} not found on {device.name}")

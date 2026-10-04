@@ -10,6 +10,7 @@
 import os
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -28,6 +29,7 @@ from cheddar.autopilot_profiles import (
     activate_target,
     apply_profile,
     capture_profile,
+    ensure_valid_active_resolution,
     is_software_target,
     load_store,
     save_store,
@@ -879,6 +881,204 @@ class TestSimulatedSingleProfileMouse(unittest.TestCase):
 
         self.assertEqual(target_label("sw:Dota2"), "Dota2")
         self.assertEqual(target_label(0), "0")
+
+
+# ==============================================================================
+# TEST SUITE 5: Profile-switch DPI regression (GUI: profile 1 -> profile 0
+# kills the DPI-cycle button until GUI restart)
+# ==============================================================================
+
+
+# TEST SUITE 5: Profile-switch DPI regression (GUI: profile 1 -> profile 0
+# kills the DPI-cycle button until GUI restart)
+# ==============================================================================
+
+
+class TestProfileSwitchDpiRegression(unittest.TestCase):
+    """Regression tests for: open GUI, activate profile 1, activate profile 0
+    (which holds the DPI-cycle button), press the button -> nothing happens;
+    after GUI restart it works again.
+
+    Root cause (proven by live ratbagd dumps on a G600): the D-Bus state
+    was always correct (profile 0 IsActive, healthy stages, button mapping
+    intact) — Profile.SetActive alone never reached the hardware, so the
+    mouse stayed on profile 1 where that physical button is a macro.
+    Device.Commit() is what flushes the switch to the mouse. A restart
+    "fixed" it only because the Rust daemon re-asserts the default
+    profile with a commit on startup.
+    """
+
+    def _make_profile(self, index, active_res=None, disabled_res=(), is_active=False):
+        res_list = [
+            MockRatbagdResolution(0, (800,), is_active=(active_res == 0),
+                                  is_default=True,
+                                  is_disabled=(0 in disabled_res)),
+            MockRatbagdResolution(1, (1600,), is_active=(active_res == 1),
+                                  is_default=False,
+                                  is_disabled=(1 in disabled_res)),
+            MockRatbagdResolution(2, (3200,), is_active=(active_res == 2),
+                                  is_default=False,
+                                  is_disabled=(2 in disabled_res)),
+        ]
+        btn_list = [
+            MockRatbagdButton(0, RatbagdButton.ActionType.BUTTON, 1),
+            MockRatbagdButton(1, RatbagdButton.ActionType.BUTTON, 2),
+            MockRatbagdButton(2, RatbagdButton.ActionType.BUTTON, 3),
+            MockRatbagdButton(
+                3,
+                RatbagdButton.ActionType.SPECIAL,
+                RatbagdButton.ActionSpecial.RESOLUTION_CYCLE_UP,
+            ),
+        ]
+        return MockRatbagdProfile(
+            index,
+            name=f"Profile {index}",
+            is_active=is_active,
+            report_rate=1000,
+            resolutions=res_list,
+            buttons=btn_list,
+            leds=[],
+        )
+
+    def _make_device(self, profiles):
+        return MockRatbagdDevice(
+            "dpi_regression_test", "Regression Mouse", "usb:046d:0000:0", profiles
+        )
+
+    def _patched_state(self, tmpdir):
+        return (
+            patch("cheddar.autopilot_profiles._STORE_FILE",
+                  os.path.join(tmpdir, "autopilot_profiles.json")),
+            patch("cheddar.autopilot_profiles._STATE_FILE",
+                  os.path.join(tmpdir, "autopilot_state.json")),
+            patch("cheddar.autopilot_profiles._STORE_DIR", tmpdir),
+        )
+
+    def test_healthy_switch_commits_to_hardware(self):
+        """A switch between healthy profiles must Commit: SetActive alone
+        only flips ratbagd's in-memory flag (proven by live G600 dumps —
+        IsActive=True while the mouse stayed on the old profile), the
+        Commit is what flushes the switch to the hardware."""
+        dev = self._make_device(
+            [self._make_profile(0, active_res=1, is_active=True),
+             self._make_profile(1, active_res=0)]
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            patches = self._patched_state(tmpdir)
+            for p in patches:
+                p.start()
+            try:
+                activate_target(dev, 1, {})
+            finally:
+                for p in patches:
+                    p.stop()
+        self.assertTrue(dev.profiles[1].is_active)
+        self.assertFalse(dev.profiles[0].is_active)
+        self.assertEqual(dev.active_profile.index, 1)
+        self.assertTrue(dev.committed)
+
+    def test_switch_heals_missing_active_resolution(self):
+        """If the target profile has no active DPI stage, the switch must
+        assert one (and persist it) so the hardware button keeps working."""
+        dev = self._make_device(
+            [self._make_profile(0, active_res=None, is_active=True),
+             self._make_profile(1, active_res=0)]
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            patches = self._patched_state(tmpdir)
+            for p in patches:
+                p.start()
+            try:
+                activate_target(dev, 0, {})
+            finally:
+                for p in patches:
+                    p.stop()
+        prof0 = dev.profiles[0]
+        self.assertTrue(prof0.is_active)
+        self.assertIsNotNone(prof0.active_resolution)
+        self.assertFalse(prof0.active_resolution.is_disabled)
+        self.assertTrue(dev.committed)
+
+    def test_switch_heals_disabled_active_resolution(self):
+        """If the target's active stage is disabled, fall back to the
+        default (enabled) stage instead of leaving the button dead."""
+        dev = self._make_device(
+            [self._make_profile(0, active_res=1, disabled_res=(1,),
+                                is_active=False),
+             self._make_profile(1, active_res=0, is_active=True)]
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            patches = self._patched_state(tmpdir)
+            for p in patches:
+                p.start()
+            try:
+                activate_target(dev, 0, {})
+            finally:
+                for p in patches:
+                    p.stop()
+        prof0 = dev.profiles[0]
+        self.assertTrue(prof0.is_active)
+        # resolution 0 is the default & enabled one -> must take over
+        self.assertEqual(prof0.active_resolution.index, 0)
+        self.assertTrue(dev.committed)
+
+    def test_rapid_switch_ends_on_usable_stage(self):
+        """The exact bug scenario: 1 -> 0 in one session must leave profile
+        0 active with a usable DPI stage (no restart needed)."""
+        dev = self._make_device(
+            [self._make_profile(0, active_res=1, is_active=True),
+             self._make_profile(1, active_res=2)]
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            patches = self._patched_state(tmpdir)
+            for p in patches:
+                p.start()
+            try:
+                activate_target(dev, 1, {})
+                activate_target(dev, 0, {})
+            finally:
+                for p in patches:
+                    p.stop()
+        self.assertEqual(dev.active_profile.index, 0)
+        stage = dev.profiles[0].active_resolution
+        self.assertIsNotNone(stage)
+        self.assertFalse(stage.is_disabled)
+
+    def test_ensure_valid_noop_when_healthy(self):
+        """Healing a healthy profile is a no-op (returns False)."""
+        prof = self._make_profile(0, active_res=1)
+        self.assertFalse(ensure_valid_active_resolution(prof))
+        self.assertEqual(prof.active_resolution.index, 1)
+
+    def test_settled_recommit_fires_when_still_on_target(self):
+        """The delayed settled re-commit (the automatic equivalent of the
+        manual 'Apply' that unwedges the G600 DPI button) fires when the
+        device is still on the expected profile."""
+        from cheddar.autopilot_profiles import schedule_settled_recommit
+
+        dev = self._make_device(
+            [self._make_profile(0, active_res=1, is_active=True),
+             self._make_profile(1, active_res=0)]
+        )
+        self.assertFalse(dev.committed)
+        schedule_settled_recommit(dev, 0, delay=0.05)
+        time.sleep(0.4)
+        self.assertTrue(dev.committed)
+
+    def test_settled_recommit_skips_after_newer_switch(self):
+        """The delayed re-commit must not fire after the user switched to
+        another profile meanwhile."""
+        from cheddar.autopilot_profiles import schedule_settled_recommit
+
+        dev = self._make_device(
+            [self._make_profile(0, active_res=1, is_active=True),
+             self._make_profile(1, active_res=0)]
+        )
+        schedule_settled_recommit(dev, 0, delay=0.05)
+        dev.profiles[1].set_active()  # newer switch wins before timer fires
+        dev.committed = False  # reset latch to observe the timer alone
+        time.sleep(0.4)
+        self.assertFalse(dev.committed)
 
 
 if __name__ == "__main__":
