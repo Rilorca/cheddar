@@ -23,6 +23,7 @@ from gi.repository import Gio, GLib
 
 from . import autopilot_profiles as ap
 from .autopilot_config import _CONFIG_FILE, load as cfg_load
+from .autopilot_service import is_daemon_service_active
 from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import Ratbagd, RatbagdIncompatibleError, RatbagdUnavailableError
 
@@ -33,6 +34,10 @@ logger = logging.getLogger("cheddar.autopilot")
 
 class AutoPilotDaemon:
     def __init__(self) -> None:
+        if is_daemon_service_active():
+            logger.info("Cheddar AutoPilot native Rust daemon is active; exiting Python daemon.")
+            sys.exit(0)
+
         try:
             self._ratbag = Ratbagd(RATBAGD_API_VERSION)
         except RatbagdUnavailableError:
