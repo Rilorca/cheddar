@@ -1,9 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" version="1.1">
-  <path d="M 2.4 4.5 L 13.6 3.6 C 14.5 3.5 15.1 4.5 14.6 5.3 L 6.6 13.8 C 6.0 14.4 5.0 14.2 4.6 13.5 L 1.5 6.4 C 1.1 5.6 1.6 4.6 2.4 4.5 Z
-           M 5.8 6.8 A 1.15 1.15 0 1 0 5.8 9.1 A 1.15 1.15 0 1 0 5.8 6.8 Z
-           M 9.5 5.8 A 0.9 0.9 0 1 0 9.5 7.6 A 0.9 0.9 0 1 0 9.5 5.8 Z
-           M 7.5 9.8 A 0.9 0.9 0 1 0 7.5 11.6 A 0.9 0.9 0 1 0 7.5 9.8 Z"
-        fill="#ffffff"
-        fill-rule="evenodd" />
+  <defs id="defs3051">
+    <style id="current-color-scheme" type="text/css">
+      .ColorScheme-Text {
+        color: #232629;
+      }
+    </style>
+  </defs>
+
+  <!-- Top Perspective Facet (translucent tone for 3D depth) -->
+  <path class="ColorScheme-Text"
+        fill="currentColor"
+        fill-opacity="0.45"
+        d="M 0.8 6.9
+           L 7.0 1.3
+           Q 7.3 1.0 7.7 1.1
+           Q 11.6 2.0 15.0 4.1
+           Q 15.3 4.3 15.2 4.6
+           L 0.8 6.9 Z" />
+
+  <!-- Front Cut Face with cheese holes and cutouts (evenodd) -->
+  <path class="ColorScheme-Text"
+        fill="currentColor"
+        fill-rule="evenodd"
+        d="M 0.8 6.9
+           L 15.2 4.4
+           Q 15.4 4.5 15.4 4.8
+           L 15.1 11.2
+           Q 15.0 11.6 14.6 11.7
+           L 10.3 12.6
+           A 1.8 1.8 0 0 0 6.5 13.5
+           L 1.5 14.8
+           Q 1.1 14.9 1.0 14.5
+           L 0.8 12.7
+           A 1.0 1.0 0 0 0 0.8 10.5
+           L 0.7 7.2
+           Q 0.7 6.9 0.8 6.9 Z
+           M 11.2 9.4 m -1.4 0 a 1.4 1.4 0 1 0 2.8 0 a 1.4 1.4 0 1 0 -2.8 0 Z
+           M 13.0 6.2 m -0.9 0 a 0.9 0.9 0 1 0 1.8 0 a 0.9 0.9 0 1 0 -1.8 0 Z
+           M 5.8 10.4 m -1.0 0 a 1.0 1.0 0 1 0 2.0 0 a 1.0 1.0 0 1 0 -2.0 0 Z
+           M 8.3 7.6 m -0.65 0 a 0.65 0.65 0 1 0 1.3 0 a 0.65 0.65 0 1 0 -1.3 0 Z
+           M 3.2 8.5 m -0.65 0 a 0.65 0.65 0 1 0 1.3 0 a 0.65 0.65 0 1 0 -1.3 0 Z" />
 </svg>
