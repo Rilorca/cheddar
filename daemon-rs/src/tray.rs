@@ -59,7 +59,7 @@ impl CheddarTray {
 use std::sync::LazyLock;
 use image::GenericImageView;
 
-static TRAY_ICON_PIXMAP: LazyLock<ksni::Icon> = LazyLock::new(|| {
+static TRAY_ICON_PIXMAP_LIGHT: LazyLock<ksni::Icon> = LazyLock::new(|| {
     let img = image::load_from_memory_with_format(
         include_bytes!("../../data/icons/tray/cheddar-tray-symbolic.png"),
         image::ImageFormat::Png,
@@ -76,6 +76,67 @@ static TRAY_ICON_PIXMAP: LazyLock<ksni::Icon> = LazyLock::new(|| {
         data,
     }
 });
+
+static TRAY_ICON_PIXMAP_DARK: LazyLock<ksni::Icon> = LazyLock::new(|| {
+    let img = image::load_from_memory_with_format(
+        include_bytes!("../../data/icons/tray/cheddar-tray-dark.png"),
+        image::ImageFormat::Png,
+    )
+    .expect("valid cheddar-tray-dark.png");
+    let (width, height) = img.dimensions();
+    let mut data = img.into_rgba8().into_vec();
+    for pixel in data.chunks_exact_mut(4) {
+        pixel.rotate_right(1); // RGBA to ARGB
+    }
+    ksni::Icon {
+        width: width as i32,
+        height: height as i32,
+        data,
+    }
+});
+
+pub fn is_light_theme() -> bool {
+    // 1. Try reading KDE's ColorScheme config
+    if let Ok(output) = std::process::Command::new("kreadconfig6")
+        .args(["--group", "General", "--key", "ColorScheme"])
+        .output()
+    {
+        let s = String::from_utf8_lossy(&output.stdout).to_lowercase();
+        if s.contains("light") {
+            return true;
+        }
+        if s.contains("dark") {
+            return false;
+        }
+    }
+
+    // 2. Try XDG Portal via D-Bus / busctl
+    if let Ok(output) = std::process::Command::new("busctl")
+        .args([
+            "--user",
+            "call",
+            "org.freedesktop.portal.Desktop",
+            "/org/freedesktop/portal/desktop",
+            "org.freedesktop.portal.Settings",
+            "Read",
+            "ss",
+            "org.freedesktop.appearance",
+            "color-scheme",
+        ])
+        .output()
+    {
+        let s = String::from_utf8_lossy(&output.stdout);
+        // Portal returns: 1 = prefer dark, 2 = prefer light
+        if s.contains(" 2") {
+            return true;
+        }
+        if s.contains(" 1") {
+            return false;
+        }
+    }
+
+    false
+}
 
 fn launch_cheddar_gui() {
     let binary = dirs::home_dir()
@@ -114,15 +175,25 @@ impl Tray for CheddarTray {
     }
 
     fn icon_pixmap(&self) -> Vec<ksni::Icon> {
-        vec![TRAY_ICON_PIXMAP.clone()]
+        if is_light_theme() {
+            vec![TRAY_ICON_PIXMAP_DARK.clone()]
+        } else {
+            vec![TRAY_ICON_PIXMAP_LIGHT.clone()]
+        }
     }
 
     fn tool_tip(&self) -> ToolTip {
+        let pixmap = if is_light_theme() {
+            vec![TRAY_ICON_PIXMAP_DARK.clone()]
+        } else {
+            vec![TRAY_ICON_PIXMAP_LIGHT.clone()]
+        };
+
         ToolTip {
             title: Self::format_tooltip_title(),
             description: Self::format_tooltip_description(&self.cached),
             icon_name: "io.github.rilorca.Cheddar-symbolic".to_string(),
-            icon_pixmap: vec![TRAY_ICON_PIXMAP.clone()],
+            icon_pixmap: pixmap,
         }
     }
 

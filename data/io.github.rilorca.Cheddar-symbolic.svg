@@ -1,17 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" version="1.1">
-  <defs id="defs3051">
-    <style id="current-color-scheme" type="text/css">
+<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+  <defs>
+    <style type="text/css" id="current-color-scheme">
       .ColorScheme-Text {
-        color: #232629;
+        color:#232629;
       }
     </style>
   </defs>
 
   <!-- Top Perspective Facet (translucent tone for 3D depth) -->
-  <path class="ColorScheme-Text"
-        fill="currentColor"
-        fill-opacity="0.45"
+  <path style="fill:currentColor;fill-opacity:0.45;stroke:none"
+        class="ColorScheme-Text"
         d="M 0.8 6.9
            L 7.0 1.3
            Q 7.3 1.0 7.7 1.1
@@ -20,9 +18,8 @@
            L 0.8 6.9 Z" />
 
   <!-- Front Cut Face with cheese holes and cutouts (evenodd) -->
-  <path class="ColorScheme-Text"
-        fill="currentColor"
-        fill-rule="evenodd"
+  <path style="fill:currentColor;fill-opacity:1;stroke:none;fill-rule:evenodd"
+        class="ColorScheme-Text"
         d="M 0.8 6.9
            L 15.2 4.4
            Q 15.4 4.5 15.4 4.8
