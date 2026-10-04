@@ -44,6 +44,7 @@ install_data(systemd_service,
              install_dir: join_paths(prefix, 'lib', 'systemd', 'user'))
 install_data('io.github.rilorca.Cheddar-symbolic.svg', install_dir: symbolicicondir)
 install_data('icons/tray/cheddar-tray.png',
+             'icons/tray/cheddar-tray-symbolic.png',
              install_dir: join_paths(pkgdatadir, 'icons'))
 
 desktop_in = configure_file(
