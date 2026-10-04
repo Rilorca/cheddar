@@ -334,6 +334,8 @@ class MousePerspective(Gtk.Overlay):
         ):
             self._config_stack.set_visible_child_name(visible_child_name)
 
+        self._config_stack.show_all()
+
         self._on_profile_notify_dirty(profile, None)
 
     def _hide_notification_error(self) -> None:
@@ -393,7 +395,10 @@ class MousePerspective(Gtk.Overlay):
                 self.label_profile.set_label(row.sw_name)
                 self.listbox_profiles.select_row(row)
         else:
+            ap._set_active_user_profile(None)
             row.set_active()
+            if self._device is not None:
+                self._device.commit()
 
     @Gtk.Template.Callback("_on_add_profile_button_clicked")
     def _on_add_profile_button_clicked(self, button: Gtk.Button) -> None:

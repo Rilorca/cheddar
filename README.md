@@ -32,7 +32,7 @@ On Windows, Logitech G HUB automatically detects when you launch a game and reco
 
 - 🎮 **Zero-Effort AutoPilot:** Launch Steam, Proton, Lutris, Heroic, or Faugus Launcher games, and your mouse profile switches instantly in the background. Alt-tab between games or back to the desktop, and your settings follow seamlessly.
 - ♾️ **Unlimited Game Profiles:** Don't let your mouse's onboard memory slots limit your gaming library. Cheddar stores unlimited custom profiles on your PC and dynamically writes them onto your mouse hardware on the fly.
-- 🦀 **Native Rust Daemon (~4-8 MB RAM):** Cheddar includes a dedicated, compiled background daemon written in Rust (`cheddar-autopilot`). It idles at just **~4-8 MB of RAM** and **0.0% CPU**, keeping your machine's full power dedicated to your games.
+- 🦀 **Ultra-Lightweight Rust Daemon (~4–12 MB RAM):** Cheddar includes a dedicated native background daemon written in Rust (`cheddar-autopilot`). While proprietary apps like Logitech G HUB frequently consume **500+ MB**, Cheddar's Rust daemon idles at only **~4–12 MB of RAM** and **0.0% CPU**, leaving your computer's full performance for your games.
 - 🎯 **Full Hardware Synchronization:** Real-time DPI stage tracking (including physical mouse DPI buttons), desktop notifications, and tray state indicators that update instantaneously.
 - 🖱️ **Universal Device Support:** Fully supports over **70+ Logitech gaming mice** (G502 Hero/Lightspeed/X, G Pro / Superlight, G305, G203, G600, G703, G903, G403, etc.) as well as mice from SteelSeries, Roccat, and ASUS supported by `libratbag`.
 

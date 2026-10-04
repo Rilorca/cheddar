@@ -133,13 +133,13 @@ for entry in os.scandir('/proc'):\n\
             }
         }
 
-        // 2. Check /proc/PID/cmdline (argv[0], critical for Wine/Proton games)
+        // 2. Check /proc/PID/cmdline (all argv arguments, critical for Wine/Proton and Python scripts)
         let cmdline_path = Path::new("/proc").join(pid_str).join("cmdline");
         if let Ok(bytes) = fs::read(&cmdline_path) {
-            if let Some(first_arg) = bytes.split(|&b| b == 0).next() {
-                if !first_arg.is_empty() {
-                    let arg0 = String::from_utf8_lossy(first_arg);
-                    add_name(&mut names, &basename_any_os(&arg0));
+            for arg_bytes in bytes.split(|&b| b == 0) {
+                if !arg_bytes.is_empty() {
+                    let arg = String::from_utf8_lossy(arg_bytes);
+                    add_name(&mut names, &basename_any_os(&arg));
                 }
             }
         }

@@ -8,6 +8,7 @@ pub struct TrayState {
     pub current_dpi: Option<u32>,
     pub active_exe: Option<String>,
     pub battery_percentage: Option<u32>,
+    pub is_light: bool,
 }
 
 impl Default for TrayState {
@@ -18,6 +19,7 @@ impl Default for TrayState {
             current_dpi: None,
             active_exe: None,
             battery_percentage: None,
+            is_light: false,
         }
     }
 }
@@ -110,7 +112,32 @@ pub fn is_light_theme() -> bool {
         }
     }
 
-    // 2. Try XDG Portal via D-Bus / busctl
+    // 2. Try GNOME gsettings interface color-scheme
+    if let Ok(output) = std::process::Command::new("gsettings")
+        .args(["get", "org.gnome.desktop.interface", "color-scheme"])
+        .output()
+    {
+        let s = String::from_utf8_lossy(&output.stdout).to_lowercase();
+        if s.contains("default") || s.contains("prefer-light") {
+            return true;
+        }
+        if s.contains("prefer-dark") {
+            return false;
+        }
+    }
+
+    // 3. Try GNOME gtk-theme
+    if let Ok(output) = std::process::Command::new("gsettings")
+        .args(["get", "org.gnome.desktop.interface", "gtk-theme"])
+        .output()
+    {
+        let s = String::from_utf8_lossy(&output.stdout).to_lowercase();
+        if s.contains("dark") {
+            return false;
+        }
+    }
+
+    // 4. Try XDG Portal via D-Bus / busctl
     if let Ok(output) = std::process::Command::new("busctl")
         .args([
             "--user",
@@ -175,7 +202,7 @@ impl Tray for CheddarTray {
     }
 
     fn icon_pixmap(&self) -> Vec<ksni::Icon> {
-        if is_light_theme() {
+        if self.cached.is_light {
             vec![TRAY_ICON_PIXMAP_DARK.clone()]
         } else {
             vec![TRAY_ICON_PIXMAP_LIGHT.clone()]
@@ -183,7 +210,7 @@ impl Tray for CheddarTray {
     }
 
     fn tool_tip(&self) -> ToolTip {
-        let pixmap = if is_light_theme() {
+        let pixmap = if self.cached.is_light {
             vec![TRAY_ICON_PIXMAP_DARK.clone()]
         } else {
             vec![TRAY_ICON_PIXMAP_LIGHT.clone()]
@@ -268,8 +295,9 @@ impl Tray for CheddarTray {
         items.push(
             StandardItem {
                 label: profile_display,
-                enabled: false,
+                enabled: true,
                 icon_name: "view-paged-symbolic".to_string(),
+                activate: Box::new(|_| {}),
                 ..Default::default()
             }
             .into(),
@@ -283,8 +311,9 @@ impl Tray for CheddarTray {
         items.push(
             StandardItem {
                 label: dpi_display,
-                enabled: false,
+                enabled: true,
                 icon_name: "input-mouse".to_string(),
+                activate: Box::new(|_| {}),
                 ..Default::default()
             }
             .into(),
@@ -315,6 +344,7 @@ mod tests {
             current_dpi: Some(1600),
             active_exe: Some("dota2".to_string()),
             battery_percentage: None,
+            is_light: false,
         };
         let desc = CheddarTray::format_tooltip_description(&state);
         assert!(desc.contains("Perfil: Dota 2 (dota2)"));
@@ -329,6 +359,7 @@ mod tests {
             current_dpi: Some(800),
             active_exe: None,
             battery_percentage: None,
+            is_light: false,
         };
         let desc = CheddarTray::format_tooltip_description(&state);
         assert!(desc.contains("Perfil: Por defecto"));
@@ -343,6 +374,7 @@ mod tests {
             current_dpi: Some(1200),
             active_exe: None,
             battery_percentage: None,
+            is_light: false,
         };
         let tray = CheddarTray::new(cached);
 

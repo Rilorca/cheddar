@@ -459,6 +459,24 @@ impl RatbagClient {
     pub async fn get_active_dpi(&self, device_path: &OwnedObjectPath) -> Result<Option<u32>> {
         let hw_slot = read_g600_hw_slot();
 
+        // Edge detection for physical hardware profile buttons (e.g. G600 mode button)
+        static LAST_HW_PROF: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(999);
+        let hw_prof_changed = if let Some((hw_prof, _)) = hw_slot {
+            let prev = LAST_HW_PROF.swap(hw_prof, std::sync::atomic::Ordering::Relaxed);
+            prev != 999 && prev != hw_prof
+        } else {
+            false
+        };
+
+        // Edge detection for physical hardware resolution buttons (e.g. G600 DPI switch)
+        static LAST_HW_RES: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(999);
+        let hw_res_changed = if let Some((_, hw_res)) = hw_slot {
+            let prev = LAST_HW_RES.swap(hw_res, std::sync::atomic::Ordering::Relaxed);
+            prev != 999 && prev != hw_res
+        } else {
+            false
+        };
+
         let profiles = self.get_profile_paths(device_path).await?;
         for p_path in profiles {
             let p_proxy = zbus::Proxy::new(
@@ -472,7 +490,7 @@ impl RatbagClient {
             let p_index: u32 = p_proxy.get_property("Index").await.unwrap_or(0);
             let ratbag_p_active: bool = p_proxy.get_property("IsActive").await.unwrap_or(false);
             let p_is_active: bool = if let Some((hw_prof, _)) = hw_slot {
-                if hw_prof == p_index && !ratbag_p_active {
+                if hw_prof_changed && hw_prof == p_index && !ratbag_p_active {
                     let _: zbus::Result<u32> = p_proxy.call("SetActive", &()).await;
                 }
                 hw_prof == p_index
@@ -494,21 +512,16 @@ impl RatbagClient {
                     let r_index: u32 = r_proxy.get_property("Index").await.unwrap_or(0);
                     let ratbag_r_active: bool = r_proxy.get_property("IsActive").await.unwrap_or(false);
                     let r_active: bool = if let Some((_, hw_res)) = hw_slot {
-                        if hw_res == r_index && !ratbag_r_active {
+                        if hw_res_changed && hw_res == r_index && !ratbag_r_active {
                             let _: zbus::Result<u32> = r_proxy.call("SetActive", &()).await;
-                            // Clean up IsDirty on ratbagd device so the GUI doesn't show "Aplicar"
-                            if let Ok(d_proxy) = zbus::Proxy::new(
-                                &self.conn,
-                                RATBAG_DEST,
-                                device_path,
-                                RATBAG_DEVICE_IFACE,
-                            )
-                            .await
-                            {
-                                let _: zbus::Result<u32> = d_proxy.call("Commit", &()).await;
-                            }
                         }
-                        hw_res == r_index
+                        // If ratbag has an active resolution in software, prefer ratbag_r_active
+                        // unless a physical hardware switch just happened.
+                        if hw_res_changed {
+                            hw_res == r_index
+                        } else {
+                            ratbag_r_active
+                        }
                     } else {
                         ratbag_r_active
                     };

@@ -1057,16 +1057,24 @@ popover.menu button:hover label {
 /* ── Tooltips ────────────────────────────────────────────────────────── */
 tooltip,
 tooltip.background {
-    background-color: #2f2f2f;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: #2b2b2b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 6px;
     color: #ffffff;
     padding: 4px 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: none;
+    text-shadow: none;
+    transition: none;
+}
+
+tooltip * {
+    background-color: transparent;
+    text-shadow: none;
 }
 
 tooltip label {
     color: #ffffff;
+    text-shadow: none;
 }
 
 /* ── Scrollbars ──────────────────────────────────────────────────────── */

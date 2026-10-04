@@ -8,7 +8,7 @@ from .ratbagd import RatbagdResolution
 from .util.gobject import connect_signal_with_weak_ref
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import GObject, Gdk, Gtk  # noqa
+from gi.repository import GLib, GObject, Gdk, Gtk  # noqa
 
 
 class _DPIEntry(Gtk.Entry, Gtk.Editable):
@@ -65,6 +65,7 @@ class ResolutionRow(Gtk.ListBoxRow):
         self.resolutions_page = resolutions_page
         self._resolution = resolution
         self.resolutions = resolution.resolutions
+        self._commit_timer_id = 0
         self._scale_handler = self.scale.connect(
             "value-changed", self._on_scale_value_changed
         )
@@ -149,6 +150,12 @@ class ResolutionRow(Gtk.ListBoxRow):
     def _on_active_button_clicked(self, _togglebutton: Gtk.Button) -> None:
         # The set active button has been clicked, update RatbagdResolution.
         self._resolution.set_active()
+        if (
+            hasattr(self, "resolutions_page")
+            and hasattr(self.resolutions_page, "_device")
+            and self.resolutions_page._device is not None
+        ):
+            self.resolutions_page._device.commit()
 
     @Gtk.Template.Callback("_on_scroll_event")
     def _on_scroll_event(self, widget: Gtk.Widget, _event: Gdk.EventScroll) -> bool:
@@ -195,6 +202,16 @@ class ResolutionRow(Gtk.ListBoxRow):
         if reveal:
             self.dpi_entry.grab_focus()
 
+    def _commit_device(self) -> bool:
+        self._commit_timer_id = 0
+        if (
+            hasattr(self, "resolutions_page")
+            and hasattr(self.resolutions_page, "_device")
+            and self.resolutions_page._device is not None
+        ):
+            self.resolutions_page._device.commit()
+        return False
+
     def _on_dpi_values_changed(self, res: Optional[int] = None) -> None:
         # Freeze the notify::resolution signal from firing and
         # update DPI text box and resolution values.
@@ -206,6 +223,10 @@ class ResolutionRow(Gtk.ListBoxRow):
         # Only update new resolution if changed
         if new_res != self._resolution.resolution:
             self._resolution.resolution = new_res
+            if self._resolution.is_active:
+                if self._commit_timer_id != 0:
+                    GLib.source_remove(self._commit_timer_id)
+                self._commit_timer_id = GLib.timeout_add(150, self._commit_device)
 
     @Gtk.Template.Callback("_on_dpi_entry_activate")
     def _on_dpi_entry_activate(self, entry: Gtk.Entry) -> None:

@@ -49,16 +49,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let initial_config = load_config();
+    let initial_light = tray::is_light_theme();
     let initial_tray_state = TrayState {
         enabled: initial_config.enabled,
         active_target_name: Some(format!("Perfil {}", initial_config.default_profile + 1)),
         current_dpi: None,
         active_exe: None,
         battery_percentage: None,
+        is_light: initial_light,
     };
     let tray_handle = match spawn_tray(initial_tray_state).await {
         Ok(handle) => {
-            info!("System Tray icon initialized (StatusNotifierItem)");
+            info!("System Tray icon initialized (StatusNotifierItem, light_mode={})", initial_light);
             Some(handle)
         }
         Err(e) => {
@@ -158,7 +160,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if changed {
                             st.last_reported_dpi.insert(dev_name.clone(), current_dpi);
                             if last_dpi.is_some() && notifications_enabled {
-                                let summary = format!("🎯 DPI: {}", current_dpi);
+                                let summary = format!("DPI: {}", current_dpi);
                                 let body = format!("{}: Sensibilidad ajustada", dev_name);
                                 notifier.notify(&summary, &body, "input-mouse", 1500).await;
                             }
@@ -224,6 +226,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
+        // Theme check: detect light/dark changes dynamically in KDE/GNOME
+        let current_light = tray::is_light_theme();
+        if let Some(th) = &tray_handle {
+            let _ = th.update(|t| {
+                if t.cached.is_light != current_light {
+                    t.cached.is_light = current_light;
+                }
+            }).await;
+        }
+
         if rules.is_empty() {
             continue;
         }
@@ -232,6 +244,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut matched_target: Option<RuleTarget> = None;
         let mut matched_exe: Option<String> = None;
 
+        let mut all_running = HashSet::new();
+        for names in procs.values() {
+            all_running.extend(names.clone());
+        }
+
+        // If Cheddar GUI is open and configuring the mouse, don't force switch to default profile!
+        let is_cheddar_running = all_running.iter().any(|name| {
+            let n = name.to_lowercase();
+            n.contains("cheddar") || n.contains("piper")
+        });
+
         let focused = focused_pid();
         if let Some(f_pid) = focused {
             let focused_names = if f_pid > 0 {
@@ -239,6 +262,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 HashSet::new()
             };
+
+            // If the Cheddar GUI is currently focused, do not override what the user is configuring!
+            let is_cheddar_focused = focused_names.iter().any(|name| {
+                let n = name.to_lowercase();
+                n.contains("cheddar") || n.contains("piper")
+            });
+            if is_cheddar_focused {
+                continue;
+            }
 
             for (exe, target) in &rules {
                 let clean_exe = exe.to_lowercase();
@@ -249,13 +281,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     break;
                 }
             }
-        } else {
-            // Fallback when focus cannot be determined (e.g. native Wayland): match running process
-            let mut all_running = HashSet::new();
-            for names in procs.values() {
-                all_running.extend(names.clone());
-            }
+        }
 
+        // Fallback matching when focus-matching did not find a rule (e.g. Wayland or background check)
+        if matched_target.is_none() {
             let last_exe = { state.lock().await.last_matched_exe.clone() };
             if let Some(last) = last_exe {
                 let clean_last = last.to_lowercase();
@@ -266,18 +295,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
+        }
 
-            if matched_target.is_none() {
-                for (exe, target) in &rules {
-                    let clean_exe = exe.to_lowercase();
-                    let no_space = clean_exe.replace(' ', "");
-                    if all_running.contains(&clean_exe) || all_running.contains(&no_space) {
-                        matched_target = Some(target.clone());
-                        matched_exe = Some(exe.clone());
-                        break;
-                    }
+        if matched_target.is_none() {
+            for (exe, target) in &rules {
+                let clean_exe = exe.to_lowercase();
+                let no_space = clean_exe.replace(' ', "");
+                if all_running.contains(&clean_exe) || all_running.contains(&no_space) {
+                    matched_target = Some(target.clone());
+                    matched_exe = Some(exe.clone());
+                    break;
                 }
             }
+        }
+
+        // If no game matched and Cheddar GUI is open, do not force-switch to default profile!
+        if is_cheddar_running && matched_target.is_none() {
+            continue;
         }
 
         let final_target = matched_target.unwrap_or(RuleTarget::Index(default_profile));
