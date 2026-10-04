@@ -1,4 +1,4 @@
-name: Build and Release Flatpak
+name: Build and Release
 
 on:
   push:
@@ -30,9 +30,51 @@ jobs:
           name: Cheddar-Flatpak
           path: io.github.rilorca.Cheddar.flatpak
 
+  daemon-binary:
+    name: "Build Rust Daemon"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Rust Daemon
+        run: |
+          cargo build --manifest-path daemon-rs/Cargo.toml --release
+          mkdir -p dist/cheddar-autopilot
+          cp daemon-rs/target/release/cheddar-autopilot dist/cheddar-autopilot/
+          cp data/cheddar-autopilot.service.in dist/cheddar-autopilot/cheddar-autopilot.service
+          sed -i 's|@bindir@|/usr/local/bin|g' dist/cheddar-autopilot/cheddar-autopilot.service
+          tar -czvf cheddar-autopilot-linux-x86_64.tar.gz -C dist/cheddar-autopilot .
+
+      - name: Upload Daemon Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cheddar-Daemon-Binary
+          path: cheddar-autopilot-linux-x86_64.tar.gz
+
+  release:
+    name: "Publish Release Assets"
+    needs: [flatpak-bundle, daemon-binary]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Flatpak
+        uses: actions/download-artifact@v4
+        with:
+          name: Cheddar-Flatpak
+
+      - name: Download Daemon
+        uses: actions/download-artifact@v4
+        with:
+          name: Cheddar-Daemon-Binary
+
       - name: Publish Release Asset
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: io.github.rilorca.Cheddar.flatpak
+          files: |
+            io.github.rilorca.Cheddar.flatpak
+            cheddar-autopilot-linux-x86_64.tar.gz
           generate_release_notes: true

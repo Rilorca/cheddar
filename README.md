@@ -1,20 +1,24 @@
 <p align="center">
-  <img src="data/io.github.rilorca.Cheddar.png" width="128" height="128" alt="Cheddar Logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="data/io.github.rilorca.Cheddar-symbolic.svg">
+    <img src="data/io.github.rilorca.Cheddar.png" width="128" height="128" alt="Cheddar Logo">
+  </picture>
 </p>
 
 <h1 align="center">Cheddar</h1>
 
 <p align="center">
   <strong>The Missing Logitech G HUB Experience for Linux 🧀🖱️</strong><br>
-  <em>Smart per-game profile switching, endless custom profiles, and zero-hassle gaming mouse management.</em>
+  <em>Smart per-game profile switching, endless custom profiles, native Rust autopilot daemon, and zero-hassle gaming mouse management.</em>
 </p>
 
 <p align="center">
   <a href="#why-cheddar">Why Cheddar?</a> •
   <a href="#screenshots">Screenshots</a> •
   <a href="#features">Features</a> •
+  <a href="#architecture">Architecture</a> •
   <a href="#installation">Installation</a> •
-  <a href="#how-it-works">How It Works</a> •
+  <a href="#releasing">Generating a Release</a> •
   <a href="#troubleshooting">Troubleshooting</a>
 </p>
 
@@ -27,9 +31,9 @@ On Windows, Logitech G HUB automatically detects when you launch a game and reco
 **Cheddar changes the game.** Built with modern Libadwaita aesthetics as a supercharged evolution of [Piper](https://github.com/libratbag/piper), Cheddar brings full-featured automation and mouse tuning to the Linux desktop:
 
 - 🎮 **Zero-Effort AutoPilot:** Launch Steam, Proton, Lutris, Heroic, or Faugus Launcher games, and your mouse profile switches instantly in the background. Alt-tab between games or back to the desktop, and your settings follow seamlessly.
-- ♾️ **Unlimited Game Profiles:** Don't let your mouse's 3 onboard memory slots limit your gaming library. Cheddar stores unlimited custom profiles on your PC and dynamically writes them onto your mouse hardware on the fly.
-- ⚡ **Insanely Lightweight (~35 MB RAM):** Say goodbye to Logitech G HUB's 500+ MB Electron bloat on Windows. Cheddar's background daemon idles at just **~35 MB of RAM** and **0.0% CPU**, keeping your machine's full power dedicated to your games.
-- 🎯 **Full Hardware Customization:** Fine-tune DPI stages, polling report rates, macro recordings, button remaps, and RGB lighting with interactive device schematics.
+- ♾️ **Unlimited Game Profiles:** Don't let your mouse's onboard memory slots limit your gaming library. Cheddar stores unlimited custom profiles on your PC and dynamically writes them onto your mouse hardware on the fly.
+- 🦀 **Native Rust Daemon (~4-8 MB RAM):** Cheddar includes a dedicated, compiled background daemon written in Rust (`cheddar-autopilot`). It idles at just **~4-8 MB of RAM** and **0.0% CPU**, keeping your machine's full power dedicated to your games.
+- 🎯 **Full Hardware Synchronization:** Real-time DPI stage tracking (including physical mouse DPI buttons), desktop notifications, and tray state indicators that update instantaneously.
 - 🖱️ **Universal Device Support:** Fully supports over **70+ Logitech gaming mice** (G502 Hero/Lightspeed/X, G Pro / Superlight, G305, G203, G600, G703, G903, G403, etc.) as well as mice from SteelSeries, Roccat, and ASUS supported by `libratbag`.
 
 ---
@@ -55,140 +59,161 @@ On Windows, Logitech G HUB automatically detects when you launch a game and reco
 - **Focus-Aware (Alt-Tab Follows You):** When running multiple games or alt-tabbing to your browser, Cheddar instantly gives priority to the focused window.
 - **Full Wine / Proton / UMU & Native Support:** Seamlessly detects Windows games running under Proton/Wine (including Battle.net, Steam, Lutris, Heroic, and Faugus Launcher), not just native Linux executables.
 - **Automated Game Library Indexing:** The rule editor automatically scans and displays your installed games with high-resolution artwork—no guesswork or manual binary paths required.
+- **System Tray (StatusNotifierItem):** Clean, native system tray with:
+  - `Abrir Cheddar` (opens the configuration GUI)
+  - `Cerrar Cheddar` (closes the app and daemon)
+  - Active profile status display
+  - Real-time active DPI display (synchronized with mouse hardware buttons)
+- **Adaptive Symbolic Icon:** Includes a 3D perspective symbolic vector icon that automatically respects system dark and light modes.
 - **Unlimited Software Profiles:** Store hundreds of named profiles on your disk; Cheddar uses an onboard scratch slot to flash them to the mouse seamlessly.
-- **Silent Background Daemon & Tray:** Runs quietly in the background via systemd user service or system tray, keeping profiles switching without leaving any window open.
+
+---
+
+## Architecture
+
+Cheddar uses a modern hybrid architecture:
+
+| Component | Technology | Role |
+| :--- | :--- | :--- |
+| **Cheddar GUI** | Python 3 + GTK 3 + Libadwaita | Visual configuration, profile editor, button remapping, LED controls, rule management. |
+| **AutoPilot Daemon** | Rust + Tokio + zbus + ksni | Lightweight background service (`cheddar-autopilot`). Monitors processes, listens to D-Bus `ratbagd` signals, manages the system tray, and triggers desktop notifications. |
+
+When the Rust daemon is running, the GUI detects it automatically and operates in zero-conflict coordination mode.
 
 ---
 
 ## Installation
 
-### Method 1: Flatpak (Universal / Recommended) 📦
+### Method 1: Flatpak (Universal / Recommended for GUI) 📦
 
-Cheddar can be installed as a Flatpak on any Linux distribution (Ubuntu, Fedora, Arch Linux, Steam Deck / SteamOS, Bazzite, Debian, etc.).
+Cheddar is available as a Flatpak bundle compatible with all major Linux distributions (Arch Linux, Fedora, Ubuntu, Debian, Steam Deck / SteamOS, Bazzite, openSUSE, etc.).
 
 > [!NOTE]
-> Cheddar communicates seamlessly with the host's `ratbagd` daemon via D-Bus, and monitors running games using the Flatpak host portal. Ensure `ratbagd` is running on your host system:
+> Cheddar communicates with the host system's `ratbagd` daemon via D-Bus. Ensure `ratbagd` is installed and running on your host system:
 > ```sh
 > sudo systemctl enable --now ratbagd
 > ```
 
-#### Download Pre-built Bundle
-Download `io.github.rilorca.Cheddar.flatpak` from the latest [GitHub Releases](https://github.com/Rilorca/cheddar/releases), then install it:
-```sh
-flatpak install io.github.rilorca.Cheddar.flatpak
-```
-*(Or double-click the `.flatpak` file in your file manager to open it in GNOME Software / KDE Discover).*
+#### Option A: Download Pre-built Bundle
+1. Download `io.github.rilorca.Cheddar.flatpak` from the [Latest GitHub Release](https://github.com/Rilorca/cheddar/releases).
+2. Install via terminal:
+   ```sh
+   flatpak install io.github.rilorca.Cheddar.flatpak
+   ```
+   *(Or double-click the `.flatpak` file to open it in GNOME Software or KDE Discover).*
 
-#### Build Locally with Flatpak Builder
+#### Option B: Build Flatpak Locally
 ```sh
-sudo pacman -S flatpak-builder   # or apt install / dnf install flatpak-builder
+# Install flatpak-builder
+sudo pacman -S flatpak-builder  # Arch
+# sudo apt install flatpak-builder  # Debian/Ubuntu
+# sudo dnf install flatpak-builder  # Fedora
+
+# Build and install locally
 flatpak-builder --user --install --force-clean build-dir io.github.rilorca.Cheddar.json
 ```
 
 ---
 
-### Method 2: Native Package Installation ⚡
+### Method 2: Native Installation (Full GUI + Rust Daemon) ⚡
 
-If you prefer building and installing natively on your host system:
+Building natively compiles both the Python graphical app and the native Rust AutoPilot daemon.
 
-#### Requirements
-- `ratbagd` / `libratbag` (0.18 or newer)
-- GTK 3 & PyGObject
-- Python 3 with modules `lxml`, `evdev`, `cairo`, `gi`
-- `xprop` (*optional but recommended* for focus-based switching under X11)
+#### Dependencies by Distribution
 
----
-
-### Arch Linux / CachyOS / Manjaro
+<details>
+<summary><b>Arch Linux / CachyOS / Manjaro</b></summary>
 
 ```sh
 # 1. Install dependencies
-sudo pacman -S --needed meson ninja libratbag gtk3 python-gobject \
+sudo pacman -S --needed meson ninja rust cargo libratbag gtk3 python-gobject \
                         python-lxml python-evdev python-cairo xorg-xprop
 
-# 2. Clone the repository and install
-git clone https://github.com/Rilorca/cheddar.git
-cd cheddar
-meson setup builddir --prefix=/usr
-ninja -C builddir
-sudo ninja -C builddir install
-
-# 3. Enable and start the ratbagd mouse daemon
+# 2. Enable mouse daemon
 sudo systemctl enable --now ratbagd
 ```
+</details>
 
-*(Optional: To install for your user only without `sudo`, replace `--prefix=/usr` with `--prefix=$HOME/.local` and run `ninja -C builddir install`).*
+<details>
+<summary><b>Fedora / Nobara / RHEL</b></summary>
 
----
+```sh
+# 1. Install dependencies
+sudo dnf install meson ninja-build rust cargo libratbag-ratbagd gtk3 python3-gobject \
+                 python3-lxml python3-evdev python3-cairo xprop
 
-### Debian / Ubuntu / Linux Mint / Pop!_OS
+# 2. Enable mouse daemon
+sudo systemctl enable --now ratbagd
+```
+</details>
+
+<details>
+<summary><b>Debian / Ubuntu / Linux Mint / Pop!_OS</b></summary>
 
 ```sh
 # 1. Install dependencies
 sudo apt update
-sudo apt install meson ninja-build ratbagd gir1.2-gtk-3.0 python3-gi \
+sudo apt install meson ninja-build cargo rustc ratbagd gir1.2-gtk-3.0 python3-gi \
                  python3-lxml python3-evdev python3-cairo x11-utils
 
-# 2. Clone the repository and install
-git clone https://github.com/Rilorca/cheddar.git
-cd cheddar
-meson setup builddir --prefix=/usr
-ninja -C builddir
-sudo ninja -C builddir install
-
-# 3. Enable and start ratbagd
+# 2. Enable mouse daemon
 sudo systemctl enable --now ratbagd
 ```
+</details>
 
----
-
-### Fedora / Nobara / RHEL
+#### Build and Install
 
 ```sh
-# 1. Install dependencies
-sudo dnf install meson ninja-build libratbag-ratbagd gtk3 python3-gobject \
-                 python3-lxml python3-evdev python3-cairo xprop
-
-# 2. Clone the repository and install
+# 1. Clone the repository
 git clone https://github.com/Rilorca/cheddar.git
 cd cheddar
+
+# 2. Configure and build (compiles GUI + Rust daemon)
 meson setup builddir --prefix=/usr
 ninja -C builddir
+
+# 3. Install system-wide
 sudo ninja -C builddir install
 
-# 3. Enable and start ratbagd
-sudo systemctl enable --now ratbagd
+# 4. Enable the AutoPilot user service (runs automatically on login)
+systemctl --user enable --now cheddar-autopilot
 ```
 
-After installing, launch **Cheddar** from your application menu or run `cheddar` in a terminal.
+*(Tip: To install for your user only without `sudo`, use `meson setup builddir --prefix=$HOME/.local` and run `ninja -C builddir install`)*.
 
 ---
 
-## How It Works
+### Method 3: Standalone Rust Daemon (Headless / Minimalist) 🦀
 
-### 1. Process & Window Detection (AutoPilot Engine)
-Cheddar watches running processes via `/proc` with virtually zero CPU overhead (no root privileges required). For Proton and Wine games, it reads the game's actual Windows-style executable and command line from the process environment rather than just the generic Wine loader. When `xprop` is available, it also inspects the active window ID to give priority to whichever game is currently focused on your screen.
+If you want the background profile switcher and system tray running with minimal overhead without installing the full GUI:
 
-### 2. Overcoming Mouse Hardware Memory Limits
-Most gaming mice only have 3 to 5 onboard profile slots in physical flash memory (e.g. Logitech G600 has 3). Cheddar bypasses this limitation by storing unlimited custom profiles in `~/.config/cheddar/autopilot_profiles.json`. When a game starts, Cheddar dynamically flashes that game's profile into a dedicated onboard "scratch slot" (by default the last slot) and activates it immediately. Your other onboard profiles remain untouched.
-
-### 3. Background Switching
-To enable background profile switching:
-1. **Via UI:** Open Cheddar $\rightarrow$ **AutoPilot** tab $\rightarrow$ toggle **Enable AutoPilot**. You can also check **Start at login** to keep Cheddar in your system tray upon boot.
-2. **Via systemd user service (Optional):**
+1. Download `cheddar-autopilot-linux-x86_64.tar.gz` from [GitHub Releases](https://github.com/Rilorca/cheddar/releases).
+2. Extract and install:
    ```sh
+   tar -xvf cheddar-autopilot-linux-x86_64.tar.gz
+   sudo cp cheddar-autopilot /usr/local/bin/
+   mkdir -p ~/.config/systemd/user/
+   cp cheddar-autopilot.service ~/.config/systemd/user/
+   systemctl --user daemon-reload
    systemctl --user enable --now cheddar-autopilot
    ```
-   Check daemon activity anytime:
-   ```sh
-   journalctl --user -u cheddar-autopilot -f
-   ```
 
-### 4. Configuration Storage
-All your settings and rules are stored in `~/.config/cheddar/`:
-- `autopilot.json` — rules, default profile, switch states.
-- `autopilot_profiles.json` — your custom named profile library.
-- `backups/` — automatic backups of your mouse's original onboard profiles.
+---
+
+## Releasing
+
+To create a new release and automatically build the Flatpak bundle and Rust daemon binaries:
+
+1. Ensure all changes are committed on `main`.
+2. Create and push a version tag:
+   ```sh
+   git tag v0.8.1
+   git push origin v0.8.1
+   ```
+3. GitHub Actions (`.github/workflows/flatpak-release.yml`) will automatically:
+   - Build `io.github.rilorca.Cheddar.flatpak`
+   - Compile `cheddar-autopilot` (Rust daemon release binary)
+   - Create a GitHub Release with release notes and attach both assets.
 
 ---
 
@@ -196,11 +221,14 @@ All your settings and rules are stored in `~/.config/cheddar/`:
 
 - **"Cannot find any devices" / Welcome screen:** `ratbagd` isn't running or your mouse needs re-enumeration. Run `sudo systemctl start ratbagd` and replug the mouse.
 - **Solaar conflict (Logitech wireless mice):** If [Solaar](https://pwr-solaar.github.io/Solaar/) is running when `ratbagd` starts, it may claim the device first, causing `ratbagd` to fail reading profiles. Stop Solaar (`killall solaar`), restart ratbagd (`sudo systemctl restart ratbagd`), and replug your mouse.
-- **Game not detected:** Check the daemon log while launching your game:
+- **Check Daemon Logs:**
   ```sh
   journalctl --user -u cheddar-autopilot -f
   ```
-  Then add a rule using the exact executable name shown in the log.
+- **Restart Daemon:**
+  ```sh
+  systemctl --user restart cheddar-autopilot
+  ```
 
 ---
 
@@ -214,9 +242,13 @@ ninja -C builddir
 ./builddir/cheddar.devel
 ```
 
-Code formatting and linting:
+Run test suites:
 ```sh
-meson test -C builddir
+# Meson & Python unit tests
+ninja -C builddir test
+
+# Rust daemon unit tests
+cargo test --manifest-path daemon-rs/Cargo.toml
 ```
 
 ---

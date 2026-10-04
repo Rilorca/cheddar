@@ -5,6 +5,7 @@ from typing import Optional
 
 from . import autopilot_config as cfg
 from . import autopilot_profiles as ap
+from .autopilot_service import is_daemon_service_active, ensure_daemon_service_running
 from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import Ratbagd
 from .tray import TrayIcon
@@ -49,6 +50,7 @@ class Application(Gtk.Application):
         self._watcher: Optional[AutoPilotWatcher] = None
         self._config = cfg.load()
         self._held: bool = False
+        self._daemon_active: bool = False
 
     def _load_stylesheet(self) -> None:
         """Load Libadwaita styling for the entire application."""
@@ -89,21 +91,13 @@ class Application(Gtk.Application):
         self._load_stylesheet()
         self._build_app_menu()
 
-        # Keep application running in background when window is closed
-        self.hold()
-        self._held = True
-
-        # Initialize background AutoPilot watcher
-        self._sync_watcher()
-
-        # Initialize system tray icon
-        self._tray = TrayIcon(
-            on_activate_window=self._show_window,
-            on_toggle_autopilot=self._toggle_autopilot,
-            on_quit=self._full_quit,
-            is_autopilot_enabled=self._is_autopilot_enabled,
-            get_status_text=self._get_status_text,
-        )
+        # Always ensure the native Rust daemon is running for background AutoPilot & Tray
+        ensure_daemon_service_running()
+        self._daemon_active = is_daemon_service_active()
+        if self._daemon_active:
+            logger.info("Native Rust AutoPilot daemon is active; running GUI in client mode")
+        else:
+            logger.warning("Could not activate cheddar-autopilot.service; running GUI without daemon")
 
     def init_ratbagd(self) -> Ratbagd:
         if self._ratbagd is None:
@@ -130,6 +124,7 @@ class Application(Gtk.Application):
         self._show_window()
 
     def _show_window(self) -> None:
+        ensure_daemon_service_running()
         if self._window is not None:
             self._window.present()
             return
@@ -144,6 +139,12 @@ class Application(Gtk.Application):
         return self._config.get("rules", {})
 
     def _sync_watcher(self) -> None:
+        if is_daemon_service_active():
+            if self._watcher is not None:
+                self._watcher.request_stop()
+                self._watcher = None
+            return
+
         self._config = cfg.load()
         rules = self._effective_rules()
         default_profile = self._config.get("default_profile", 0)

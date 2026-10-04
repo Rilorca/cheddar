@@ -9,6 +9,8 @@ man1dir = join_paths(mandir, 'man1')
 conf = configuration_data()
 conf.set('version', meson.project_version())
 conf.set('version_date', version_date)
+conf.set('bindir', bindir)
+conf.set('exec', (prefix == '/usr' or prefix == '/app') ? 'cheddar' : join_paths(bindir, 'cheddar'))
 
 manpage = configure_file(
      input: files('cheddar.1.in'),
@@ -33,13 +35,24 @@ endforeach
 
 
 # AutoPilot fork: systemd user unit for the headless daemon
-install_data('cheddar-autopilot.service',
+systemd_service = configure_file(
+    input: 'cheddar-autopilot.service.in',
+    output: 'cheddar-autopilot.service',
+    configuration: conf,
+)
+install_data(systemd_service,
              install_dir: join_paths(prefix, 'lib', 'systemd', 'user'))
 install_data('io.github.rilorca.Cheddar-symbolic.svg', install_dir: symbolicicondir)
 install_data('icons/tray/cheddar-tray.png',
              install_dir: join_paths(pkgdatadir, 'icons'))
 
-i18n.merge_file(input: 'io.github.rilorca.Cheddar.desktop.in',
+desktop_in = configure_file(
+    input: 'io.github.rilorca.Cheddar.desktop.in.in',
+    output: 'io.github.rilorca.Cheddar.desktop.in',
+    configuration: conf,
+)
+
+i18n.merge_file(input: desktop_in,
                 output: 'io.github.rilorca.Cheddar.desktop',
                 type: 'desktop',
                 po_dir: podir,

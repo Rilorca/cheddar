@@ -19,6 +19,7 @@ from . import autostart
 from . import autopilot_profiles as ap
 from .autopilot_config import load as cfg_load, save as cfg_save
 from .autopilot_games import installed_games
+from .autopilot_service import is_daemon_service_active
 from .autopilot_watcher import AutoPilotWatcher, RuleTarget
 from .ratbagd import RatbagdDevice, RatbagdProfile
 
@@ -573,6 +574,12 @@ class AutoPilotPage(Gtk.Box):
     # ── Watcher control ────────────────────────────────────────────────────────
 
     def _start_watcher(self) -> None:
+        if is_daemon_service_active():
+            if self._watcher and self._watcher.is_running():
+                threading.Thread(target=self._watcher.stop, daemon=True).start()
+                self._watcher = None
+            self._update_status_label()
+            return
         if self._watcher and self._watcher.is_running():
             return
         rules = self._config.get("rules", {})
@@ -743,8 +750,9 @@ class AutoPilotPage(Gtk.Box):
         last_switch=None,
         error: Optional[str] = None,
     ) -> None:
-        running = self._watcher is not None and self._watcher.is_running()
-        is_active = running or (hasattr(self, "_toggle") and self._toggle.get_active())
+        daemon_active = is_daemon_service_active()
+        running = (self._watcher is not None and self._watcher.is_running()) or daemon_active
+        is_active = running and (hasattr(self, "_toggle") and self._toggle.get_active())
         if error:
             markup = (
                 '<span foreground="#e01b24" weight="bold">⚠ Error</span> '
@@ -758,8 +766,9 @@ class AutoPilotPage(Gtk.Box):
                 p_name = self._target_label(idx)
             else:
                 p_name = self.current_user_profile or _profile_label(self._device.active_profile)
+            badge_text = "  Activo (Daemon Rust)  " if daemon_active else "  Activo  "
             markup = (
-                '<span background="#2ec27e33" foreground="#2ec27e" weight="bold">  Activo  </span>  '
+                f'<span background="#2ec27e33" foreground="#2ec27e" weight="bold">{badge_text}</span>  '
                 + '<span size="small" foreground="#ffffffaa">'
                 + _("Último cambio:")
                 + " "
@@ -811,10 +820,14 @@ class AutoPilotPage(Gtk.Box):
         active = switch.get_active()
         self._config["enabled"] = active
         cfg_save(self._config)
-        if active:
-            self._start_watcher()
+        if is_daemon_service_active():
+            # Native Rust daemon reloads config via inotify
+            self._update_status_label()
         else:
-            self._stop_watcher()
+            if active:
+                self._start_watcher()
+            else:
+                self._stop_watcher()
 
         # Update system tray menu if running inside Application
         app = Gio.Application.get_default()

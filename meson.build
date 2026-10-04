@@ -89,6 +89,7 @@ config_piper.set('localedir', localedir)
 config_piper.set('gtk_major_version', gtk_major_version)
 config_piper.set('gtk_minor_version', gtk_minor_version)
 config_piper.set('RATBAGD_API_VERSION', ratbagd_api_version)
+config_piper.set('pythondir', python_dir)
 config_piper.set('devel', '')
 
 config_piper_devel = config_piper
@@ -107,6 +108,18 @@ configure_file(input: 'cheddar.in',
 configure_file(input: 'cheddar.in',
                output: 'cheddar.devel',
                configuration: config_piper_devel)
+
+cargo = find_program('cargo', required: get_option('rust-daemon'))
+if cargo.found()
+    build_rust_script = find_program(join_paths(meson.current_source_dir(), 'tools/build-rust-daemon.sh'))
+    custom_target('cheddar-autopilot-daemon',
+                  input: files('daemon-rs/Cargo.toml', 'daemon-rs/src/main.rs'),
+                  output: 'cheddar-autopilot',
+                  command: [build_rust_script, join_paths(meson.current_source_dir(), 'daemon-rs'), '@OUTPUT@'],
+                  install: true,
+                  install_dir: bindir,
+                  console: true)
+endif
 
 if meson.version().version_compare('>=0.59.0')
     gnome.post_install(

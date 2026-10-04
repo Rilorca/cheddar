@@ -48,7 +48,8 @@
             "name": "Cheddar",
             "buildsystem": "meson",
             "config-opts": [
-                "-Druntime-dependency-checks=false"
+                "-Druntime-dependency-checks=false",
+                "-Drust-daemon=disabled"
             ],
             "sources": [
                 {
