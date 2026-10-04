@@ -84,38 +84,13 @@ When the Rust daemon is running, the GUI detects it automatically and operates i
 
 ## Installation
 
-### Method 1: Flatpak (Universal / Recommended for GUI) 📦
-
-Cheddar is available as a Flatpak bundle compatible with all major Linux distributions (Arch Linux, Fedora, Ubuntu, Debian, Steam Deck / SteamOS, Bazzite, openSUSE, etc.).
-
 > [!NOTE]
 > Cheddar communicates with the host system's `ratbagd` daemon via D-Bus. Ensure `ratbagd` is installed and running on your host system:
 > ```sh
 > sudo systemctl enable --now ratbagd
 > ```
 
-#### Option A: Download Pre-built Bundle
-1. Download `io.github.rilorca.Cheddar.flatpak` from the [Latest GitHub Release](https://github.com/Rilorca/cheddar/releases).
-2. Install via terminal:
-   ```sh
-   flatpak install io.github.rilorca.Cheddar.flatpak
-   ```
-   *(Or double-click the `.flatpak` file to open it in GNOME Software or KDE Discover).*
-
-#### Option B: Build Flatpak Locally
-```sh
-# Install flatpak-builder
-sudo pacman -S flatpak-builder  # Arch
-# sudo apt install flatpak-builder  # Debian/Ubuntu
-# sudo dnf install flatpak-builder  # Fedora
-
-# Build and install locally
-flatpak-builder --user --install --force-clean build-dir io.github.rilorca.Cheddar.json
-```
-
----
-
-### Method 2: Native Installation (Full GUI + Rust Daemon) ⚡
+### Method 1: Native Installation (Full GUI + Rust Daemon) ⚡
 
 Building natively compiles both the Python graphical app and the native Rust AutoPilot daemon.
 
@@ -183,7 +158,7 @@ systemctl --user enable --now cheddar-autopilot
 
 ---
 
-### Method 3: Standalone Rust Daemon (Headless / Minimalist) 🦀
+### Method 2: Standalone Rust Daemon (Headless / Minimalist) 🦀
 
 If you want the background profile switcher and system tray running with minimal overhead without installing the full GUI:
 
@@ -213,10 +188,6 @@ To create a new release and automatically build the Rust daemon binary:
 3. GitHub Actions (`.github/workflows/flatpak-release.yml`) will automatically:
    - Compile `cheddar-autopilot` (Rust daemon release binary)
    - Create a GitHub Release with release notes and attach the tarball.
-4. For the Flatpak bundle, build locally (see Installation, Option B):
-   ```sh
-   flatpak-builder --user --install --force-clean build-dir io.github.rilorca.Cheddar.json
-   ```
 
 ---
 
