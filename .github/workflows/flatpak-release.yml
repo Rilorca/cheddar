@@ -18,7 +18,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          # The flatpak-builder action installs deps with --system as the
+          # unprivileged runner user; allow it via polkit.
+          echo "polkit.addRule(function(action, subject) { if (action.id.indexOf('org.freedesktop.Flatpak') == 0 && subject.user == 'runner') { return polkit.Result.YES; } });" | sudo tee /etc/polkit-1/rules.d/10-flatpak-allow-runner.rules > /dev/null
+          sudo systemctl restart polkit.service || true
 
       - name: Build Flatpak Bundle
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
