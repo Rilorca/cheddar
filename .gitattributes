@@ -1,0 +1,3 @@
+# Exclude design mockups from GitHub language statistics
+design/* linguist-documentation
+design/*.html linguist-documentation

@@ -9,3 +9,4 @@ target/
 daemon-rs/target/
 .vscode/
 .ruff_cache/
+graphify-out/
