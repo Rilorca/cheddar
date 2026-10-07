@@ -184,7 +184,7 @@ impl Tray for CheddarTray {
     }
 
     fn category(&self) -> Category {
-        Category::Hardware
+        Category::ApplicationStatus
     }
 
     fn title(&self) -> String {
