@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="data/io.github.rilorca.Cheddar-symbolic.svg">
-    <img src="data/io.github.rilorca.Cheddar.png" width="128" height="128" alt="Cheddar Logo">
-  </picture>
+  <img src="data/io.github.rilorca.Cheddar.png" width="128" height="128" alt="Cheddar Logo">
 </p>
 
 <h1 align="center">Cheddar</h1>
