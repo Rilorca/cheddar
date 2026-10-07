@@ -90,7 +90,23 @@ When the Rust daemon is running, the GUI detects it automatically and operates i
 > sudo systemctl enable --now ratbagd
 > ```
 
-### Method 1: Native Installation (Full GUI + Rust Daemon) ⚡
+### Method 1: Flatpak Bundle (Recommended for GUI) 📦
+
+For any Linux distribution with Flatpak enabled, you can install the standalone bundle directly from GitHub Releases:
+
+1. Download **`io.github.rilorca.Cheddar.flatpak`** from [GitHub Releases](https://github.com/Rilorca/cheddar/releases).
+2. Install it with your package manager / GNOME Software / Discover, or run in a terminal:
+   ```sh
+   flatpak install --user io.github.rilorca.Cheddar.flatpak
+   ```
+3. Launch Cheddar from your desktop applications menu, or run:
+   ```sh
+   flatpak run io.github.rilorca.Cheddar
+   ```
+
+---
+
+### Method 2: Native Installation (Full GUI + Rust Daemon) ⚡
 
 Building natively compiles both the Python graphical app and the native Rust AutoPilot daemon.
 
@@ -158,7 +174,7 @@ systemctl --user enable --now cheddar-autopilot
 
 ---
 
-### Method 2: Standalone Rust Daemon (Headless / Minimalist) 🦀
+### Method 3: Standalone Rust Daemon (Headless / Minimalist) 🦀
 
 If you want the background profile switcher and system tray running with minimal overhead without installing the full GUI:
 
@@ -177,17 +193,18 @@ If you want the background profile switcher and system tray running with minimal
 
 ## Releasing
 
-To create a new release and automatically build the Rust daemon binary:
+To create a new release and automatically build the Flatpak bundle and Rust daemon:
 
 1. Ensure all changes are committed on `main`.
-2. Create and push a version tag:
+2. Create and push a version tag (e.g. `v0.8.6`):
    ```sh
-   git tag v0.8.1
-   git push origin v0.8.1
+   git tag v0.8.6
+   git push origin v0.8.6
    ```
 3. GitHub Actions (`.github/workflows/flatpak-release.yml`) will automatically:
-   - Compile `cheddar-autopilot` (Rust daemon release binary)
-   - Create a GitHub Release with release notes and attach the tarball.
+   - Compile and package the Flatpak bundle (`io.github.rilorca.Cheddar.flatpak`)
+   - Compile `cheddar-autopilot` (Rust daemon release binary tarball)
+   - Create a GitHub Release with release notes and attach all release assets.
 
 ---
 

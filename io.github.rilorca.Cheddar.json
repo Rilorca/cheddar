@@ -10,6 +10,7 @@
         "--socket=wayland",
         "--system-talk-name=org.freedesktop.ratbag1",
         "--talk-name=org.freedesktop.Flatpak",
+        "--talk-name=org.freedesktop.Notifications",
         "--device=dri",
         "--filesystem=xdg-config/cheddar:create",
         "--filesystem=xdg-data/applications:ro",
@@ -53,9 +54,8 @@
             ],
             "sources": [
                 {
-                    "type": "git",
-                    "url": "https://github.com/Rilorca/cheddar.git",
-                    "branch": "main"
+                    "type": "dir",
+                    "path": "."
                 }
             ]
         }
