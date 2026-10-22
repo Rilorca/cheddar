@@ -681,6 +681,38 @@ class TestSimulatedLogitechG502Hero(unittest.TestCase):
         self.assertEqual(dst_profile.resolutions[0].resolution, (600, 500))
         self.assertTrue(dst_profile.resolutions[0].is_active)
 
+    def test_g502_svg_and_device_mappings(self):
+        """Test that all known G502 hardware and receiver variants map to valid SVGs."""
+        import configparser
+
+        config = configparser.ConfigParser()
+        config.read("data/svgs/svg-lookup.ini")
+
+        variants = [
+            ("usb:046d:c08b:0", "logitech-g502.svg"),            # G502 Hero Wired
+            ("usb:046d:c08d:0", "logitech-g502.svg"),            # G502 Hero Wireless (wired mode)
+            ("usb:046d:407f:0", "logitech-g502.svg"),            # G502 Hero Wireless (wireless mode)
+            ("usb:046d:c539:0", "logitech-g502.svg"),            # G502 Hero Wireless (receiver dongle)
+            ("usb:046d:c07d:0", "logitech-g502.svg"),            # G502 Proteus Core
+            ("usb:046d:c332:0", "logitech-g502.svg"),            # G502 Proteus Spectrum
+            ("usb:046d:c099:0", "logitech-g502-x.svg"),          # G502 X
+            ("usb:046d:c098:0", "logitech-g502-x.svg"),          # G502 X Wireless
+            ("usb:046d:4099:0", "logitech-g502-x-plus.svg"),     # G502 X PLUS (wireless mode)
+            ("usb:046d:c095:0", "logitech-g502-x-plus.svg"),     # G502 X PLUS (wired mode)
+            ("usb:046d:c547:0", "logitech-g502-x-plus.svg"),     # G502 X PLUS (receiver dongle)
+        ]
+
+        for model, expected_svg in variants:
+            bus, vid, pid, version = model.split(":")
+            usbid = ":".join([bus, vid, pid]) if int(version) == 0 else model
+            matched_svg = None
+            for s in config.sections():
+                matches = config[s].get("DeviceMatch", "").split(";")
+                if usbid in matches:
+                    matched_svg = config[s].get("Svg")
+                    break
+            self.assertEqual(matched_svg, expected_svg, f"Failed to match model {model} (usbid {usbid})")
+
 
 # ==============================================================================
 # TEST SUITE 3: Simulated Logitech G Pro Wireless
