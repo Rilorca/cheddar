@@ -1254,6 +1254,36 @@ class TestProfileSwitchDpiRegression(unittest.TestCase):
                 saved = autopilot_config.load()
                 self.assertEqual(saved["rules"]["game.exe"], "sw:NonExistent")
 
+    def test_normalize_lone_modifier_macro_keys(self):
+        """Ensure standalone modifier keys (like Left Shift) are normalized with KEY_RESERVED (0)
+        so libratbag drivers (such as G600) accept the hardware write without erroring."""
+        from cheddar.ratbagd import normalize_modifier_macro_keys, RatbagdMacro, RatbagdButton
+
+        # Lone Left Shift (KEY_LEFTSHIFT = 42)
+        shift_keys = [(1, 42), (2, 42)]
+        norm = normalize_modifier_macro_keys(shift_keys)
+        self.assertEqual(norm, [(1, 42), (1, 0), (2, 0), (2, 42)])
+
+        # Already normalized macro
+        self.assertEqual(normalize_modifier_macro_keys(norm), norm)
+
+        # Combination with a regular key (Shift + A: 42 + 30) -> should not inject 0
+        combo = [(1, 42), (1, 30), (2, 30), (2, 42)]
+        self.assertEqual(normalize_modifier_macro_keys(combo), combo)
+
+    def test_lone_modifier_macro_string_preview(self):
+        """RatbagdMacro string preview should display ↕KEY_LEFTSHIFT cleanly
+        without exposing the internal dummy KEY_RESERVED keycode."""
+        from cheddar.ratbagd import RatbagdMacro, RatbagdButton
+
+        m = RatbagdMacro()
+        m.append(RatbagdButton.Macro.KEY_PRESS, 42)
+        m.append(RatbagdButton.Macro.KEY_PRESS, 0)
+        m.append(RatbagdButton.Macro.KEY_RELEASE, 0)
+        m.append(RatbagdButton.Macro.KEY_RELEASE, 42)
+
+        self.assertEqual(str(m), "↕KEY_LEFTSHIFT")
+
 
 if __name__ == "__main__":
     unittest.main()

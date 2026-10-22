@@ -1118,6 +1118,27 @@ class RatbagdButton(_RatbagdDBus):
         self.notify("action-type")
 
 
+MODIFIER_KEYCODES = {29, 42, 54, 56, 97, 100, 125, 126}
+
+
+def normalize_modifier_macro_keys(keys):
+    """Normalize standalone modifier key macros (e.g. KEY_LEFTSHIFT).
+
+    Libratbag device drivers (such as driver-logitech-g600.c) require a
+    non-modifier keycode (KEY_RESERVED = 0) inside the sequence because
+    ratbag_action_macro_num_keys ignores modifiers. If missing, libratbag
+    returns -EINVAL and refuses to commit the key to mouse hardware, leaving
+    the button in its hardware default state (e.g. G-Shift).
+    """
+    presses = [k for k in keys if int(k[0]) == 1]
+    releases = [k for k in keys if int(k[0]) == 2]
+    if not presses or not releases:
+        return keys
+    if all(k[1] in MODIFIER_KEYCODES for k in presses) and not any(k[1] == 0 for k in keys):
+        return presses + [(1, 0), (2, 0)] + releases
+    return keys
+
+
 class RatbagdMacro(GObject.Object):
     """Represents a button macro. Note that it uses keycodes as defined by
     linux/input-event-codes.h and not those used by X.Org or any other higher
@@ -1146,6 +1167,16 @@ class RatbagdMacro(GObject.Object):
             # Translators: this is used when there is no macro to preview.
             return _("None")
 
+        # Special case: single modifier key with hardware KEY_RESERVED dummy pairing
+        if (
+            len(self._macro) == 4
+            and int(self._macro[0][0]) == int(RatbagdButton.Macro.KEY_PRESS)
+            and (int(self._macro[1][0]), self._macro[1][1]) == (int(RatbagdButton.Macro.KEY_PRESS), 0)
+            and (int(self._macro[2][0]), self._macro[2][1]) == (int(RatbagdButton.Macro.KEY_RELEASE), 0)
+            and (int(self._macro[3][0]), self._macro[3][1]) == (int(RatbagdButton.Macro.KEY_RELEASE), self._macro[0][1])
+        ):
+            return f"↕{evcode_to_str(self._macro[0][1])}"
+
         keys = []
         idx = 0
         while idx < len(self._macro):
@@ -1159,6 +1190,9 @@ class RatbagdMacro(GObject.Object):
                         idx += 1
             except IndexError:
                 pass
+            if v == 0 and len(self._macro) > 2:
+                idx += 1
+                continue
             keys.append(self._MACRO_DESCRIPTION[t](v))
             idx += 1
         return " ".join(keys)

@@ -17,7 +17,13 @@ import threading
 import time
 from typing import Any, Dict, List, Optional, Union
 
-from .ratbagd import RatbagdButton, RatbagdDevice, RatbagdMacro, RatbagdProfile
+from .ratbagd import (
+    RatbagdButton,
+    RatbagdDevice,
+    RatbagdMacro,
+    RatbagdProfile,
+    normalize_modifier_macro_keys,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +186,7 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
                 btn.special = value
         elif t == int(RatbagdButton.ActionType.MACRO):
             keys = [tuple(k) for k in value or []]
+            keys = [tuple(k) for k in normalize_modifier_macro_keys(keys)]
             current = btn.macro
             if current is None or list(current.keys) != keys:
                 macro = RatbagdMacro()

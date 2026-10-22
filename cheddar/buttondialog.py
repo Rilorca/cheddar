@@ -5,7 +5,12 @@ import sys
 from gettext import gettext as _
 from typing import List, Optional, Tuple, Union
 
-from .ratbagd import RatbagdButton, RatbagdMacro, RatbagDeviceType
+from .ratbagd import (
+    RatbagdButton,
+    RatbagdMacro,
+    RatbagDeviceType,
+    normalize_modifier_macro_keys,
+)
 
 import gi
 
@@ -354,7 +359,14 @@ class ButtonDialog(Gtk.Dialog):
             self._mapping = value
         else:
             self._action_type = RatbagdButton.ActionType.MACRO
-            self._mapping = macro
+            norm_keys = normalize_modifier_macro_keys(list(macro.keys))
+            if norm_keys != list(macro.keys):
+                new_macro = RatbagdMacro()
+                for ktype, kval in norm_keys:
+                    new_macro.append(ktype, kval)
+                self._mapping = new_macro
+            else:
+                self._mapping = macro
         self.stack.set_visible_child_name("overview")
         self._release_grab()
 

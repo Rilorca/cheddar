@@ -411,6 +411,7 @@ impl RatbagClient {
                                         }
                                     }
                                 }
+                                let keys_vec = normalize_modifier_macro_keys(&keys_vec);
                                 let res: Result<()> = btn_proxy
                                     .call(
                                         "Set",
@@ -637,9 +638,45 @@ impl RatbagClient {
     }
 }
 
+const MODIFIER_KEYCODES: [u32; 8] = [29, 42, 54, 56, 97, 100, 125, 126];
+
+pub fn normalize_modifier_macro_keys(keys: &[(u32, u32)]) -> Vec<(u32, u32)> {
+    let presses: Vec<(u32, u32)> = keys.iter().filter(|k| k.0 == 1).copied().collect();
+    let releases: Vec<(u32, u32)> = keys.iter().filter(|k| k.0 == 2).copied().collect();
+    if presses.is_empty() || releases.is_empty() {
+        return keys.to_vec();
+    }
+    let all_modifiers = presses.iter().all(|k| MODIFIER_KEYCODES.contains(&k.1));
+    let has_zero = keys.iter().any(|k| k.1 == 0);
+    if all_modifiers && !has_zero {
+        let mut result = presses;
+        result.push((1, 0));
+        result.push((2, 0));
+        result.extend(releases);
+        result
+    } else {
+        keys.to_vec()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_normalize_modifier_macro_keys() {
+        // Lone Left Shift: (1, 42), (2, 42) -> should inject (1, 0), (2, 0)
+        let left_shift = vec![(1, 42), (2, 42)];
+        let norm = normalize_modifier_macro_keys(&left_shift);
+        assert_eq!(norm, vec![(1, 42), (1, 0), (2, 0), (2, 42)]);
+
+        // Shift + A: (1, 42), (1, 30), (2, 30), (2, 42) -> unchanged
+        let shift_a = vec![(1, 42), (1, 30), (2, 30), (2, 42)];
+        assert_eq!(normalize_modifier_macro_keys(&shift_a), shift_a);
+
+        // Already normalized: (1, 42), (1, 0), (2, 0), (2, 42) -> unchanged
+        assert_eq!(normalize_modifier_macro_keys(&norm), norm);
+    }
 
     #[test]
     fn test_macro_payload_parsing() {
