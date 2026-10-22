@@ -640,12 +640,17 @@ class AutoPilotPage(Gtk.Box):
         self._editing_name = name
         return True
 
+    def refresh_rules(self) -> None:
+        """Refresh the rules list UI to reflect current rules and profiles."""
+        self._refresh_rules()
+
     def save_active_as_user_profile(self, name: str) -> None:
         """Re-capture the mouse's current setup and store it under `name`.
         Used when the user edits a loaded profile and hits Apply."""
         store = ap.load_store()
         store[name] = ap.capture_profile(self._device.active_profile)
         ap.save_store(store)
+        self._refresh_rules()
 
     def save_current_setup_dialog(self, parent: Gtk.Widget) -> Optional[str]:
         """Prompt for a name and save the mouse's current setup under it.
@@ -689,6 +694,7 @@ class AutoPilotPage(Gtk.Box):
             store[saved] = ap.capture_profile(active)
             ap.save_store(store)
             self._editing_name = None
+            self._refresh_rules()
         dlg.destroy()
         return saved
 

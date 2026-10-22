@@ -1112,6 +1112,61 @@ class TestProfileSwitchDpiRegression(unittest.TestCase):
         time.sleep(0.4)
         self.assertFalse(dev.committed)
 
+    def test_autopilot_page_refreshes_game_rule_combobox_on_new_profile(self):
+        """When a user creates a new profile, existing game rules' target
+        comboboxes must immediately include the new profile without requiring
+        an app restart."""
+        from cheddar.autopilotpage import AutoPilotPage
+        from cheddar import autopilot_config, autopilot_profiles
+
+        prof = self._make_profile(0, active_res=0, is_active=True)
+        dev = self._make_device([prof])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_file = os.path.join(tmpdir, "config.json")
+            store_file = os.path.join(tmpdir, "profiles.json")
+            with patch("cheddar.autopilot_config._CONFIG_FILE", cfg_file), \
+                 patch("cheddar.autopilotpage.is_daemon_service_active", return_value=False), \
+                 patch("cheddar.autopilotpage.autostart.is_autostart_enabled", return_value=False), \
+                 patch("cheddar.autopilot_profiles._STORE_FILE", store_file), \
+                 patch("cheddar.autopilot_profiles._STORE_DIR", tmpdir):
+
+                autopilot_config.save({"enabled": True, "rules": {"repo.exe": 0}})
+                page = AutoPilotPage(dev)
+
+                # Find the target combo in the repo.exe row
+                row = page._rules_box.get_children()[0]
+                box = row.get_child()
+                combos = [w for w in box.get_children() if isinstance(w, Gtk.ComboBoxText)]
+                self.assertEqual(len(combos), 1)
+                combo = combos[0]
+
+                # Initially, only Profile 0 exists
+                initial_targets = [r[1] for r in combo.get_model()]
+                self.assertIn("0", initial_targets)
+                self.assertNotIn("sw:RepoProfile", initial_targets)
+
+                # Now save a new profile into the store and refresh rules (as done by save_current_setup_dialog)
+                autopilot_profiles.save_store({"RepoProfile": {"name": "RepoProfile"}})
+                page.refresh_rules()
+
+                # Verify the existing game rule row now contains the new profile in its dropdown immediately
+                row2 = page._rules_box.get_children()[0]
+                box2 = row2.get_child()
+                combo2 = [w for w in box2.get_children() if isinstance(w, Gtk.ComboBoxText)][0]
+                updated_targets = [r[1] for r in combo2.get_model()]
+                self.assertIn("sw:RepoProfile", updated_targets)
+                self.assertIn("0", updated_targets)
+
+                # Also verify save_active_as_user_profile automatically refreshes the dropdown
+                page.save_active_as_user_profile("Overwatch2")
+                row3 = page._rules_box.get_children()[0]
+                box3 = row3.get_child()
+                combo3 = [w for w in box3.get_children() if isinstance(w, Gtk.ComboBoxText)][0]
+                targets3 = [r[1] for r in combo3.get_model()]
+                self.assertIn("sw:Overwatch2", targets3)
+
 
 if __name__ == "__main__":
     unittest.main()
+

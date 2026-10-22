@@ -455,6 +455,7 @@ class MousePerspective(Gtk.Overlay):
             saved = self._autopilot_page.save_current_setup_dialog(self.get_toplevel())
             if saved:
                 self._refresh_user_profile_rows()
+                self._autopilot_page.refresh_rules()
             return
         # No AutoPilot page (shouldn't happen): fall back to upstream behavior.
         for profile in self._device.profiles:
@@ -494,6 +495,8 @@ class MousePerspective(Gtk.Overlay):
         self, _stack: Gtk.Stack, _pspec: Optional[GObject.ParamSpec]
     ) -> None:
         self._update_header_controls_visibility()
+        if self.stack.get_visible_child_name() == "autopilot" and self._autopilot_page is not None:
+            self._autopilot_page.refresh_rules()
 
     def _update_header_controls_visibility(self) -> None:
         if self._device is None:
