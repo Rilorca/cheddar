@@ -169,6 +169,16 @@ systemctl --user enable --now cheddar-autopilot
 
 *(Tip: To install for your user only without `sudo`, use `meson setup builddir --prefix=$HOME/.local` and run `ninja -C builddir install`)*.
 
+> [!TIP]
+> **GNOME Users:** If Cheddar does not appear immediately in your desktop app grid or search after building, GNOME's app launcher cache may need to be refreshed:
+> ```sh
+> # Refresh desktop applications database
+> update-desktop-database ~/.local/share/applications /usr/share/applications
+> 
+> # If using Wayland and GNOME Shell needs a quick reload, log out and back in, or run:
+> gnome-shell --replace &   # (On X11: press Alt + F2, type 'r', and press Enter)
+> ```
+
 ---
 
 ### Method 3: Standalone Rust Daemon (Headless / Minimalist) 🦀
