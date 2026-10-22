@@ -152,7 +152,51 @@ for entry in os.scandir('/proc'):\n\
     procs
 }
 
-pub fn focused_pid() -> Option<u32> {
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct FocusedWindow {
+    pub pid: Option<u32>,
+    pub names: HashSet<String>,
+}
+
+pub fn parse_xprop_window_id(output: &str) -> Option<String> {
+    WINDOW_ID_RE.find(output).map(|m| m.as_str().to_string())
+}
+
+pub fn parse_xprop_properties(output: &str) -> (Option<u32>, HashSet<String>) {
+    let mut pid = None;
+    let mut names = HashSet::new();
+
+    for line in output.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("_NET_WM_PID") {
+            if let Some(caps) = PID_RE.captures(trimmed) {
+                if let Some(p) = caps.get(1).and_then(|m| m.as_str().parse::<u32>().ok()) {
+                    if p > 0 {
+                        pid = Some(p);
+                    }
+                }
+            }
+        } else if trimmed.starts_with("WM_CLASS") || trimmed.starts_with("_NET_WM_NAME") || trimmed.starts_with("WM_NAME") {
+            // Extract string values inside quotes: e.g. "Overwatch", "steam_app_2357570"
+            for part in trimmed.split('"').enumerate() {
+                // Odd indices contain quoted strings
+                if part.0 % 2 == 1 {
+                    let val = part.1.trim();
+                    if !val.is_empty() {
+                        add_name(&mut names, val);
+                        if !val.to_lowercase().ends_with(".exe") {
+                            add_name(&mut names, &format!("{}.exe", val));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    (pid, names)
+}
+
+pub fn focused_window() -> Option<FocusedWindow> {
     let mut cmd = if is_flatpak() {
         let mut c = Command::new("flatpak-spawn");
         c.args(["--host", "xprop"]);
@@ -168,11 +212,10 @@ pub fn focused_pid() -> Option<u32> {
 
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        if let Some(win_match) = WINDOW_ID_RE.find(&stdout) {
-            let win_id_str = win_match.as_str();
+        if let Some(win_id_str) = parse_xprop_window_id(&stdout) {
             let win_id = u64::from_str_radix(win_id_str.trim_start_matches("0x"), 16).unwrap_or(0);
             if win_id > 0 {
-                let mut pid_cmd = if is_flatpak() {
+                let mut prop_cmd = if is_flatpak() {
                     let mut c = Command::new("flatpak-spawn");
                     c.args(["--host", "xprop"]);
                     c
@@ -180,16 +223,11 @@ pub fn focused_pid() -> Option<u32> {
                     Command::new("xprop")
                 };
 
-                if let Ok(pid_output) = pid_cmd.args(["-id", win_id_str, "_NET_WM_PID"]).output() {
-                    if pid_output.status.success() {
-                        let pid_str = String::from_utf8_lossy(&pid_output.stdout);
-                        if let Some(caps) = PID_RE.captures(pid_str.trim()) {
-                            if let Some(pid) = caps.get(1).and_then(|m| m.as_str().parse::<u32>().ok()) {
-                                if pid > 0 {
-                                    return Some(pid);
-                                }
-                            }
-                        }
+                if let Ok(prop_output) = prop_cmd.args(["-id", &win_id_str, "_NET_WM_PID", "WM_CLASS", "_NET_WM_NAME", "WM_NAME"]).output() {
+                    if prop_output.status.success() {
+                        let prop_str = String::from_utf8_lossy(&prop_output.stdout);
+                        let (pid, names) = parse_xprop_properties(&prop_str);
+                        return Some(FocusedWindow { pid, names });
                     }
                 }
             }
@@ -197,6 +235,11 @@ pub fn focused_pid() -> Option<u32> {
     }
 
     None
+}
+
+#[allow(dead_code)]
+pub fn focused_pid() -> Option<u32> {
+    focused_window().and_then(|w| w.pid)
 }
 
 #[cfg(test)]
@@ -235,5 +278,28 @@ mod tests {
             basename_any_os("/usr/bin/disco.exe"),
             "disco.exe"
         );
+    }
+
+    #[test]
+    fn test_parse_xprop_window_id() {
+        let output = "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x6c00005\n";
+        assert_eq!(parse_xprop_window_id(output), Some("0x6c00005".to_string()));
+
+        let root_no_id = "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x0\n";
+        assert_eq!(parse_xprop_window_id(root_no_id), Some("0x0".to_string()));
+    }
+
+    #[test]
+    fn test_parse_xprop_properties() {
+        let sample = r#"
+_NET_WM_PID(CARDINAL) = 96850
+WM_CLASS(STRING) = "steam_app_2357570", "steam_app_2357570"
+_NET_WM_NAME(UTF8_STRING) = "Overwatch"
+"#;
+        let (pid, names) = parse_xprop_properties(sample);
+        assert_eq!(pid, Some(96850));
+        assert!(names.contains("overwatch"));
+        assert!(names.contains("overwatch.exe"));
+        assert!(names.contains("steam_app_2357570"));
     }
 }

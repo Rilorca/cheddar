@@ -12,7 +12,7 @@ use log::{debug, error, info, warn};
 
 use config::{config_path, load_config, AutoPilotConfig, RuleTarget};
 use notify::Notifier;
-use process::{focused_pid, scan_processes};
+use process::{focused_window, scan_processes};
 use ratbag::RatbagClient;
 use tray::{spawn_tray, TrayState};
 
@@ -58,13 +58,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         battery_percentage: None,
         is_light: initial_light,
     };
-    let tray_handle = match spawn_tray(initial_tray_state).await {
+    let mut tray_handle = match spawn_tray(initial_tray_state.clone()).await {
         Ok(handle) => {
             info!("System Tray icon initialized (StatusNotifierItem, light_mode={})", initial_light);
             Some(handle)
         }
         Err(e) => {
-            warn!("Could not initialize System Tray icon: {}", e);
+            warn!("Could not initialize System Tray icon immediately: {}. Will retry as desktop panel appears.", e);
             None
         }
     };
@@ -132,6 +132,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 st.config.clone(),
             )
         };
+
+        // If tray icon failed to connect on early login before panel/BetterTrayIcons loaded, retry every ~3s
+        if tray_handle.is_none() && tick_count % (PROCESS_SCAN_TICKS * 2) == 0 {
+            let current_light = tray::is_light_theme();
+            let retry_state = TrayState {
+                enabled,
+                active_target_name: Some(format!("Perfil {}", default_profile + 1)),
+                current_dpi: None,
+                active_exe: None,
+                battery_percentage: None,
+                is_light: current_light,
+            };
+            if let Ok(handle) = spawn_tray(retry_state).await {
+                info!("System Tray icon successfully initialized on retry");
+                tray_handle = Some(handle);
+            }
+        }
 
         if !enabled {
             continue;
@@ -255,13 +272,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             n.contains("cheddar") || n.contains("piper")
         });
 
-        let focused = focused_pid();
-        if let Some(f_pid) = focused {
-            let focused_names = if f_pid > 0 {
-                procs.get(&f_pid).cloned().unwrap_or_default()
-            } else {
-                HashSet::new()
-            };
+        let focused = focused_window();
+        let mut has_focused_window = false;
+
+        if let Some(f_win) = focused {
+            let mut focused_names = f_win.names;
+            if let Some(f_pid) = f_win.pid {
+                if let Some(proc_names) = procs.get(&f_pid) {
+                    focused_names.extend(proc_names.clone());
+                }
+            }
+
+            if !focused_names.is_empty() {
+                has_focused_window = true;
+            }
 
             // If the Cheddar GUI is currently focused, do not override what the user is configuring!
             let is_cheddar_focused = focused_names.iter().any(|name| {
@@ -283,8 +307,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // Fallback matching when focus-matching did not find a rule (e.g. Wayland or background check)
-        if matched_target.is_none() {
+        // Only fall back to background processes if we couldn't detect an active window at all
+        // (e.g. pure Wayland fullscreen unredirect where xprop returns no active window).
+        // If a known non-game window is focused (e.g. browser, file manager), has_focused_window is true,
+        // so we cleanly switch to default profile instead of being stuck to an old background game!
+        if matched_target.is_none() && !has_focused_window {
             let last_exe = { state.lock().await.last_matched_exe.clone() };
             if let Some(last) = last_exe {
                 let clean_last = last.to_lowercase();
@@ -297,7 +324,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        if matched_target.is_none() {
+        if matched_target.is_none() && !has_focused_window {
             for (exe, target) in &rules {
                 let clean_exe = exe.to_lowercase();
                 let no_space = clean_exe.replace(' ', "");
@@ -309,8 +336,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // If no game matched and Cheddar GUI is open, do not force-switch to default profile!
-        if is_cheddar_running && matched_target.is_none() {
+        // If no game matched and Cheddar GUI is open and focused/visible, do not force-switch to default profile!
+        if is_cheddar_running && matched_target.is_none() && !has_focused_window {
             continue;
         }
 

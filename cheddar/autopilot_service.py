@@ -92,3 +92,38 @@ def stop_daemon_service() -> bool:
     except Exception as exc:
         logger.warning("Failed to stop %s: %s", SERVICE_NAME, exc)
         return False
+
+
+def enable_daemon_service() -> bool:
+    """Enable the user systemd service to start on login."""
+    if not shutil.which("systemctl"):
+        return False
+    try:
+        res = subprocess.run(
+            ["systemctl", "--user", "enable", SERVICE_NAME],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3.0,
+        )
+        return res.returncode == 0
+    except Exception as exc:
+        logger.warning("Failed to enable %s: %s", SERVICE_NAME, exc)
+        return False
+
+
+def disable_daemon_service() -> bool:
+    """Disable the user systemd service from starting on login."""
+    if not shutil.which("systemctl"):
+        return False
+    try:
+        res = subprocess.run(
+            ["systemctl", "--user", "disable", SERVICE_NAME],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3.0,
+        )
+        return res.returncode == 0
+    except Exception as exc:
+        logger.warning("Failed to disable %s: %s", SERVICE_NAME, exc)
+        return False
+

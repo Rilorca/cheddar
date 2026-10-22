@@ -4,6 +4,8 @@ import logging
 import os
 from typing import Optional
 
+from . import autopilot_service
+
 logger = logging.getLogger(__name__)
 
 AUTOSTART_FILENAME = "io.github.rilorca.Cheddar.desktop"
@@ -29,6 +31,10 @@ def is_flatpak() -> bool:
 
 def is_autostart_enabled() -> bool:
     """Check whether Cheddar is configured to launch on desktop startup."""
+    # If the native Rust daemon is enabled as a systemd user service, autostart is active
+    if autopilot_service.is_daemon_service_enabled():
+        return True
+
     for path in (_get_autostart_path(), _get_legacy_path()):
         if os.path.isfile(path):
             try:
@@ -48,6 +54,7 @@ def set_autostart_enabled(enabled: bool) -> bool:
     legacy_path = _get_legacy_path()
 
     if not enabled:
+        autopilot_service.disable_daemon_service()
         for path in (target_path, legacy_path):
             if os.path.isfile(path):
                 try:
@@ -57,6 +64,10 @@ def set_autostart_enabled(enabled: bool) -> bool:
                     logger.warning("Failed to remove autostart file %s: %s", path, e)
                     return False
         return True
+
+    # Also enable the systemd daemon service so background AutoPilot & Tray start on login
+    autopilot_service.enable_daemon_service()
+    autopilot_service.ensure_daemon_service_running()
 
     # Enable autostart
     autostart_dir = _get_autostart_dir()
