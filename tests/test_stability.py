@@ -91,25 +91,40 @@ class TestAutostart(unittest.TestCase):
     """Unit tests for XDG autostart configuration."""
 
     def test_enable_and_disable_autostart(self):
-        """Test enabling and disabling autostart file generation."""
-        # Enable autostart
-        self.assertTrue(autostart.set_autostart_enabled(True))
-        self.assertTrue(autostart.is_autostart_enabled())
+        """Test enabling and disabling autostart file generation in isolation."""
+        import tempfile
 
-        autostart_path = autostart._get_autostart_path()
-        self.assertTrue(os.path.isfile(autostart_path))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_autostart_file = os.path.join(tmpdir, "io.github.rilorca.Cheddar.desktop")
+            test_legacy_file = os.path.join(tmpdir, "cheddar.desktop")
 
-        with open(autostart_path, "r", encoding="utf-8") as f:
-            content = f.read()
+            with patch("cheddar.autostart._get_autostart_dir", return_value=tmpdir), \
+                 patch("cheddar.autostart._get_autostart_path", return_value=test_autostart_file), \
+                 patch("cheddar.autostart._get_legacy_path", return_value=test_legacy_file), \
+                 patch("cheddar.autopilot_service.enable_daemon_service") as mock_enable_daemon, \
+                 patch("cheddar.autopilot_service.disable_daemon_service") as mock_disable_daemon, \
+                 patch("cheddar.autopilot_service.ensure_daemon_service_running"), \
+                 patch("cheddar.autopilot_service.is_daemon_service_enabled", return_value=False):
 
-        self.assertIn("[Desktop Entry]", content)
-        self.assertIn("--background", content)
-        self.assertIn("X-GNOME-Autostart-enabled=true", content)
+                # Enable autostart
+                self.assertTrue(autostart.set_autostart_enabled(True))
+                mock_enable_daemon.assert_called_once()
+                self.assertTrue(autostart.is_autostart_enabled())
 
-        # Disable autostart
-        self.assertTrue(autostart.set_autostart_enabled(False))
-        self.assertFalse(autostart.is_autostart_enabled())
-        self.assertFalse(os.path.isfile(autostart_path))
+                self.assertTrue(os.path.isfile(test_autostart_file))
+
+                with open(test_autostart_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                self.assertIn("[Desktop Entry]", content)
+                self.assertIn("--background", content)
+                self.assertIn("X-GNOME-Autostart-enabled=true", content)
+
+                # Disable autostart
+                self.assertTrue(autostart.set_autostart_enabled(False))
+                mock_disable_daemon.assert_called_once()
+                self.assertFalse(autostart.is_autostart_enabled())
+                self.assertFalse(os.path.isfile(test_autostart_file))
 
 
 class TestAutoPilotWatcherStability(unittest.TestCase):

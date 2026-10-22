@@ -98,6 +98,14 @@ class Application(Gtk.Application):
             logger.info("Native Rust AutoPilot daemon is active; running GUI in client mode")
         else:
             logger.warning("Could not activate cheddar-autopilot.service; running GUI without daemon")
+            self._tray = TrayIcon(
+                on_activate_window=self._show_window,
+                on_toggle_autopilot=self._toggle_autopilot,
+                on_quit=self._full_quit,
+                is_autopilot_enabled=self._is_autopilot_enabled,
+                get_status_text=self._get_status_text,
+            )
+            self._sync_watcher()
 
     def init_ratbagd(self) -> Ratbagd:
         if self._ratbagd is None:
@@ -114,7 +122,14 @@ class Application(Gtk.Application):
         options = command_line.get_options_dict()
         start_in_background = options.contains("background")
 
-        if not start_in_background:
+        if start_in_background:
+            if not self._daemon_active:
+                if not self._held:
+                    self.hold()
+                    self._held = True
+            else:
+                ensure_daemon_service_running()
+        else:
             self._show_window()
 
         return 0
