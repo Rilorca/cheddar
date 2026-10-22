@@ -34,8 +34,49 @@ class ProfileRow(Gtk.ListBoxRow):
             name = f"Profile {profile.index}"
 
         self.title.set_text(name)
+
+        # Add pencil button for renaming
+        box = self.get_child()
+        if isinstance(box, Gtk.Box):
+            edit_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
+            edit_btn.add(
+                Gtk.Image.new_from_icon_name("document-edit-symbolic", Gtk.IconSize.MENU)
+            )
+            edit_btn.set_tooltip_text(_("Rename this profile"))
+            edit_btn.connect("clicked", self._on_rename_button_clicked)
+            box.pack_end(edit_btn, False, False, 0)
+            box.reorder_child(edit_btn, 1)
+
         self.show_all()
         self.set_visible(not profile.disabled)
+
+    def _on_rename_button_clicked(self, _button: Gtk.Button) -> None:
+        dlg = Gtk.Dialog(
+            title=_("Rename Profile"),
+            transient_for=self.get_toplevel(),
+            modal=True,
+            use_header_bar=True,
+        )
+        dlg.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+        ok = dlg.add_button(_("_Save"), Gtk.ResponseType.OK)
+        ok.get_style_context().add_class("suggested-action")
+        dlg.set_default_response(Gtk.ResponseType.OK)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, border_width=18)
+        current = self.title.get_text()
+        box.add(Gtk.Label(label=_("Enter a new name for this profile:"), xalign=0))
+        entry = Gtk.Entry(text=current, activates_default=True)
+        box.add(entry)
+        dlg.get_content_area().add(box)
+        box.show_all()
+        if dlg.run() == Gtk.ResponseType.OK:
+            new_name = entry.get_text().strip()
+            if new_name:
+                try:
+                    self._profile.name = new_name
+                except Exception:
+                    pass
+                self.title.set_text(new_name)
+        dlg.destroy()
 
     def _on_profile_notify_disabled(
         self, profile: RatbagdProfile, pspec: Optional[GObject.ParamSpec]

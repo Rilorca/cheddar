@@ -27,10 +27,10 @@ class UserProfileRow(Gtk.ListBoxRow):
     profiles. Activating it writes the profile onto the mouse.
     """
 
-    def __init__(self, name: str, on_delete) -> None:
+    def __init__(self, name: str, on_delete, on_rename=None) -> None:
         super().__init__()
         self.sw_name = name
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8, border_width=4)
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, border_width=4)
         mark = Gtk.Image.new_from_icon_name(
             "avatar-default-symbolic", Gtk.IconSize.MENU
         )
@@ -39,6 +39,16 @@ class UserProfileRow(Gtk.ListBoxRow):
         lbl = Gtk.Label(label=name, xalign=0, hexpand=True)
         lbl.set_ellipsize(3)  # PANGO_ELLIPSIZE_END
         box.pack_start(lbl, True, True, 0)
+
+        if on_rename is not None:
+            edit_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
+            edit_btn.add(
+                Gtk.Image.new_from_icon_name("document-edit-symbolic", Gtk.IconSize.MENU)
+            )
+            edit_btn.set_tooltip_text(_("Rename this profile"))
+            edit_btn.connect("clicked", lambda _b: on_rename(name))
+            box.pack_start(edit_btn, False, False, 0)
+
         del_btn = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
         del_btn.add(
             Gtk.Image.new_from_icon_name("edit-delete-symbolic", Gtk.IconSize.MENU)
@@ -261,7 +271,44 @@ class MousePerspective(Gtk.Overlay):
             if isinstance(row, UserProfileRow):
                 self.listbox_profiles.remove(row)
         for name in self._autopilot_page.user_profile_names():
-            self.listbox_profiles.add(UserProfileRow(name, self._delete_user_profile))
+            self.listbox_profiles.add(
+                UserProfileRow(name, self._delete_user_profile, self._rename_user_profile)
+            )
+
+    def _rename_user_profile(self, old_name: str) -> None:
+        dlg = Gtk.Dialog(
+            title=_("Rename Profile"),
+            transient_for=self.get_toplevel(),
+            modal=True,
+            use_header_bar=True,
+        )
+        dlg.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+        ok = dlg.add_button(_("_Save"), Gtk.ResponseType.OK)
+        ok.get_style_context().add_class("suggested-action")
+        dlg.set_default_response(Gtk.ResponseType.OK)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, border_width=18)
+        box.add(
+            Gtk.Label(
+                label=_('Enter a new name for profile "{}":').format(old_name),
+                xalign=0,
+            )
+        )
+        entry = Gtk.Entry(
+            text=old_name,
+            activates_default=True,
+        )
+        box.add(entry)
+        dlg.get_content_area().add(box)
+        box.show_all()
+        if dlg.run() == Gtk.ResponseType.OK:
+            new_name = entry.get_text().strip()
+            if new_name and new_name != old_name:
+                assert self._autopilot_page is not None
+                if self._autopilot_page.rename_user_profile(old_name, new_name):
+                    self._refresh_user_profile_rows()
+                    if self.label_profile.get_label() == old_name:
+                        self.label_profile.set_label(new_name)
+        dlg.destroy()
 
     def _delete_user_profile(self, name: str) -> None:
         confirm = Gtk.MessageDialog(

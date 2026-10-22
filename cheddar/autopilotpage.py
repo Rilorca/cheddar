@@ -730,6 +730,41 @@ class AutoPilotPage(Gtk.Box):
         self._sync_watcher_rules()
         self._refresh_rules()
 
+    def rename_user_profile(self, old_name: str, new_name: str) -> bool:
+        """Rename a saved user profile, updating the profile store and all game rules."""
+        if not new_name or old_name == new_name:
+            return False
+        store = ap.load_store()
+        if old_name not in store:
+            return False
+        # Move profile data to new name
+        store[new_name] = store.pop(old_name)
+        ap.save_store(store)
+
+        # Update rules in config
+        self._config = cfg_load()
+        rules = self._config.get("rules", {})
+        old_target = ap.SW_PREFIX + old_name
+        new_target = ap.SW_PREFIX + new_name
+        updated = False
+        for exe, target in list(rules.items()):
+            if target == old_target:
+                rules[exe] = new_target
+                updated = True
+        if updated:
+            cfg_save(self._config)
+            self._sync_watcher_rules()
+
+        # Update active state if currently active
+        if ap.active_user_profile() == old_name:
+            ap._set_active_user_profile(new_name)
+
+        if self._editing_name == old_name:
+            self._editing_name = new_name
+
+        self._refresh_rules()
+        return True
+
     def _target_label(self, target: RuleTarget) -> str:
         """Display name for a rule target: onboard profile name, or the
         software profile's name."""
@@ -791,7 +826,7 @@ class AutoPilotPage(Gtk.Box):
                 p_name = self._target_label(idx)
             else:
                 p_name = self.current_user_profile or _profile_label(self._device.active_profile)
-            badge_text = "  Activo (Daemon Rust)  " if daemon_active else "  Activo  "
+            badge_text = "  Activo  "
             markup = (
                 f'<span background="#2ec27e33" foreground="#2ec27e" weight="bold">{badge_text}</span>  '
                 + '<span size="small" foreground="#ffffffaa">'

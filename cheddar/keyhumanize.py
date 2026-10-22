@@ -100,7 +100,7 @@ def humanize_macro(macro) -> str:
     """Human label for a RatbagdMacro. Collapses press+release into a tap,
     recognizes single keys and common modifier combos, and keeps long macros
     short."""
-    events = list(macro.keys)
+    events = list(macro.keys if hasattr(macro, "keys") else macro)
 
     # Collapse into an ordered sequence of tokens.
     seq = []  # ("tap", ev) | ("down", ev) | ("up", ev) | ("wait", ms)
@@ -137,16 +137,23 @@ def humanize_macro(macro) -> str:
     taps = [v for kind, v in seq if kind == "tap"]
     if len(taps) == 1 and downs and set(downs) == set(ups):
         mods = " + ".join(_short_mod(evcode_to_str(d)) for d in downs)
+        if taps[0] == 0:
+            # Standalone modifier key with hardware dummy KEY_RESERVED (0)
+            return mods
         key = friendly_key(taps[0])
         combo_key = f"{mods}+{key}"
         if combo_key in _COMBOS:
             return _COMBOS[combo_key]
         return f"{mods} + {key}"
 
+    # Standalone modifiers without non-modifier keys
+    if downs and set(downs) == set(ups) and (not taps or taps == [0]):
+        return " + ".join(_short_mod(evcode_to_str(d)) for d in downs)
+
     # Anything more elaborate: a compact "Macro · a b c…" preview.
     parts = []
     for kind, v in seq:
-        if kind == "wait":
+        if kind == "wait" or v == 0:
             continue
         parts.append(friendly_key(v))
         if len(parts) >= 4:

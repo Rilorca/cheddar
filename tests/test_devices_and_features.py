@@ -1284,6 +1284,72 @@ class TestProfileSwitchDpiRegression(unittest.TestCase):
 
         self.assertEqual(str(m), "↕KEY_LEFTSHIFT")
 
+    def test_humanize_macro_lone_modifier_shows_only_key_name(self):
+        """In the GUI button label, standalone modifier keys must display purely as
+        their friendly name (e.g. 'Shift') rather than 'Shift + Reserved'."""
+        from cheddar.keyhumanize import humanize_macro
+
+        # Normalized lone Left Shift (42) with dummy key (0)
+        shift_macro = [(1, 42), (1, 0), (2, 0), (2, 42)]
+        self.assertEqual(humanize_macro(shift_macro), "Shift")
+
+        # Normalized lone Left Ctrl (29) with dummy key (0)
+        ctrl_macro = [(1, 29), (1, 0), (2, 0), (2, 29)]
+        self.assertEqual(humanize_macro(ctrl_macro), "Ctrl")
+
+        # Normal key (Space: 57)
+        space_macro = [(1, 57), (2, 57)]
+        self.assertEqual(humanize_macro(space_macro), "Space")
+
+        # Actual combo: Shift + Space
+        combo_macro = [(1, 42), (1, 57), (2, 57), (2, 42)]
+        self.assertEqual(humanize_macro(combo_macro), "Shift + Space")
+
+    def test_autopilot_rename_user_profile(self):
+        """Renaming a software profile should update both the profile store and
+        any rules mapped to that profile, keeping the active state in sync."""
+        from cheddar.autopilotpage import AutoPilotPage
+        from cheddar import autopilot_config, autopilot_profiles
+
+        prof = self._make_profile(0, active_res=0, is_active=True)
+        dev = self._make_device([prof])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_file = os.path.join(tmpdir, "config.json")
+            store_file = os.path.join(tmpdir, "profiles.json")
+            with patch("cheddar.autopilot_config._CONFIG_FILE", cfg_file), \
+                 patch("cheddar.autopilotpage.is_daemon_service_active", return_value=False), \
+                 patch("cheddar.autopilotpage.autostart.is_autostart_enabled", return_value=False), \
+                 patch("cheddar.autopilot_profiles._STORE_FILE", store_file), \
+                 patch("cheddar.autopilot_profiles._STORE_DIR", tmpdir):
+
+                # Save initial store and rule
+                autopilot_profiles.save_store({"OriginalName": {"dummy": 123}})
+                autopilot_config.save({"enabled": True, "rules": {"game.exe": "sw:OriginalName"}})
+
+                page = AutoPilotPage(dev)
+                self.assertIn("OriginalName", page.user_profile_names())
+
+                # Set active
+                autopilot_profiles._set_active_user_profile("OriginalName")
+                self.assertEqual(autopilot_profiles.active_user_profile(), "OriginalName")
+
+                # Rename
+                success = page.rename_user_profile("OriginalName", "RenamedName")
+                self.assertTrue(success)
+
+                # Store should now contain RenamedName and not OriginalName
+                names = page.user_profile_names()
+                self.assertIn("RenamedName", names)
+                self.assertNotIn("OriginalName", names)
+
+                # Active profile should be updated
+                self.assertEqual(autopilot_profiles.active_user_profile(), "RenamedName")
+
+                # Rule target should be updated in config
+                cfg = autopilot_config.load()
+                self.assertEqual(cfg["rules"]["game.exe"], "sw:RenamedName")
+
 
 if __name__ == "__main__":
     unittest.main()
