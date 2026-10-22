@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from gettext import gettext as _
 import sys
 from typing import Optional
 

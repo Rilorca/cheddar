@@ -1350,6 +1350,20 @@ class TestProfileSwitchDpiRegression(unittest.TestCase):
                 cfg = autopilot_config.load()
                 self.assertEqual(cfg["rules"]["game.exe"], "sw:RenamedName")
 
+    def test_profile_rows_instantiation_and_rename_button(self):
+        """Verify that UserProfileRow and ProfileRow instantiate without missing names or errors."""
+        from cheddar.mouseperspective import UserProfileRow
+        from cheddar.profilerow import ProfileRow
+
+        renamed = []
+        row = UserProfileRow("TestProfile", on_delete=lambda n: None, on_rename=lambda n: renamed.append(n))
+        self.assertEqual(row.sw_name, "TestProfile")
+
+        prof = self._make_profile(0, active_res=0, is_active=True)
+        # ProfileRow loads a Gtk.Template from gresource, ensure it doesn't crash on undefined symbols
+        prow = ProfileRow(prof)
+        self.assertIsNotNone(prow)
+
 
 if __name__ == "__main__":
     unittest.main()
