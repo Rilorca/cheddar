@@ -240,8 +240,14 @@ impl RatbagClient {
         // 3. Resolutions
         if let Some(res_list) = data.get("resolutions").and_then(|v| v.as_array()) {
             if let Ok(res_paths) = self.get_resolutions(profile_path).await {
+                let res_map: HashMap<u32, &serde_json::Value> = res_list
+                    .iter()
+                    .filter_map(|r| r.get("index").and_then(|idx| idx.as_u64()).map(|idx| (idx as u32, r)))
+                    .collect();
+
                 for (i, res_path) in res_paths.iter().enumerate() {
-                    if let Some(res_obj) = res_list.get(i) {
+                    let r_idx = i as u32;
+                    if let Some(res_obj) = res_map.get(&r_idx).copied().or_else(|| res_list.get(i)) {
                         let res_proxy = zbus::Proxy::new(
                             &self.conn,
                             RATBAG_DEST,
@@ -250,7 +256,35 @@ impl RatbagClient {
                         )
                         .await?;
 
-                        if let Some(dpi) = res_obj.get("dpi").and_then(|v| v.as_u64()) {
+                        if let Some(res_arr) = res_obj.get("resolution").and_then(|v| v.as_array()) {
+                            if res_arr.len() == 1 {
+                                if let Some(dpi) = res_arr[0].as_u64() {
+                                    let _: Result<()> = res_proxy
+                                        .call(
+                                            "Set",
+                                            &(
+                                                "org.freedesktop.ratbag1.Resolution",
+                                                "Resolution",
+                                                Value::new(Value::new(dpi as u32)),
+                                            ),
+                                        )
+                                        .await;
+                                }
+                            } else if res_arr.len() >= 2 {
+                                if let (Some(x), Some(y)) = (res_arr[0].as_u64(), res_arr[1].as_u64()) {
+                                    let _: Result<()> = res_proxy
+                                        .call(
+                                            "Set",
+                                            &(
+                                                "org.freedesktop.ratbag1.Resolution",
+                                                "Resolution",
+                                                Value::new(Value::new((x as u32, y as u32))),
+                                            ),
+                                        )
+                                        .await;
+                                }
+                            }
+                        } else if let Some(dpi) = res_obj.get("dpi").and_then(|v| v.as_u64()) {
                             let _: Result<()> = res_proxy
                                 .call(
                                     "Set",
@@ -281,8 +315,14 @@ impl RatbagClient {
         // 4. Buttons
         if let Some(btn_list) = data.get("buttons").and_then(|v| v.as_array()) {
             if let Ok(btn_paths) = self.get_buttons(profile_path).await {
+                let btn_map: HashMap<u32, &serde_json::Value> = btn_list
+                    .iter()
+                    .filter_map(|b| b.get("index").and_then(|idx| idx.as_u64()).map(|idx| (idx as u32, b)))
+                    .collect();
+
                 for (i, btn_path) in btn_paths.iter().enumerate() {
-                    if let Some(btn_obj) = btn_list.get(i) {
+                    let b_idx = i as u32;
+                    if let Some(btn_obj) = btn_map.get(&b_idx).copied().or_else(|| btn_list.get(i)) {
                         let btn_proxy = zbus::Proxy::new(
                             &self.conn,
                             RATBAG_DEST,
@@ -294,7 +334,7 @@ impl RatbagClient {
                         let action_type = btn_obj.get("type").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
                         if action_type == 0 {
                             // ActionType.NONE (disable)
-                            let _: Result<()> = btn_proxy
+                            let res: Result<()> = btn_proxy
                                 .call(
                                     "Set",
                                     &(
@@ -304,10 +344,13 @@ impl RatbagClient {
                                     ),
                                 )
                                 .await;
+                            if let Err(e) = res {
+                                warn!("Failed to disable button {}: {}", b_idx, e);
+                            }
                         } else if action_type == 1 {
                             // ActionType.BUTTON
                             if let Some(val) = btn_obj.get("value").and_then(|v| v.as_u64()) {
-                                let _: Result<()> = btn_proxy
+                                let res: Result<()> = btn_proxy
                                     .call(
                                         "Set",
                                         &(
@@ -317,11 +360,14 @@ impl RatbagClient {
                                         ),
                                     )
                                     .await;
+                                if let Err(e) = res {
+                                    warn!("Failed to set button {} to BUTTON {}: {}", b_idx, val, e);
+                                }
                             }
                         } else if action_type == 2 {
                             // ActionType.SPECIAL
                             if let Some(val) = btn_obj.get("value").and_then(|v| v.as_u64()) {
-                                let _: Result<()> = btn_proxy
+                                let res: Result<()> = btn_proxy
                                     .call(
                                         "Set",
                                         &(
@@ -331,11 +377,14 @@ impl RatbagClient {
                                         ),
                                     )
                                     .await;
+                                if let Err(e) = res {
+                                    warn!("Failed to set button {} to SPECIAL {}: {}", b_idx, val, e);
+                                }
                             }
                         } else if action_type == 3 {
                             // ActionType.KEY
                             if let Some(val) = btn_obj.get("value").and_then(|v| v.as_u64()) {
-                                let _: Result<()> = btn_proxy
+                                let res: Result<()> = btn_proxy
                                     .call(
                                         "Set",
                                         &(
@@ -345,6 +394,36 @@ impl RatbagClient {
                                         ),
                                     )
                                     .await;
+                                if let Err(e) = res {
+                                    warn!("Failed to set button {} to KEY {}: {}", b_idx, val, e);
+                                }
+                            }
+                        } else if action_type == 4 {
+                            // ActionType.MACRO
+                            if let Some(macro_keys) = btn_obj.get("value").and_then(|v| v.as_array()) {
+                                let mut keys_vec: Vec<(u32, u32)> = Vec::new();
+                                for key_pair in macro_keys {
+                                    if let Some(arr) = key_pair.as_array() {
+                                        if arr.len() == 2 {
+                                            let ktype = arr[0].as_u64().unwrap_or(0) as u32;
+                                            let kval = arr[1].as_u64().unwrap_or(0) as u32;
+                                            keys_vec.push((ktype, kval));
+                                        }
+                                    }
+                                }
+                                let res: Result<()> = btn_proxy
+                                    .call(
+                                        "Set",
+                                        &(
+                                            "org.freedesktop.ratbag1.Button",
+                                            "Mapping",
+                                            Value::new((4u32, Value::new(keys_vec))),
+                                        ),
+                                    )
+                                    .await;
+                                if let Err(e) = res {
+                                    warn!("Failed to set button {} to MACRO: {}", b_idx, e);
+                                }
                             }
                         }
                     }
@@ -555,6 +634,58 @@ impl RatbagClient {
             }
         }
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_macro_payload_parsing() {
+        let json_btn = serde_json::json!({
+            "index": 8,
+            "type": 4,
+            "value": [[1, 29], [1, 46], [2, 46], [2, 29]]
+        });
+
+        let action_type = json_btn.get("type").and_then(|v| v.as_u64()).unwrap() as u32;
+        assert_eq!(action_type, 4);
+
+        let macro_keys = json_btn.get("value").and_then(|v| v.as_array()).unwrap();
+        let mut keys_vec: Vec<(u32, u32)> = Vec::new();
+        for key_pair in macro_keys {
+            let arr = key_pair.as_array().unwrap();
+            keys_vec.push((arr[0].as_u64().unwrap() as u32, arr[1].as_u64().unwrap() as u32));
+        }
+
+        assert_eq!(keys_vec, vec![(1, 29), (1, 46), (2, 46), (2, 29)]);
+
+        let mapping_val = Value::new((4u32, Value::new(keys_vec)));
+        // Verify zvariant serialization
+        assert_eq!(mapping_val.value_signature(), "(uv)");
+    }
+
+    #[test]
+    fn test_resolution_payload_parsing() {
+        let json_single = serde_json::json!({
+            "index": 0,
+            "resolution": [1200],
+            "active": true
+        });
+        let res_arr = json_single.get("resolution").and_then(|v| v.as_array()).unwrap();
+        assert_eq!(res_arr.len(), 1);
+        assert_eq!(res_arr[0].as_u64().unwrap(), 1200);
+
+        let json_dual = serde_json::json!({
+            "index": 0,
+            "resolution": [800, 1600],
+            "active": false
+        });
+        let res_arr2 = json_dual.get("resolution").and_then(|v| v.as_array()).unwrap();
+        assert_eq!(res_arr2.len(), 2);
+        assert_eq!(res_arr2[0].as_u64().unwrap(), 800);
+        assert_eq!(res_arr2[1].as_u64().unwrap(), 1600);
     }
 }
 

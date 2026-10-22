@@ -463,6 +463,7 @@ class AutoPilotPage(Gtk.Box):
     # ── Rules list ─────────────────────────────────────────────────────────────
 
     def _refresh_rules(self) -> None:
+        self._config = cfg_load()
         for child in self._rules_box.get_children():
             self._rules_box.remove(child)
 
@@ -484,6 +485,17 @@ class AutoPilotPage(Gtk.Box):
                 self._rules_box.add(row)
 
         self._rules_box.show_all()
+
+    def _on_rule_combo_scrolled(self, widget: Gtk.Widget, event) -> bool:
+        # In GTK, mouse wheel over a ComboBox changes its selected item.
+        # Inside a ScrolledWindow, scrolling down the page inadvertently
+        # cycles through profiles and fires "changed", corrupting game assignments.
+        # We forward the scroll event to the parent ScrolledWindow and return True
+        # so the ComboBox never cycles its active item.
+        parent = widget.get_ancestor(Gtk.ScrolledWindow)
+        if parent and event is not None:
+            parent.emit("scroll-event", event)
+        return True
 
     def _make_rule_row(self, exe: str, profile_idx: int) -> Gtk.ListBoxRow:
         row = Gtk.ListBoxRow(activatable=False, selectable=False)
@@ -543,7 +555,13 @@ class AutoPilotPage(Gtk.Box):
             target_combo.append(ap.SW_PREFIX + name, name)
 
         target_val = str(profile_idx)
-        target_combo.set_active_id(target_val)
+        if not target_combo.set_active_id(target_val):
+            # If the profile was missing, add placeholder so it is not corrupted
+            label = target_val.removeprefix(ap.SW_PREFIX) if target_val.startswith(ap.SW_PREFIX) else f"Profile {target_val}"
+            target_combo.append(target_val, f"{label} ({_('missing')})")
+            target_combo.set_active_id(target_val)
+
+        target_combo.connect("scroll-event", self._on_rule_combo_scrolled)
         target_combo.connect("changed", self._on_rule_combo_changed, exe)
         box.pack_start(target_combo, False, False, 6)
 
@@ -567,6 +585,7 @@ class AutoPilotPage(Gtk.Box):
         if val is None:
             return
         target = val if val.startswith(ap.SW_PREFIX) else int(val)
+        self._config = cfg_load()
         self._config.setdefault("rules", {})[exe] = target
         cfg_save(self._config)
         self._sync_watcher_rules()
@@ -860,6 +879,7 @@ class AutoPilotPage(Gtk.Box):
         )
         resp = dlg.run()
         if resp == Gtk.ResponseType.OK and dlg.exe:
+            self._config = cfg_load()
             self._config.setdefault("rules", {})[dlg.exe] = dlg.target
             cfg_save(self._config)
             self._sync_watcher_rules()
@@ -877,6 +897,7 @@ class AutoPilotPage(Gtk.Box):
         )
         resp = dlg.run()
         if resp == Gtk.ResponseType.OK:
+            self._config = cfg_load()
             rules = self._config.setdefault("rules", {})
             if dlg.exe and dlg.exe != exe:
                 rules.pop(exe, None)
@@ -896,6 +917,7 @@ class AutoPilotPage(Gtk.Box):
             text=_('Delete rule for "{}"?').format(exe),
         )
         if confirm.run() == Gtk.ResponseType.YES:
+            self._config = cfg_load()
             self._config.get("rules", {}).pop(exe, None)
             cfg_save(self._config)
             self._sync_watcher_rules()

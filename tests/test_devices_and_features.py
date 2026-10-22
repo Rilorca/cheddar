@@ -1166,6 +1166,94 @@ class TestProfileSwitchDpiRegression(unittest.TestCase):
                 targets3 = [r[1] for r in combo3.get_model()]
                 self.assertIn("sw:Overwatch2", targets3)
 
+    def test_autopilot_macro_button_capture_and_apply(self):
+        """Ensure macro buttons (action_type 4) are preserved and applied with exact key sequences."""
+        from cheddar.ratbagd import RatbagdMacro, RatbagdButton
+        from cheddar.autopilot_profiles import capture_profile, apply_profile
+
+        m = RatbagdMacro()
+        m.append(1, 29)  # KEY_LEFTCTRL press
+        m.append(1, 57)  # KEY_SPACE press
+        m.append(2, 57)  # KEY_SPACE release
+        m.append(2, 29)  # KEY_LEFTCTRL release
+
+        src_btn = MockRatbagdButton(0, RatbagdButton.ActionType.MACRO, m)
+        src_profile = MockRatbagdProfile(0, buttons=[src_btn])
+
+        cap = capture_profile(src_profile)
+        self.assertEqual(cap["buttons"][0]["type"], 4)
+        self.assertEqual(cap["buttons"][0]["value"], [[1, 29], [1, 57], [2, 57], [2, 29]])
+
+        dst_btn = MockRatbagdButton(0, RatbagdButton.ActionType.BUTTON, 1)
+        dst_profile = MockRatbagdProfile(0, buttons=[dst_btn])
+
+        apply_profile(cap, dst_profile)
+        self.assertEqual(dst_profile.buttons[0].action_type, RatbagdButton.ActionType.MACRO)
+        self.assertEqual(dst_profile.buttons[0].macro.keys, [(1, 29), (1, 57), (2, 57), (2, 29)])
+
+    def test_autopilot_combobox_scroll_event_suppressed(self):
+        """Ensure mouse scroll over rule dropdowns does not unintentionally cycle profiles."""
+        from cheddar.autopilotpage import AutoPilotPage
+        from cheddar import autopilot_config
+
+        prof0 = self._make_profile(0, active_res=0, is_active=True)
+        prof1 = self._make_profile(1, active_res=0, is_active=False)
+        dev = self._make_device([prof0, prof1])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_file = os.path.join(tmpdir, "config.json")
+            store_file = os.path.join(tmpdir, "profiles.json")
+            with patch("cheddar.autopilot_config._CONFIG_FILE", cfg_file), \
+                 patch("cheddar.autopilotpage.is_daemon_service_active", return_value=False), \
+                 patch("cheddar.autopilotpage.autostart.is_autostart_enabled", return_value=False), \
+                 patch("cheddar.autopilot_profiles._STORE_FILE", store_file), \
+                 patch("cheddar.autopilot_profiles._STORE_DIR", tmpdir):
+
+                autopilot_config.save({"enabled": True, "rules": {"repo.exe": 0}})
+                page = AutoPilotPage(dev)
+
+                row = page._rules_box.get_children()[0]
+                box = row.get_child()
+                combo = [w for w in box.get_children() if isinstance(w, Gtk.ComboBoxText)][0]
+                self.assertEqual(combo.get_active_id(), "0")
+
+                # In GTK, returning True consumes the scroll event on the ComboBox
+                # so the selection is never scrambled when scrolling the page
+                res = page._on_rule_combo_scrolled(combo, None)
+                self.assertTrue(res)
+                self.assertEqual(combo.get_active_id(), "0")
+
+    def test_autopilot_missing_profile_placeholder_no_corruption(self):
+        """If a rule points to a missing software profile, it should display as missing
+        rather than crashing or resetting to profile 0."""
+        from cheddar.autopilotpage import AutoPilotPage
+        from cheddar import autopilot_config
+
+        prof = self._make_profile(0, active_res=0, is_active=True)
+        dev = self._make_device([prof])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_file = os.path.join(tmpdir, "config.json")
+            store_file = os.path.join(tmpdir, "profiles.json")
+            with patch("cheddar.autopilot_config._CONFIG_FILE", cfg_file), \
+                 patch("cheddar.autopilotpage.is_daemon_service_active", return_value=False), \
+                 patch("cheddar.autopilotpage.autostart.is_autostart_enabled", return_value=False), \
+                 patch("cheddar.autopilot_profiles._STORE_FILE", store_file), \
+                 patch("cheddar.autopilot_profiles._STORE_DIR", tmpdir):
+
+                autopilot_config.save({"enabled": True, "rules": {"game.exe": "sw:NonExistent"}})
+                page = AutoPilotPage(dev)
+
+                row = page._rules_box.get_children()[0]
+                box = row.get_child()
+                combo = [w for w in box.get_children() if isinstance(w, Gtk.ComboBoxText)][0]
+
+                # The combo should have preserved the missing target ID
+                self.assertEqual(combo.get_active_id(), "sw:NonExistent")
+                # And the config on disk should remain untouched
+                saved = autopilot_config.load()
+                self.assertEqual(saved["rules"]["game.exe"], "sw:NonExistent")
+
 
 if __name__ == "__main__":
     unittest.main()
