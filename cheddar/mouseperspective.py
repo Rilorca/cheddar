@@ -333,7 +333,6 @@ class MousePerspective(Gtk.Overlay):
         # that instead of the hidden "Profile N" slot.
         if (
             page is not None
-            and page.autopilot_enabled
             and profile.index == page.scratch_slot
             and page.current_user_profile
         ):
@@ -437,7 +436,7 @@ class MousePerspective(Gtk.Overlay):
         # "Apply" would only touch the mouse's scratch slot, which gets
         # overwritten on the next game launch, losing the changes.
         page = self._autopilot_page
-        if page is None or not page.autopilot_enabled:
+        if page is None:
             return
         name = page.current_user_profile
         active = self._device.active_profile
@@ -460,8 +459,13 @@ class MousePerspective(Gtk.Overlay):
             # A user profile: write it onto the mouse's reserved slot.
             assert self._autopilot_page is not None
             if self._autopilot_page.load_user_profile(row.sw_name):
+                if self._device is not None and self._device.active_profile is not None:
+                    self._set_profile(self._device.active_profile)
                 self.label_profile.set_label(row.sw_name)
                 self.listbox_profiles.select_row(row)
+                popover = self.button_profile.get_popover()
+                if popover is not None:
+                    popover.popdown()
         else:
             # NOTE: Device.Commit() after SetActive is mandatory, not
             # optional (verified with live dumps on a G600): SetActive
@@ -471,6 +475,7 @@ class MousePerspective(Gtk.Overlay):
             # Healing runs first so a single commit flushes everything.
             expected = row.profile.index
             try:
+                ap._set_active_user_profile(None)
                 row.set_active()
                 try:
                     ap.ensure_valid_active_resolution(row.profile)
@@ -485,7 +490,10 @@ class MousePerspective(Gtk.Overlay):
                     # replicates the manual "Apply" that unwedges the
                     # on-mouse DPI-cycle button on G600-class hardware.
                     ap.schedule_settled_recommit(self._device, expected)
-                ap._set_active_user_profile(None)
+                self._set_profile(row.profile)
+                popover = self.button_profile.get_popover()
+                if popover is not None:
+                    popover.popdown()
             except Exception as e:
                 print(f"Failed to activate profile {expected}: {e}", file=sys.stderr)
                 self._show_notification_error()
@@ -503,6 +511,11 @@ class MousePerspective(Gtk.Overlay):
             if saved:
                 self._refresh_user_profile_rows()
                 self._autopilot_page.refresh_rules()
+                if self._device.active_profile is not None:
+                    self._set_profile(self._device.active_profile)
+                popover = self.button_profile.get_popover()
+                if popover is not None:
+                    popover.popdown()
             return
         # No AutoPilot page (shouldn't happen): fall back to upstream behavior.
         for profile in self._device.profiles:

@@ -297,6 +297,30 @@ impl RatbagClient {
                                 .await;
                         }
 
+                        if let Some(disabled) = res_obj.get("disabled").and_then(|v| v.as_bool()) {
+                            let _: Result<()> = res_proxy
+                                .call(
+                                    "Set",
+                                    &(
+                                        "org.freedesktop.ratbag1.Resolution",
+                                        "IsDisabled",
+                                        Value::new(disabled),
+                                    ),
+                                )
+                                .await;
+                        }
+
+                        if res_obj.get("default").and_then(|v| v.as_bool()).unwrap_or(false) {
+                            let r_proxy = zbus::Proxy::new(
+                                &self.conn,
+                                RATBAG_DEST,
+                                res_path,
+                                "org.freedesktop.ratbag1.Resolution",
+                            )
+                            .await?;
+                            let _: Result<u32> = r_proxy.call("SetDefault", &()).await;
+                        }
+
                         if res_obj.get("active").and_then(|v| v.as_bool()).unwrap_or(false) {
                             let r_proxy = zbus::Proxy::new(
                                 &self.conn,
@@ -460,9 +484,14 @@ impl RatbagClient {
 
                         if let Some(color_arr) = led_obj.get("color").and_then(|v| v.as_array()) {
                             if color_arr.len() == 3 {
-                                let r = color_arr[0].as_u64().unwrap_or(0) as u32;
-                                let g = color_arr[1].as_u64().unwrap_or(0) as u32;
-                                let b = color_arr[2].as_u64().unwrap_or(0) as u32;
+                                let to_u32 = |v: &serde_json::Value| -> u32 {
+                                    v.as_u64()
+                                        .or_else(|| v.as_f64().map(|f| f.round() as u64))
+                                        .unwrap_or(0) as u32
+                                };
+                                let r = to_u32(&color_arr[0]);
+                                let g = to_u32(&color_arr[1]);
+                                let b = to_u32(&color_arr[2]);
                                 let _: Result<()> = led_proxy
                                     .call(
                                         "Set",
@@ -474,6 +503,38 @@ impl RatbagClient {
                                     )
                                     .await;
                             }
+                        }
+
+                        if let Some(dur) = led_obj
+                            .get("effect_duration")
+                            .and_then(|v| v.as_u64().or_else(|| v.as_f64().map(|f| f.round() as u64)))
+                        {
+                            let _: Result<()> = led_proxy
+                                .call(
+                                    "Set",
+                                    &(
+                                        "org.freedesktop.ratbag1.Led",
+                                        "EffectDuration",
+                                        Value::new(dur as u32),
+                                    ),
+                                )
+                                .await;
+                        }
+
+                        if let Some(brightness) = led_obj
+                            .get("brightness")
+                            .and_then(|v| v.as_u64().or_else(|| v.as_f64().map(|f| f.round() as u64)))
+                        {
+                            let _: Result<()> = led_proxy
+                                .call(
+                                    "Set",
+                                    &(
+                                        "org.freedesktop.ratbag1.Led",
+                                        "Brightness",
+                                        Value::new(brightness as u32),
+                                    ),
+                                )
+                                .await;
                         }
                     }
                 }

@@ -30,7 +30,7 @@ import gi
 gi.require_version("Gdk", "3.0")
 gi.require_version("Gio", "2.0")
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk  # noqa
 
 try:
     gi.require_version("Notify", "0.7")
@@ -490,8 +490,11 @@ class AutoPilotPage(Gtk.Box):
         # In GTK, mouse wheel over a ComboBox changes its selected item.
         # Inside a ScrolledWindow, scrolling down the page inadvertently
         # cycles through profiles and fires "changed", corrupting game assignments.
-        # We forward the scroll event to the parent ScrolledWindow and return True
-        # so the ComboBox never cycles its active item.
+        # Stop the default ComboBox scroll handler and forward to ScrolledWindow.
+        try:
+            GObject.signal_stop_emission_by_name(widget, "scroll-event")
+        except Exception:
+            pass
         parent = widget.get_ancestor(Gtk.ScrolledWindow)
         if parent and event is not None:
             parent.emit("scroll-event", event)
@@ -701,7 +704,7 @@ class AutoPilotPage(Gtk.Box):
         entry = Gtk.Entry(
             placeholder_text=_("Name, e.g. Overwatch setup"),
             activates_default=True,
-            text=self._editing_name or "",
+            text="",
         )
         box.add(entry)
         dlg.get_content_area().add(box)
@@ -712,7 +715,7 @@ class AutoPilotPage(Gtk.Box):
             store = ap.load_store()
             store[saved] = ap.capture_profile(active)
             ap.save_store(store)
-            self._editing_name = None
+            self.load_user_profile(saved)
             self._refresh_rules()
         dlg.destroy()
         return saved

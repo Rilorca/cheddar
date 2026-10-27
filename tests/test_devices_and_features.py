@@ -1364,6 +1364,91 @@ class TestProfileSwitchDpiRegression(unittest.TestCase):
         prow = ProfileRow(prof)
         self.assertIsNotNone(prow)
 
+    def test_creating_new_profile_activates_it_and_prevents_overwriting_previous_profile(self):
+        """Regression test: when user is on profile 'Farfar', creates a new profile 'DeadLock',
+        and then edits buttons and clicks Apply, 'DeadLock' must be active so edits save to
+        'DeadLock' and do NOT overwrite 'Farfar'."""
+        from cheddar.autopilotpage import AutoPilotPage
+        from cheddar import autopilot_config, autopilot_profiles
+
+        prof0 = self._make_profile(0, active_res=0, is_active=False)
+        prof1 = self._make_profile(1, active_res=0, is_active=False)
+        prof2 = self._make_profile(2, active_res=0, is_active=True)
+        dev = self._make_device([prof0, prof1, prof2])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cfg_file = os.path.join(tmpdir, "config.json")
+            store_file = os.path.join(tmpdir, "profiles.json")
+            state_file = os.path.join(tmpdir, "state.json")
+            with patch("cheddar.autopilot_config._CONFIG_FILE", cfg_file), \
+                 patch("cheddar.autopilotpage.is_daemon_service_active", return_value=False), \
+                 patch("cheddar.autopilotpage.autostart.is_autostart_enabled", return_value=False), \
+                 patch("cheddar.autopilot_profiles._STORE_FILE", store_file), \
+                 patch("cheddar.autopilot_profiles._STATE_FILE", state_file), \
+                 patch("cheddar.autopilot_profiles._STORE_DIR", tmpdir):
+
+                autopilot_config.save({"enabled": True, "rules": {}})
+                page = AutoPilotPage(dev)
+
+                # Initial setup on 'Farfar': button 0 is mapped to 1
+                prof2.buttons[0].mapping = 1
+                autopilot_profiles.save_store({"Farfar": autopilot_profiles.capture_profile(prof2)})
+                page.load_user_profile("Farfar")
+                self.assertEqual(page.current_user_profile, "Farfar")
+
+                # Simulate save_current_setup_dialog creating "DeadLock" while on "Farfar"
+                with patch("gi.repository.Gtk.Dialog.run", return_value=Gtk.ResponseType.OK), \
+                     patch("gi.repository.Gtk.Entry.get_text", return_value="DeadLock"):
+                    saved = page.save_current_setup_dialog(None)
+
+                self.assertEqual(saved, "DeadLock")
+                # Crucial: the newly created profile must now be the active user profile!
+                self.assertEqual(page.current_user_profile, "DeadLock")
+
+                # Now user edits button 0 on the mouse for "DeadLock" (mapped to 9) and hits Apply
+                dev.active_profile.buttons[0].mapping = 9
+                page.save_active_as_user_profile(page.current_user_profile)
+
+                store = autopilot_profiles.load_store()
+                self.assertEqual(store["DeadLock"]["buttons"][0]["value"], 9)
+                # "Farfar" must still have its original button 0 mapping (1), untouched!
+                self.assertEqual(store["Farfar"]["buttons"][0]["value"], 1)
+
+    def test_capture_and_apply_profile_coerces_float_led_colors_and_clears_dirty(self):
+        """Ensure float LED colors (from Gdk.RGBA * 255.0) are coerced to ints and
+        activate_target clears profile._dirty after committing."""
+        from cheddar import autopilot_profiles
+
+        prof0 = self._make_profile(0, active_res=0, is_active=True)
+        prof2 = self._make_profile(2, active_res=0, is_active=False)
+        prof2.leds = [MockRatbagdLed(0, mode=RatbagdLed.Mode.ON, color=(87.4, 227.2, 136.8), brightness=199.6)]
+        dev = self._make_device([prof0, prof2])
+
+        captured = autopilot_profiles.capture_profile(prof2)
+        self.assertEqual(captured["leds"][0]["color"], [87, 227, 137])
+        self.assertEqual(captured["leds"][0]["brightness"], 200)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            patches = self._patched_state(tmpdir)
+            for p in patches:
+                p.start()
+            try:
+                autopilot_profiles.save_store({"TestFloatLed": {
+                    "version": 1,
+                    "report_rate": 1000,
+                    "resolutions": [],
+                    "buttons": [{"index": 0, "type": 1, "value": 5}],
+                    "leds": [{"index": 0, "mode": 1, "color": [53.0, 132.0, 228.0], "effect_duration": 0.0, "brightness": 100.0}],
+                }})
+                autopilot_profiles.activate_target(dev, "sw:TestFloatLed", {})
+                self.assertEqual(prof2.leds[0].color, (53, 132, 228))
+                self.assertTrue( all(isinstance(c, int) for c in prof2.leds[0].color) )
+                self.assertEqual(prof2.buttons[0].mapping, 5)
+                self.assertFalse(getattr(prof2, "_dirty", False))
+            finally:
+                for p in patches:
+                    p.stop()
+
 
 if __name__ == "__main__":
     unittest.main()

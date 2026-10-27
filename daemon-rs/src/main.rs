@@ -95,8 +95,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let new_cfg = load_config();
                         let is_enabled = new_cfg.enabled;
                         let mut st = state_for_file_watcher.lock().await;
+                        let enabled_changed = st.config.enabled != new_cfg.enabled;
+                        let default_changed = st.config.default_profile != new_cfg.default_profile;
                         st.config = new_cfg;
-                        st.active_target = None; // Trigger re-evaluation
+                        // Only force a re-evaluation when a game is currently matched or
+                        // when enabled/default_profile changed. Do not reset active_target
+                        // when the user is simply editing rules in the Cheddar GUI with no
+                        // game running, otherwise the daemon will overwrite the user's
+                        // currently selected profile on the mouse with default_profile!
+                        if st.last_matched_exe.is_some() || enabled_changed || default_changed {
+                            st.active_target = None;
+                        }
                         info!(
                             "Config reloaded: {} rule(s), default profile {}, enabled: {}",
                             st.config.rules.len(),
@@ -269,7 +278,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // If Cheddar GUI is open and configuring the mouse, don't force switch to default profile!
         let is_cheddar_running = all_running.iter().any(|name| {
             let n = name.to_lowercase();
-            n.contains("cheddar") || n.contains("piper")
+            (n.contains("cheddar") || n.contains("piper")) && !n.contains("autopilot")
         });
 
         let focused = focused_window();

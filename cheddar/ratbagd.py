@@ -204,6 +204,29 @@ class _RatbagdDBus(GObject.GObject):
             return p.unpack()
         return p
 
+    def _fetch_live_dbus_property(self, property):
+        # Queries org.freedesktop.DBus.Properties.Get synchronously on the bus
+        # and updates the local cached property so stale local cache entries
+        # (e.g. from previous SetActive calls) cannot desync Python from ratbagd.
+        try:
+            pval = GLib.Variant("(ss)", (self._interface, property))
+            res = self._proxy.call_sync(
+                "org.freedesktop.DBus.Properties.Get",
+                pval,
+                Gio.DBusCallFlags.NO_AUTO_START,
+                2000,
+                None,
+            )
+            if res is not None and isinstance(res, GLib.Variant):
+                inner = res.get_child_value(0)
+                if inner.get_type_string() == "v":
+                    inner = inner.get_child_value(0)
+                self._proxy.set_cached_property(property, inner)
+                return inner.unpack()
+        except Exception:
+            pass
+        return self._get_dbus_property(property)
+
     def _get_dbus_property_nonnull(self, property: str):
         p = self._get_dbus_property(property)
         if p is None:
@@ -383,17 +406,21 @@ class RatbagdDevice(_RatbagdDBus):
         active = None
         for profile in self._profiles:
             try:
-                is_active = profile._get_dbus_property("IsActive")
+                is_active = profile._fetch_live_dbus_property("IsActive")
             except Exception:
                 continue
-            if is_active is not None and bool(is_active) != profile._active:
-                profile._active = bool(is_active)
-                profile.notify("is-active")
+            if is_active is not None:
+                want_active = bool(is_active) and active is None
+                if want_active != bool(is_active):
+                    profile._set_dbus_property("IsActive", "b", False, readwrite=False)
+                if want_active != profile._active:
+                    profile._active = want_active
+                    profile.notify("is-active")
             for res in profile._resolutions:
                 try:
-                    r_active = res._get_dbus_property("IsActive")
-                    r_default = res._get_dbus_property("IsDefault")
-                    r_disabled = res._get_dbus_property("IsDisabled")
+                    r_active = res._fetch_live_dbus_property("IsActive")
+                    r_default = res._fetch_live_dbus_property("IsDefault")
+                    r_disabled = res._fetch_live_dbus_property("IsDisabled")
                 except Exception:
                     continue
                 if r_active is not None and bool(r_active) != res._active:
@@ -473,7 +500,16 @@ class RatbagdDevice(_RatbagdDBus):
         by emitting the Resync signal, which automatically resynchronizes the
         device. No further interaction is required by the client.
         """
-        self._dbus_call("Commit", "")
+        ret = self._dbus_call("Commit", "")
+        for profile in self._profiles:
+            if profile._dirty:
+                profile._dirty = False
+                try:
+                    profile._set_dbus_property("IsDirty", "b", False, readwrite=False)
+                except Exception:
+                    pass
+                profile.notify("dirty")
+        return ret
 
 
 class RatbagdProfile(_RatbagdDBus):
@@ -557,6 +593,18 @@ class RatbagdProfile(_RatbagdDBus):
             # Different property changed, skip.
             pass
         else:
+            if active:
+                device = getattr(self, "_device", None)
+                if device is not None:
+                    for p in device.profiles:
+                        if p is not self:
+                            try:
+                                p._set_dbus_property("IsActive", "b", False, readwrite=False)
+                            except Exception:
+                                pass
+                            if p._active:
+                                p._active = False
+                                p.notify("is-active")
             if active != self._active:
                 self._active = active
                 self.notify("is-active")
@@ -742,12 +790,16 @@ class RatbagdProfile(_RatbagdDBus):
         device = getattr(self, "_device", None)
         if device is not None:
             for p in device.profiles:
-                if p is not self and p._active:
-                    p._active = False
-                    p.notify("is-active")
-        if not self._active:
-            self._active = True
-            self.notify("is-active")
+                if p is not self:
+                    try:
+                        p._set_dbus_property("IsActive", "b", False, readwrite=False)
+                    except Exception:
+                        pass
+                    if p._active:
+                        p._active = False
+                        p.notify("is-active")
+        self._active = True
+        self.notify("is-active")
         return ret
 
 
@@ -786,6 +838,18 @@ class RatbagdResolution(_RatbagdDBus):
             # Different property changed, skip.
             pass
         else:
+            if active:
+                profile = getattr(self, "_profile", None)
+                if profile is not None:
+                    for res in profile.resolutions:
+                        if res is not self:
+                            try:
+                                res._set_dbus_property("IsActive", "b", False, readwrite=False)
+                            except Exception:
+                                pass
+                            if res._active:
+                                res._active = False
+                                res.notify("is-active")
             if active != self._active:
                 self._active = active
                 self.notify("is-active")
@@ -796,6 +860,18 @@ class RatbagdResolution(_RatbagdDBus):
             # Different property changed, skip.
             pass
         else:
+            if default:
+                profile = getattr(self, "_profile", None)
+                if profile is not None:
+                    for res in profile.resolutions:
+                        if res is not self:
+                            try:
+                                res._set_dbus_property("IsDefault", "b", False, readwrite=False)
+                            except Exception:
+                                pass
+                            if res._default:
+                                res._default = False
+                                res.notify("is-default")
             if default != self._default:
                 self._default = default
                 self.notify("is-default")
@@ -892,9 +968,14 @@ class RatbagdResolution(_RatbagdDBus):
         profile = getattr(self, "_profile", None)
         if profile is not None:
             for res in profile.resolutions:
-                if res is not self and res._active:
-                    res._active = False
-                    res.notify("is-active")
+                if res is not self:
+                    try:
+                        res._set_dbus_property("IsActive", "b", False, readwrite=False)
+                    except Exception:
+                        pass
+                    if res._active:
+                        res._active = False
+                        res.notify("is-active")
         if not self._active:
             self._active = True
             self.notify("is-active")
@@ -907,9 +988,14 @@ class RatbagdResolution(_RatbagdDBus):
         profile = getattr(self, "_profile", None)
         if profile is not None:
             for res in profile.resolutions:
-                if res is not self and res._default:
-                    res._default = False
-                    res.notify("is-default")
+                if res is not self:
+                    try:
+                        res._set_dbus_property("IsDefault", "b", False, readwrite=False)
+                    except Exception:
+                        pass
+                    if res._default:
+                        res._default = False
+                        res.notify("is-default")
         if not self._default:
             self._default = True
             self.notify("is-default")
@@ -1314,6 +1400,7 @@ class RatbagdLed(_RatbagdDBus):
 
         @param color An RGB color, as an integer triplet with values 0-255.
         """
+        color = tuple(int(round(c)) for c in color)
         self._set_dbus_property("Color", "(uuu)", color)
         if color != self._color:
             self._color = color
@@ -1336,6 +1423,7 @@ class RatbagdLed(_RatbagdDBus):
 
         @param effect_duration The new effect duration, as int
         """
+        effect_duration = int(round(effect_duration))
         self._set_dbus_property("EffectDuration", "u", effect_duration)
         if effect_duration != self._effect_duration:
             self._effect_duration = effect_duration
@@ -1352,6 +1440,7 @@ class RatbagdLed(_RatbagdDBus):
 
         @param brightness The new brightness, as int
         """
+        brightness = int(round(brightness))
         self._set_dbus_property("Brightness", "u", brightness)
         if brightness != self._brightness:
             self._brightness = brightness
