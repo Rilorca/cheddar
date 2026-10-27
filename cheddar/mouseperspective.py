@@ -324,6 +324,7 @@ class MousePerspective(Gtk.Overlay):
             assert self._autopilot_page is not None
             self._autopilot_page.delete_user_profile(name)
             self._refresh_user_profile_rows()
+            self._refresh_active_label()
         confirm.destroy()
 
     def _select_profile_row(self, profile: RatbagdProfile) -> None:

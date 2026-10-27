@@ -345,8 +345,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // If no game matched and Cheddar GUI is open and focused/visible, do not force-switch to default profile!
-        if is_cheddar_running && matched_target.is_none() && !has_focused_window {
+        // If no game matched and Cheddar GUI is open, do not force-switch to default profile!
+        if is_cheddar_running && matched_target.is_none() {
             continue;
         }
 

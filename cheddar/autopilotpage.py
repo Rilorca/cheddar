@@ -733,6 +733,22 @@ class AutoPilotPage(Gtk.Box):
         self._sync_watcher_rules()
         self._refresh_rules()
 
+        # If the deleted profile was currently active, switch away cleanly!
+        if ap.active_user_profile() == name or self._editing_name == name:
+            remaining = sorted(store.keys())
+            if remaining:
+                self.load_user_profile(remaining[0])
+            else:
+                ap._set_active_user_profile(None)
+                default_slot = self._config.get("default_profile", 0)
+                if self._device is not None and self._device.profiles:
+                    for p in self._device.profiles:
+                        if p.index == default_slot:
+                            p.set_active()
+                            break
+                    self._device.commit()
+                self._editing_name = None
+
     def rename_user_profile(self, old_name: str, new_name: str) -> bool:
         """Rename a saved user profile, updating the profile store and all game rules."""
         if not new_name or old_name == new_name:

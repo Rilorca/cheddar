@@ -140,15 +140,16 @@ def capture_profile(profile: RatbagdProfile) -> Dict[str, Any]:
 def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
     """Write a captured configuration into an onboard profile slot.
 
-    Always writes the target properties to ratbagd rather than trusting Python's
-    local Gio.DBusProxy cache, because the background Rust daemon (or external
-    tools) may have modified the scratch slot in ratbagd without emitting
-    D-Bus PropertiesChanged for Button.Mapping. The caller commits.
+    Only touches properties that differ from the current state, avoiding
+    saturating ratbagd and mouse firmware EEPROM writes with dozens of
+    redundant D-Bus calls on profile switches. The caller commits.
     """
     rate = data.get("report_rate")
     rates = profile.report_rates or []
     if rate and (rate in rates or not rates):
-        profile.report_rate = int(round(rate))
+        target_rate = int(round(rate))
+        if getattr(profile, "report_rate", None) != target_rate:
+            profile.report_rate = target_rate
 
     by_index = {r["index"]: r for r in data.get("resolutions", [])}
     for res in profile.resolutions:
@@ -156,15 +157,16 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
         if want is None:
             continue
         target = tuple(int(round(v)) for v in want["resolution"])
-        if len(target) == len(res.resolution):
+        if len(target) == len(res.resolution) and tuple(res.resolution) != target:
             res.resolution = target
-        if want.get("disabled", False) != res.is_disabled and (
-            res.CAP_DISABLE in res.capabilities or not want.get("disabled")
+        want_disabled = bool(want.get("disabled", False))
+        if want_disabled != getattr(res, "is_disabled", False) and (
+            res.CAP_DISABLE in res.capabilities or not want_disabled
         ):
-            res.set_disabled(bool(want.get("disabled", False)))
-        if want.get("default"):
+            res.set_disabled(want_disabled)
+        if want.get("default") and not getattr(res, "is_default", False):
             res.set_default()
-        if want.get("active"):
+        if want.get("active") and not getattr(res, "is_active", False):
             res.set_active()
 
     by_index = {b["index"]: b for b in data.get("buttons", [])}
@@ -174,21 +176,36 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
             continue
         t = want["type"]
         value = want.get("value")
+        current_type = getattr(btn, "action_type", None)
+        is_dis = getattr(btn, "disabled", False)
+
         if t == int(RatbagdButton.ActionType.NONE):
-            btn.disable()
+            if not is_dis:
+                btn.disable()
         elif t == int(RatbagdButton.ActionType.BUTTON):
-            btn.mapping = int(value)
+            val = int(value)
+            if is_dis or current_type != RatbagdButton.ActionType.BUTTON or getattr(btn, "mapping", None) != val:
+                btn.mapping = val
         elif t == int(RatbagdButton.ActionType.KEY):
-            btn.key = int(value)
+            val = int(value)
+            if is_dis or current_type != RatbagdButton.ActionType.KEY or getattr(btn, "key", None) != val:
+                btn.key = val
         elif t == int(RatbagdButton.ActionType.SPECIAL):
-            btn.special = int(value)
+            val = int(value)
+            if is_dis or current_type != RatbagdButton.ActionType.SPECIAL or getattr(btn, "special", None) != val:
+                btn.special = val
         elif t == int(RatbagdButton.ActionType.MACRO):
             keys = [(int(k[0]), int(k[1])) for k in value or []]
             keys = [tuple(k) for k in normalize_modifier_macro_keys(keys)]
-            macro = RatbagdMacro()
-            for ktype, kval in keys:
-                macro.append(ktype, kval)
-            btn.macro = macro
+            current_macro = getattr(btn, "macro", None)
+            current_keys = []
+            if current_macro is not None:
+                current_keys = [tuple(k) for k in getattr(current_macro, "keys", [])]
+            if is_dis or current_type != RatbagdButton.ActionType.MACRO or current_keys != keys:
+                macro = RatbagdMacro()
+                for ktype, kval in keys:
+                    macro.append(ktype, kval)
+                btn.macro = macro
 
     by_index = {led_d["index"]: led_d for led_d in data.get("leds", [])}
     for led in profile.leds:
@@ -197,13 +214,21 @@ def apply_profile(data: Dict[str, Any], profile: RatbagdProfile) -> None:
             continue
         modes = led.modes or []
         if want.get("mode") is not None and (want["mode"] in modes or not modes):
-            led.mode = int(want["mode"])
+            mode_val = int(want["mode"])
+            if getattr(led, "mode", None) != mode_val:
+                led.mode = mode_val
         if want.get("color") is not None:
-            led.color = tuple(int(round(c)) for c in want["color"])
+            color_val = tuple(int(round(c)) for c in want["color"])
+            if tuple(getattr(led, "color", ())) != color_val:
+                led.color = color_val
         if want.get("effect_duration") is not None:
-            led.effect_duration = int(round(want["effect_duration"]))
+            dur_val = int(round(want["effect_duration"]))
+            if getattr(led, "effect_duration", None) != dur_val:
+                led.effect_duration = dur_val
         if want.get("brightness") is not None:
-            led.brightness = int(round(want["brightness"]))
+            br_val = int(round(want["brightness"]))
+            if getattr(led, "brightness", None) != br_val:
+                led.brightness = br_val
 
 
 # ── Active-resolution healing ────────────────────────────────────────────────
